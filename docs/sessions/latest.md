@@ -66,6 +66,10 @@ transação real na S02 e registrar a ADR.
   cadeia de ADRs: Bíblia Livre → KJV → WEB (as duas primeiras substituídas)
 - UI English-first com i18n desde o início (Alexandre); toda string via
   chaves de mensagem, pt-BR como primeira locale adicional → ADR aceita
+- Sem limite de registro por carteira (Alexandre, 2026-07-19) — risco R6
+  encerrado; `register_verse` não ganha cota nem verificação de identidade
+- Config do programa **precisa** ser PDA de seeds fixas: conta de config
+  forjada é o único caminho conhecido para burlar a validação Merkle (PG-02)
 - Modelo de dados off-chain: Registro separado do Catálogo (translations,
   books, verse_texts, verses); tradução mora no Catálogo com is_canonical,
   não na linha do registro → ADR aceita
