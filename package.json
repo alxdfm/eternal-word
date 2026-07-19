@@ -1,0 +1,29 @@
+{
+  "name": "eternal-word",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "catalog:build": "pnpm --filter @eternal-word/catalog build:dataset",
+    "catalog:verify": "pnpm --filter @eternal-word/catalog verify",
+    "catalog:merkle": "pnpm --filter @eternal-word/catalog merkle"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+  }
+}
