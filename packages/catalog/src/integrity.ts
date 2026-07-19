@@ -10,13 +10,17 @@ export const EXPECTED_CHAPTERS = CHAPTER_COUNT
 export const EXPECTED_REGISTRABLE_VERSES = 31098
 
 /** Positions carried by the traditional numbering that the WEB leaves
- * without text — see data/canonical-text/PROVENANCE.md. */
+ * without text — see data/canonical-text/PROVENANCE.md.
+ *
+ * The first four are textual variants absent from the Majority Text. The
+ * fifth is only a numbering shift: the Romans doxology lives at 14:24-26 in
+ * this edition, so no text is lost — only its address changes. */
 export const EXPECTED_OMITTED: readonly VerseAddress[] = [
   { book: 42, chapter: 17, verse: 36 }, // Luke 17:36
   { book: 44, chapter: 8, verse: 37 }, // Acts 8:37
   { book: 44, chapter: 15, verse: 34 }, // Acts 15:34
   { book: 44, chapter: 24, verse: 7 }, // Acts 24:7
-  { book: 45, chapter: 16, verse: 25 }, // Romans 16:25
+  { book: 45, chapter: 16, verse: 25 }, // Romans 16:25 — doxology at 14:24-26
 ]
 
 export interface IntegrityReport {

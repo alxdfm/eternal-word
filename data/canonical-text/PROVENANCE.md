@@ -18,16 +18,24 @@ integridade do texto, cujo uso é permitido quando o texto não é modificado).
 
 ## Posições omitidas (`null`)
 
-A WEB preserva a numeração tradicional (KJV), mas omite do texto principal
-os versículos ausentes do Texto Majoritário. Essas posições aparecem como
-`null` no JSON — existem na versificação, não têm texto e **não são
-registráveis** on-chain:
+A WEB preserva a numeração tradicional (KJV), mas segue o Texto Majoritário
+no Novo Testamento. Cinco posições ficam sem texto e aparecem como `null` no
+JSON — existem na versificação e **não são registráveis** on-chain. Elas não
+são todas do mesmo tipo:
 
-- Lucas 17:36
-- Atos 8:37
+**Quatro são variantes textuais ausentes** dos manuscritos que embasam o
+Texto Majoritário. O texto não existe nesta tradução:
+
+- Lucas 17:36 — paralelo de Mateus 24:40
+- Atos 8:37 — confissão do eunuco etíope; citada por Ireneu (c. 180 d.C.)
 - Atos 15:34
-- Atos 24:7
-- Romanos 16:25
+- Atos 24:7 — parte da passagem de Lísias
+
+**Uma é apenas deslocamento de numeração.** Romanos 16:25 está vazio porque
+a WEB coloca a doxologia final ao fim do capítulo 14, seguindo o Texto
+Majoritário. **O texto existe e é registrável** — em Romanos 14:24-26, que
+por isso tem 26 versículos em vez dos 23 tradicionais. Nada de Romanos se
+perde no registro; muda o endereço.
 
 ## Snapshot congelado
 
