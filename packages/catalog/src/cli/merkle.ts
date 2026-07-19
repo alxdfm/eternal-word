@@ -22,10 +22,6 @@ import { checkIntegrity } from '../integrity.js'
 
 const ARTIFACT_PATH = fileURLToPath(new URL('../../../../data/merkle-root.json', import.meta.url))
 const HASH_BYTES = 32
-const SOLANA_TRANSACTION_LIMIT = 1232
-/** Signatures, message header, account keys and blockhash — everything in a
- * registration transaction that is not the instruction payload. */
-const TRANSACTION_OVERHEAD = 240
 
 const books = loadCanonicalBooks()
 const integrity = checkIntegrity(books)
@@ -41,10 +37,6 @@ const chapters = buildChapterTrees(verses)
 const chapterRoots = buildChapterRootsTree(chapters)
 
 const maxChapterDepth = chapters.reduce((max, chapter) => Math.max(max, chapter.tree.depth), 0)
-const longestVerse = verses.reduce((longest, verse) =>
-  Buffer.byteLength(verse.text, 'utf8') > Buffer.byteLength(longest.text, 'utf8') ? verse : longest,
-)
-const longestVerseBytes = Buffer.byteLength(longestVerse.text, 'utf8')
 
 const artifact = {
   translation: 'engwebp',
@@ -98,18 +90,11 @@ if (process.argv.includes('--check')) {
   process.stdout.write(`wrote ${ARTIFACT_PATH}\n`)
 }
 
-// Transaction budget — input for spike PG-00 (risk R1 in sprints/ROADMAP.md).
-const instructionOverhead = 8 + 5 // anchor discriminator + book/chapter/verse args
-const globalWorstCase = longestVerseBytes + global.tree.depth * HASH_BYTES + instructionOverhead
-const chapterWorstCase = longestVerseBytes + maxChapterDepth * HASH_BYTES + instructionOverhead
-
-process.stdout.write(
-  [
-    '',
-    'transaction budget (worst case)',
-    `  longest verse:        ${longestVerse.address.book}:${longestVerse.address.chapter}:${longestVerse.address.verse} — ${longestVerseBytes} bytes`,
-    `  global tree:          instruction ${globalWorstCase} B -> transaction ~${globalWorstCase + TRANSACTION_OVERHEAD} B of ${SOLANA_TRANSACTION_LIMIT}`,
-    `  per-chapter tree:     instruction ${chapterWorstCase} B -> transaction ~${chapterWorstCase + TRANSACTION_OVERHEAD} B of ${SOLANA_TRANSACTION_LIMIT}`,
-    '',
-  ].join('\n'),
-)
+// The transaction budget used to be estimated here by adding up bytes. It was
+// wrong by ~38 bytes in the direction that mattered — it omitted the 4-byte
+// Borsh length prefixes on `String` and `Vec`, and guessed the envelope at 240
+// bytes when the real one is 270 — which made the global tree look viable when
+// it never was. Sizing now lives in `scripts/spike-pg00-transaction-budget.ts`
+// (`pnpm spike:pg00`), which serializes real transactions instead of guessing.
+// Keeping a second, hand-rolled estimate here is what let it drift.
+// See docs/decisions/2026-07-19_forma-da-merkle-tree-e-orcamento-de-transacao.md
