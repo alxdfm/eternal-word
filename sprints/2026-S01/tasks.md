@@ -63,8 +63,8 @@
 > Tudo aqui precisa estar resolvido **antes ou junto do primeiro commit** —
 > depois de publicado, o histórico do git carrega o que entrou.
 
-- [x] **FD-07** `git` — **commit inicial feito em 2026-07-19.** Falta criar o
-      repositório remoto no GitHub e publicar a branch `main`.
+- [x] **FD-07** `git` — **concluído em 2026-07-19.** Commit inicial `240f5d2`
+      publicado em `git@github.com:alxdfm/eternal-word.git`, branch `main`.
 - [x] **FD-08** `LICENSE` do código — **MIT** (Alexandre, 2026-07-19).
       Titular gravado como "Eternal Word contributors"; trocar pelo nome
       legal se preferir atribuição pessoal. O texto bíblico é domínio público
@@ -76,7 +76,10 @@
 - [ ] **FD-10** Contas e serviços externos — **Alexandre provisiona depois do
       desenvolvimento, antes do primeiro smoke test** (decidido em
       2026-07-19): projeto no Supabase, infra AWS (incl. role de OIDC para o
-      deploy), provider de RPC/webhook e domínio.
+      deploy) e provider de RPC/webhook.
+      **Exceção — domínio:** único item cuja espera tem risco real (o nome
+      pode ser registrado por outra pessoa). Verificar disponibilidade e
+      garantir o nome cedo, mesmo sem apontar para nada.
       **Consequência para o planejamento:** S03 e S04 são desenvolvidas
       contra ambiente local (Postgres em Docker, validador local ou devnet
       público) e só encostam em infra real no smoke test. As tasks dessas
