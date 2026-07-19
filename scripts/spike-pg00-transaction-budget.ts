@@ -205,11 +205,22 @@ measure(
  * measures a verse that does not exist. The number that matters is the maximum
  * over every registrable verse of its own text plus its own chapter's proof.
  */
-const worstForChapterShape = verses.reduce((worst, verse) => {
-  const cost = (candidate: CanonicalVerse) =>
-    Buffer.byteLength(candidate.text, 'utf8') + chapterFor(candidate.address).tree.depth * 32
-  return cost(verse) > cost(worst) ? verse : worst
-})
+function chapterShapeCost(verse: CanonicalVerse): number {
+  return Buffer.byteLength(verse.text, 'utf8') + chapterFor(verse.address).tree.depth * 32
+}
+
+let worstForChapterShape = verses[0]
+if (worstForChapterShape === undefined) throw new Error('CanonicalText has no registrable verses')
+let worstCost = chapterShapeCost(worstForChapterShape)
+for (const verse of verses) {
+  // Only the candidate is measured — the incumbent's cost is already known,
+  // so the sweep does one pass of work instead of two.
+  const cost = chapterShapeCost(verse)
+  if (cost > worstCost) {
+    worstCost = cost
+    worstForChapterShape = verse
+  }
+}
 
 measure(
   '(b) per-chapter tree — 1,189 roots in the config account',
