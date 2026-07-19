@@ -82,6 +82,12 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
+      # O build da web depende dos pacotes do workspace (`workspace:*`),
+      # então precisa das dependências instaladas antes do Vercel CLI.
+      - name: Install
+        if: steps.app.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+
       - name: Deploy
         if: steps.app.outputs.ready == 'true'
         env:

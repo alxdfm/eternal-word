@@ -63,9 +63,16 @@ for (const line of lines) {
     fail(`non-contiguous reference: ${sourceCode} ${chapter}:${verse}`)
   }
 
+  const currentChapter = chapters[chapter - 1]
+  // Unreachable after the check above, but a dropped verse would change the
+  // Merkle root with no error at all — so it fails loudly instead.
+  if (currentChapter === undefined) {
+    fail(`chapter bucket missing after validation: ${sourceCode} ${chapter}:${verse}`)
+  }
+
   const cleaned = cleanText(text)
   if (cleaned === '') omitted.push(`${sourceCode} ${chapter}:${verse}`)
-  chapters[chapter - 1]?.push(cleaned === '' ? null : cleaned)
+  currentChapter.push(cleaned === '' ? null : cleaned)
 }
 
 mkdirSync(CANONICAL_TEXT_DIR, { recursive: true })

@@ -1,4 +1,4 @@
-import { BOOK_COUNT, CHAPTER_COUNT, type VerseAddress } from '@eternal-word/domain'
+import { BOOK_COUNT, CHAPTER_COUNT, type VerseAddress, verseAddressKey } from '@eternal-word/domain'
 import type { CanonicalBook } from './dataset.js'
 import { listOmittedPositions, listRegistrableVerses } from './dataset.js'
 
@@ -25,10 +25,6 @@ export interface IntegrityReport {
   readonly registrableVerses: number
   readonly omitted: readonly VerseAddress[]
   readonly problems: readonly string[]
-}
-
-function formatAddress(address: VerseAddress): string {
-  return `${address.book}:${address.chapter}:${address.verse}`
 }
 
 /**
@@ -70,12 +66,12 @@ export function checkIntegrity(books: readonly CanonicalBook[]): IntegrityReport
 
   const emptyText = registrable.filter((verse) => verse.text.trim() === '')
   for (const verse of emptyText) {
-    problems.push(`empty text at ${formatAddress(verse.address)}`)
+    problems.push(`empty text at ${verseAddressKey(verse.address)}`)
   }
 
   const omitted = listOmittedPositions(books)
-  const omittedKeys = new Set(omitted.map(formatAddress))
-  const expectedKeys = new Set(EXPECTED_OMITTED.map(formatAddress))
+  const omittedKeys = new Set(omitted.map(verseAddressKey))
+  const expectedKeys = new Set(EXPECTED_OMITTED.map(verseAddressKey))
 
   for (const key of expectedKeys) {
     if (!omittedKeys.has(key)) problems.push(`expected omitted position missing: ${key}`)
