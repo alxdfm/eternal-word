@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { TESTAMENT, type Testament, type VerseAddress } from '@eternal-word/domain'
+import { fromRepoRoot } from '@eternal-word/shared'
 
 /** One book file of the CanonicalText, as committed in data/canonical-text/. */
 export interface CanonicalBook {
@@ -20,9 +20,7 @@ export interface CanonicalVerse {
   readonly text: string
 }
 
-export const CANONICAL_TEXT_DIR = fileURLToPath(
-  new URL('../../../data/canonical-text/', import.meta.url),
-)
+export const CANONICAL_TEXT_DIR = fromRepoRoot(import.meta.url, 'data/canonical-text')
 
 const TESTAMENTS: ReadonlySet<string> = new Set([TESTAMENT.OLD, TESTAMENT.NEW])
 
