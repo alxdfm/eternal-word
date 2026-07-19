@@ -15,12 +15,10 @@
 //
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fromRepoRoot } from '@eternal-word/shared'
 
-const SOURCE = fileURLToPath(new URL('../target/idl/eternal_word.json', import.meta.url))
-const TARGET = fileURLToPath(
-  new URL('../packages/blockchain/src/idl/eternal_word.json', import.meta.url),
-)
+const SOURCE = fromRepoRoot(import.meta.url, 'target/idl/eternal_word.json')
+const TARGET = fromRepoRoot(import.meta.url, 'packages/blockchain/src/idl/eternal_word.json')
 
 if (!existsSync(SOURCE)) {
   process.stderr.write(

@@ -10,7 +10,7 @@
  * auditability.
  */
 import { readFileSync, writeFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { fromRepoRoot } from '@eternal-word/shared'
 import {
   buildCanonicalTree,
   buildChapterRootsTree,
@@ -20,7 +20,7 @@ import {
 import { listRegistrableVerses, loadCanonicalBooks } from '../dataset.js'
 import { checkIntegrity } from '../integrity.js'
 
-const ARTIFACT_PATH = fileURLToPath(new URL('../../../../data/merkle-root.json', import.meta.url))
+const ARTIFACT_PATH = fromRepoRoot(import.meta.url, 'data/merkle-root.json')
 const HASH_BYTES = 32
 
 const books = loadCanonicalBooks()
