@@ -5,56 +5,55 @@
 
 ## Fundação
 
-- [ ] **FD-01** Monorepo pnpm — `pnpm-workspace.yaml`, `package.json` raiz,
+- [x] **FD-01** Monorepo pnpm — `pnpm-workspace.yaml`, `package.json` raiz,
       `tsconfig.base.json`. Layout de `docs/architecture/STACK.md`:
       `apps/{web,api}` + `packages/{domain,application,infrastructure,blockchain,shared}`
       + `programs/`. Apps e pacotes ainda sem código entram com `package.json`
       mínimo só para fixar o workspace.
-- [ ] **FD-02** Tooling — TypeScript strict, linter/formatter (avaliar Biome
+- [x] **FD-02** Tooling — TypeScript strict, linter/formatter (avaliar Biome
       vs ESLint+Prettier → **ADR**), Vitest com projeto por pacote. Scripts
       raiz: `test`, `typecheck`, `lint`.
-- [x] **FD-03** CI no GitHub Actions — **feito em 2026-07-19**
-      (`.github/workflows/ci.yml`): `typecheck` + `lint` + `test` em push e
-      PR, com cache do pnpm, mais job de integridade do CanonicalText que já
-      roda hoje. Os passos de código pulam com aviso enquanto o workspace não
-      existir e se ativam sozinhos ao FD-01 entrar. Falta só ligar o
-      `catalog:verify` do CT-02 no lugar da verificação inline.
-- [ ] **FD-04** `packages/domain` — entidades e regras puras, sem I/O:
+- [x] **FD-03** CI no GitHub Actions (`.github/workflows/ci.yml`):
+      `typecheck` + `lint` + `test` em push e PR, com cache do pnpm, mais job
+      dedicado que roda `catalog:verify` e `catalog:merkle --check`.
+- [x] **FD-04** `packages/domain` — entidades e regras puras, sem I/O:
       `VerseAddress` (book/chapter/verse, validação de faixa), `Book`,
       `Testament`, `VerseStatus`, e a noção de **posição não-registrável**
       (as 5 omitidas da WEB). Termos exatamente como no glossário —
       `adopter`, nunca `owner`; `register`, nunca `adopt`.
-- [ ] **FD-05** `packages/shared` — tipos comuns e `Result<T>` (padrão de erro
+- [x] **FD-05** `packages/shared` — tipos comuns e `Result<T>` (padrão de erro
       do `CODE_STYLE.md`).
-- [ ] **FD-06** Testes unitários do domínio — faixas válidas/inválidas,
+- [x] **FD-06** Testes unitários do domínio — faixas válidas/inválidas,
       transições de status, rejeição das posições não-registráveis.
       Arquivos em `__tests__/unit.test.ts` (convenção do projeto).
 
 ## Catálogo
 
-- [ ] **CT-01** Mover a geração do dataset para o workspace — hoje
-      `scripts/build-canonical-text.mjs` roda solto. Vira comando do
-      Catálogo (`pnpm catalog:build`), mantendo a validação de contiguidade
-      que já pegou as 5 posições omitidas da WEB.
-- [ ] **CT-02** `pnpm catalog:verify` — verificação independente do dataset
+- [x] **CT-01** Geração do dataset movida para o workspace: o script solto
+      `scripts/build-canonical-text.mjs` virou `pnpm catalog:build`
+      (`packages/catalog/src/cli/build-dataset.ts`), com a tabela de livros
+      extraída para `src/books.ts` e a validação de contiguidade preservada.
+      **Verificado:** regenerar do VPL original reproduz os 66 arquivos
+      commitados byte a byte.
+- [x] **CT-02** `pnpm catalog:verify` — verificação independente do dataset
       commitado: 66 livros, 1.189 capítulos, 31.098 versículos registráveis,
       exatamente as 5 posições `null` esperadas (Lc 17:36, At 8:37, At 15:34,
       At 24:7, Rm 16:25), sem lacuna de numeração. Roda no CI.
-- [ ] **CT-03** Construção da Merkle tree — folha canônica
+- [x] **CT-03** Construção da Merkle tree — folha canônica
       `hash(book, chapter, verse, text)` com **encoding fixo e documentado**
       (ordem, tipos, separadores; sem ambiguidade possível). Função de hash a
       definir: precisa ser barata em compute units na verificação on-chain →
       avaliar `keccak`/`sha256` do Solana → **ADR**.
-- [ ] **CT-04** Root commitada no repositório em arquivo próprio, com metadados
+- [x] **CT-04** Root commitada no repositório em arquivo próprio, com metadados
       (fonte, contagem, data, algoritmo). É o artefato que a S02 consome.
-- [ ] **CT-05** Teste de reprodutibilidade — regenerar do dataset e comparar
+- [x] **CT-05** Teste de reprodutibilidade — regenerar do dataset e comparar
       com a root commitada; **falha o CI** se divergir. Este teste é a
       garantia central da auditabilidade pública do projeto.
-- [ ] **CT-06** Geração de proof para um versículo — API do Catálogo que a
+- [x] **CT-06** Geração de proof para um versículo — API do Catálogo que a
       web (S04) e os testes do programa (S02) vão consumir. Incluir teste com
       **Ester 8:9** (o versículo mais longo, 493 bytes) e um caso de proof
       inválida.
-- [ ] **CT-07** Medir e documentar o orçamento de transação com os números
+- [x] **CT-07** Medir e documentar o orçamento de transação com os números
       reais medidos — insumo do spike **PG-00** da S02 (ver risco R1 no
       ROADMAP). Deixar os números num arquivo do Catálogo, não só na ADR.
 
@@ -86,6 +85,6 @@
       sprints precisam nascer com essa premissa — nada de acoplar código a
       serviço gerenciado sem camada de porta/adapter.
       O domínio é o item de maior prazo: vale checar disponibilidade cedo.
-- [ ] **FD-11** Ligar o job `catalog` do CI ao `catalog:verify` (CT-02) e à
+- [x] **FD-11** Ligar o job `catalog` do CI ao `catalog:verify` (CT-02) e à
       verificação de reprodutibilidade da root (CT-05), substituindo a
       verificação inline que está no workflow hoje.

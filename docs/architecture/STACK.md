@@ -68,22 +68,41 @@ Padrão geral:     Clean Architecture em monorepo pnpm
 Separação:        packages/domain → application → infrastructure | blockchain | shared
 Testes:           Vitest — unitários em `__tests__/unit.test.ts`,
                   integração em `__tests__/integration.test.ts`
+Lint/format:      Biome (ver ADR 2026-07-19_tooling-e-pacote-catalog.md)
+TypeScript:       strict + noUncheckedIndexedAccess + project references
 ```
 
-### Layout alvo do monorepo (a criar)
+### Layout do monorepo
 
 ```
 apps/
-  web/            ← Next.js
-  api/            ← AWS Lambda (API + indexer)
+  web/            ← Next.js (placeholder até a S04)
+  api/            ← AWS Lambda: API + indexer (placeholder até a S03)
 packages/
-  domain/         ← entidades e regras de negócio (sem dependências externas)
-  application/    ← casos de uso (orquestram domain via ports)
-  infrastructure/ ← Drizzle, Supabase, adapters (implementam ports)
-  blockchain/     ← cliente do programa, derivação de PDAs, construção de transações
-  shared/         ← tipos e utilitários comuns
+  domain/         ← entidades e regras de negócio (sem dependências externas) ✅
+  catalog/        ← CanonicalText, integridade e Merkle tree ✅
+  shared/         ← tipos e utilitários comuns ✅
+  application/    ← casos de uso (orquestram domain via ports) — S03/S04
+  infrastructure/ ← Drizzle, Supabase, adapters (implementam ports) — S03
+  blockchain/     ← cliente do programa, PDAs, transações — S02
 programs/
-  eternal-word/   ← programa Anchor (Rust)
+  eternal-word/   ← programa Anchor (Rust) — S02
+```
+
+> `catalog` não constava na lista original de pacotes; foi acrescentado na
+> S01 porque o Catálogo já era um bounded context em `OVERVIEW.md` e precisa
+> ser consumido por web, testes do programa e seed sem arrastar
+> infraestrutura junto.
+
+### Comandos
+
+```
+pnpm typecheck          tsc --build sobre todas as project references
+pnpm lint / lint:fix    Biome (lint + formatação)
+pnpm test               Vitest
+pnpm catalog:verify     integridade do CanonicalText (66 / 1.189 / 31.098)
+pnpm catalog:merkle     regenera data/merkle-root.json
+pnpm catalog:merkle --check   falha se a root divergir da commitada (CI)
 ```
 
 ---

@@ -23,13 +23,32 @@ ainda — o monorepo `apps/` + `packages/` + `programs/` é o próximo passo.
 ## Estado atual do projeto
 
 ```
-O que está funcionando:   documentação de fundação completa (docs/) +
-                          CanonicalText em data/canonical-text/ (66 livros,
-                          1.189 capítulos, 31.098 versículos registráveis
-                          + 5 placeholders null — validado)
-O que está em progresso:  nada — pronto para o scaffolding do código
+O que está funcionando:   S01 entregue — monorepo pnpm + Biome + Vitest + CI;
+                          packages/{domain,catalog,shared} implementados;
+                          Merkle root reprodutível commitada; 40 testes verdes
+O que está em progresso:  nada — pronto para a S02 (programa Anchor)
 O que está bloqueado:     nada
 ```
+
+## Merkle root do CanonicalText (S01)
+
+```
+root global:      112e5318594829adc058b35543812bf976ec999c4afdfec03a94e8ee5b3f7adb
+algoritmo:        sha256, prefixo 0x00 folha / 0x01 nó, pares ordenados,
+                  nó ímpar promovido (nunca duplicado)
+folha:            book:u8 | chapter:u16le | verse:u16le | textLen:u32le | text:utf8
+artefato:         data/merkle-root.json (inclui as 1.189 roots por capítulo)
+```
+
+**Spike PG-00 praticamente resolvido pelos números medidos:**
+
+```
+árvore global:      15 níveis → proof 480 B → transação ~1.226 / 1.232 B
+árvore por capítulo: 8 níveis → proof 256 B → transação ~1.002 / 1.232 B
+```
+
+A forma por capítulo é a que cabe com margem — falta só confirmar em
+transação real na S02 e registrar a ADR.
 
 ---
 
@@ -63,10 +82,11 @@ O que está bloqueado:     nada
 
 ## Próximos passos (para retomar)
 
-**Executar a Sprint S01** — plano em `sprints/2026-S01/tasks.md`:
-monorepo pnpm + tooling (FD-01, FD-02), domínio com testes (FD-04..FD-06),
-Catálogo com Merkle root reprodutível (CT-01..CT-07). CI (FD-03) já existe.
-Depois S02 (programa Anchor) começando pelo spike bloqueador **PG-00**.
+**S01 concluída** (só FD-10, infra externa, segue aberta por decisão).
+**Executar a Sprint S02** — `sprints/2026-S02/tasks.md`: começar pelo spike
+**PG-00** (confirmar em transação real a forma da árvore), depois
+`anchor init`, conta de config com as roots por capítulo, `register_verse`
+com verificação de proof, testes dos caminhos de falha e deploy em devnet.
 
 Sequência completa e riscos abertos: `sprints/ROADMAP.md`.
 

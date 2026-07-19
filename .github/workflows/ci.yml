@@ -16,44 +16,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # O workspace é montado na S01 (FD-01). Enquanto não existir, o job
-      # passa sem falsear sucesso de teste — e passa a valer sozinho no
-      # momento em que o pnpm-workspace.yaml entrar no repositório.
-      - name: Detect workspace
-        id: workspace
-        run: |
-          if [ -f pnpm-workspace.yaml ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Workspace ainda não montado (S01/FD-01) — verificação de código pulada."
-          fi
-
       - uses: pnpm/action-setup@v4
-        if: steps.workspace.outputs.ready == 'true'
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: ${{ steps.workspace.outputs.ready == 'true' && 'pnpm' || '' }}
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - name: Install
-        if: steps.workspace.outputs.ready == 'true'
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        if: steps.workspace.outputs.ready == 'true'
-        run: pnpm typecheck
+      - run: pnpm typecheck
 
-      - name: Lint
-        if: steps.workspace.outputs.ready == 'true'
-        run: pnpm lint
+      - run: pnpm lint
 
-      - name: Test
-        if: steps.workspace.outputs.ready == 'true'
-        run: pnpm test
+      - run: pnpm test
 
   catalog:
     name: Integridade do CanonicalText
@@ -61,37 +39,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      # Guarda central da auditabilidade: o dataset precisa bater sempre
-      # 66 / 1.189 / 31.098 e, a partir da S01 (CT-05), a Merkle root
-      # regenerada precisa ser idêntica à commitada.
+      - run: pnpm install --frozen-lockfile
+
+      # Integridade do snapshot: 66 livros / 1.189 capítulos / 31.098
+      # versículos registráveis e exatamente as 5 posições omitidas pela WEB.
       - name: Verificar dataset
-        run: |
-          if [ -f package.json ] && grep -q '"catalog:verify"' package.json; then
-            corepack enable
-            pnpm install --frozen-lockfile
-            pnpm catalog:verify
-          else
-            node -e "
-              const fs = require('fs');
-              const dir = 'data/canonical-text';
-              const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-              let chapters = 0, verses = 0, omitted = 0;
-              for (const f of files) {
-                const book = JSON.parse(fs.readFileSync(dir + '/' + f));
-                chapters += book.chapters.length;
-                for (const chapter of book.chapters)
-                  for (const verse of chapter) verse === null ? omitted++ : verses++;
-              }
-              const expected = { books: 66, chapters: 1189, verses: 31098, omitted: 5 };
-              const actual = { books: files.length, chapters, verses, omitted };
-              console.log(actual);
-              for (const [key, value] of Object.entries(expected))
-                if (actual[key] !== value)
-                  throw new Error('CanonicalText mismatch on ' + key + ': expected ' + value + ', got ' + actual[key]);
-              console.log('CanonicalText OK');
-            "
-          fi
+        run: pnpm catalog:verify
+
+      # Reprodutibilidade da Merkle root — qualquer pessoa precisa conseguir
+      # regenerar, a partir do repositório, exatamente a root que vai
+      # on-chain. É a base da auditabilidade pública do projeto.
+      - name: Verificar reprodutibilidade da Merkle root
+        run: pnpm catalog:merkle --check

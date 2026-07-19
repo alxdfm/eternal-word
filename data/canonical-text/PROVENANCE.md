@@ -11,7 +11,7 @@ integridade do texto, cujo uso é permitido quando o texto não é modificado).
   — https://ebible.org/details.php?id=engwebp — obtida em 2026-07-18.
 - **Conteúdo:** canon protestante de 66 livros, 1.189 capítulos,
   **31.098 versículos com texto** + 5 posições vazias (ver abaixo).
-- **Processamento** (via `scripts/build-canonical-text.mjs`):
+- **Processamento** (via `pnpm catalog:build <engwebp_vpl.txt>`):
   - espaços normalizados; aspas tipográficas da fonte preservadas;
   - títulos dos Salmos integrados ao versículo 1 (convenção da fonte);
   - o texto dos versículos não foi alterado.

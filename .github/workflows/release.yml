@@ -23,38 +23,31 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Detect workspace
-        id: workspace
-        run: |
-          if [ -f pnpm-workspace.yaml ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Workspace ainda não montado (S01/FD-01)."
-          fi
-
       - uses: pnpm/action-setup@v4
-        if: steps.workspace.outputs.ready == 'true'
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: ${{ steps.workspace.outputs.ready == 'true' && 'pnpm' || '' }}
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - name: Install
-        if: steps.workspace.outputs.ready == 'true'
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
       # Nunca deployar sem a suíte verde na mesma tag: a release pode ter
       # sido criada de um commit que não passou pelo CI da branch.
       - name: Typecheck, lint & test
-        if: steps.workspace.outputs.ready == 'true'
         run: |
           pnpm typecheck
           pnpm lint
           pnpm test
+
+      # O que vai a produção precisa carregar o mesmo texto canônico que
+      # está registrado on-chain.
+      - name: Verificar CanonicalText e Merkle root
+        run: |
+          pnpm catalog:verify
+          pnpm catalog:merkle --check
 
   deploy-web:
     name: Deploy web (Vercel)
@@ -66,25 +59,27 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
+      # apps/web já existe como placeholder do workspace; o que marca que ele
+      # é deployável é ter um script de build (chega na S04).
       - name: Detect app
         id: app
         run: |
-          if [ -f apps/web/package.json ]; then
+          if grep -q '"build"' apps/web/package.json 2>/dev/null; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::apps/web ainda não existe (S04) — deploy pulado."
+            echo "::notice::apps/web ainda não é deployável (S04) — deploy pulado."
           fi
 
       - uses: pnpm/action-setup@v4
         if: steps.app.outputs.ready == 'true'
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         if: steps.app.outputs.ready == 'true'
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Deploy
@@ -111,25 +106,27 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
+      # Idem: o sinal de que a API é deployável é existir o script de deploy
+      # (chega na S03, junto da ferramenta escolhida).
       - name: Detect app
         id: app
         run: |
-          if [ -f apps/api/package.json ]; then
+          if grep -q '"deploy:production"' apps/api/package.json 2>/dev/null; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::apps/api ainda não existe (S03) — deploy pulado."
+            echo "::notice::apps/api ainda não é deployável (S03) — deploy pulado."
           fi
 
       - uses: pnpm/action-setup@v4
         if: steps.app.outputs.ready == 'true'
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         if: steps.app.outputs.ready == 'true'
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Credenciais AWS (OIDC)
