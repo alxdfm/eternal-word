@@ -28,6 +28,13 @@
       da tradução (`engwebp`) e metadados de proveniência. Definir **quem
       pode escrever nela e quando** (risco R3): a intenção é root gravada uma
       vez e nunca mais alterável.
+      **Obrigatório: a config precisa ser uma PDA de seeds fixas**, validada
+      pela constraint `seeds` do Anchor. Se a instrução aceitar qualquer
+      conta passada como config, um atacante fornece a própria conta, com uma
+      root que ele escolheu, e **toda a validação Merkle deixa de valer** —
+      passa a conseguir gravar qualquer texto. É a falha clássica de
+      "missing account validation" e o único caminho conhecido para
+      contornar a proteção do texto. Teste correspondente: PG-06.
 - [ ] **PG-03** `VerseAccount` — layout com espaço calculado por constantes
       nomeadas, sem número mágico. Campo **`adopter`**, nunca `owner`
       (glossário). Sem instrução de `update` nem de `close`.
