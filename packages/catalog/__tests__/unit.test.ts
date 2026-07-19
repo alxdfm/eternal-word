@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   buildCanonicalTree,
@@ -6,6 +9,7 @@ import {
   encodeVerseLeaf,
   hashLeaf,
   hashPair,
+  loadCanonicalBooks,
   merkleProof,
   proofForAddress,
   verifyMerkleProof,
@@ -132,5 +136,51 @@ describe('canonical tree', () => {
     expect(() => proofForAddress(tree, { book: 44, chapter: 8, verse: 37 })).toThrow(
       /not registrable/,
     )
+  })
+})
+
+describe('dataset loading', () => {
+  function withBook(contents: string): string {
+    const directory = mkdtempSync(join(tmpdir(), 'eternal-word-'))
+    writeFileSync(join(directory, '01-test.json'), contents)
+    return directory
+  }
+
+  const valid = {
+    book: 1,
+    name: 'Genesis',
+    abbreviation: 'Gen',
+    testament: 'OLD',
+    chapters: [['first verse', null]],
+  }
+
+  it('loads a well-formed book', () => {
+    const books = loadCanonicalBooks(withBook(JSON.stringify(valid)))
+    expect(books).toHaveLength(1)
+    expect(books[0]?.chapters[0]).toEqual(['first verse', null])
+  })
+
+  it('names the offending file when the shape is wrong', () => {
+    // Everything downstream trusts these types, so a malformed file has to
+    // fail at the boundary rather than deep inside the tree construction.
+    const cases: [string, unknown][] = [
+      ['"book" must be an integer index', { ...valid, book: '1' }],
+      ['"testament" must be OLD or NEW', { ...valid, testament: 'APOCRYPHA' }],
+      ['"chapters" must be an array', { ...valid, chapters: {} }],
+      ['chapter 1 must be an array', { ...valid, chapters: ['not an array'] }],
+      ['holds a non-string verse', { ...valid, chapters: [[42]] }],
+      ['"name" and "abbreviation" must be strings', { ...valid, name: 7 }],
+    ]
+
+    for (const [message, payload] of cases) {
+      expect(() => loadCanonicalBooks(withBook(JSON.stringify(payload))), message).toThrow(
+        new RegExp(`01-test\\.json.*${message.replace(/["]/g, '"')}`),
+      )
+    }
+  })
+
+  it('rejects a file that is not a JSON object', () => {
+    expect(() => loadCanonicalBooks(withBook('[]'))).toThrow(/expected a JSON object/)
+    expect(() => loadCanonicalBooks(withBook('not json'))).toThrow()
   })
 })

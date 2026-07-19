@@ -1,4 +1,4 @@
-import type { VerseAddress } from '@eternal-word/domain'
+import { type VerseAddress, verseAddressKey } from '@eternal-word/domain'
 import type { CanonicalVerse } from './dataset.js'
 import { type Hash, type MerkleTree, buildMerkleTree, hashLeaf, merkleProof } from './merkle.js'
 
@@ -41,7 +41,7 @@ export interface CanonicalTree {
 function indexVerses(verses: readonly CanonicalVerse[]): ReadonlyMap<string, number> {
   const index = new Map<string, number>()
   verses.forEach((verse, position) => {
-    index.set(`${verse.address.book}:${verse.address.chapter}:${verse.address.verse}`, position)
+    index.set(verseAddressKey(verse.address), position)
   })
   return index
 }
@@ -99,7 +99,7 @@ export function buildChapterRootsTree(chapters: readonly ChapterTree[]): MerkleT
 }
 
 export function proofForAddress(source: CanonicalTree, address: VerseAddress): Hash[] {
-  const key = `${address.book}:${address.chapter}:${address.verse}`
+  const key = verseAddressKey(address)
   const index = source.indexByAddress.get(key)
   if (index === undefined) throw new Error(`verse is not registrable: ${key}`)
   return merkleProof(source.tree, index)

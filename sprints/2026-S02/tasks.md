@@ -45,6 +45,14 @@
       da config, criação da conta, gravação de `adopter` e `created_at`.
       Erros customizados com mensagem em inglês; `require!` em vez de
       `unwrap`/`panic`.
+      **Limitar o tamanho da proof** ao máximo do desenho escolhido (8
+      irmãos na forma por capítulo). Não é vulnerabilidade — quem envia
+      proof gigante queima os próprios compute units — mas é validação
+      barata que evita trabalho inútil e deixa o contrato explícito.
+      Espelhar exatamente o algoritmo de `packages/catalog/src/merkle.ts`:
+      sha256, prefixo `0x00` folha / `0x01` nó, pares ordenados por bytes,
+      nó ímpar promovido; folha =
+      `book:u8 | chapter:u16le | verse:u16le | textLen:u32le | text:utf8`.
 - [ ] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
       `anchor test` → **ADR**). Cobrir principalmente falhas:
       - registro feliz grava os campos corretos

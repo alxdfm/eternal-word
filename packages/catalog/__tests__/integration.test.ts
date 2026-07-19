@@ -72,7 +72,9 @@ describe('committed dataset', () => {
 })
 
 describe('merkle commitment', () => {
+  // Hoisted: rebuilding these hashes all 31,098 verses again.
   const tree = buildCanonicalTree(verses)
+  const chapters = buildChapterTrees(verses)
 
   it('reproduces the committed root exactly', () => {
     const artifact = JSON.parse(
@@ -111,14 +113,12 @@ describe('merkle commitment', () => {
   it('keeps the proof within the transaction budget in the per-chapter shape', () => {
     // Risk R1 / spike PG-00: the global tree leaves almost no room, the
     // per-chapter shape leaves plenty. Guard the number we are counting on.
-    const chapters = buildChapterTrees(verses)
     const maxDepth = chapters.reduce((max, chapter) => Math.max(max, chapter.tree.depth), 0)
     expect(chapters).toHaveLength(EXPECTED_CHAPTERS)
     expect(maxDepth).toBeLessThanOrEqual(8)
   })
 
   it('proves a verse inside its own chapter tree', () => {
-    const chapters = buildChapterTrees(verses)
     const psalm119 = chapters.find((chapter) => chapter.book === 19 && chapter.chapter === 119)
     if (psalm119 === undefined) throw new Error('Psalm 119 missing from the dataset')
 

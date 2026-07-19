@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { Testament, VerseAddress } from '@eternal-word/domain'
+import { TESTAMENT, type Testament, type VerseAddress } from '@eternal-word/domain'
 
 /** One book file of the CanonicalText, as committed in data/canonical-text/. */
 export interface CanonicalBook {
@@ -24,13 +24,64 @@ export const CANONICAL_TEXT_DIR = fileURLToPath(
   new URL('../../../data/canonical-text/', import.meta.url),
 )
 
+const TESTAMENTS: ReadonlySet<string> = new Set([TESTAMENT.OLD, TESTAMENT.NEW])
+
+/** Validates the shape at the I/O boundary. Everything downstream — the
+ * integrity report, the Merkle tree, the seed — trusts these types, so a
+ * malformed file has to fail here, with the file name, instead of surfacing
+ * as an obscure error deep in the tree construction. */
+function parseBook(file: string, contents: string): CanonicalBook {
+  const parsed: unknown = JSON.parse(contents)
+
+  // Arrays are objects too — without this an array would slip through and
+  // fail later with a misleading message about a missing field.
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`${file}: expected a JSON object`)
+  }
+
+  const { book, name, abbreviation, testament, chapters } = parsed as Record<string, unknown>
+
+  if (typeof book !== 'number' || !Number.isInteger(book)) {
+    throw new Error(`${file}: "book" must be an integer index`)
+  }
+  if (typeof name !== 'string' || typeof abbreviation !== 'string') {
+    throw new Error(`${file}: "name" and "abbreviation" must be strings`)
+  }
+  if (typeof testament !== 'string' || !TESTAMENTS.has(testament)) {
+    throw new Error(`${file}: "testament" must be OLD or NEW`)
+  }
+  if (!Array.isArray(chapters)) {
+    throw new Error(`${file}: "chapters" must be an array`)
+  }
+
+  chapters.forEach((chapter, index) => {
+    if (!Array.isArray(chapter)) {
+      throw new Error(`${file}: chapter ${index + 1} must be an array`)
+    }
+    for (const verse of chapter) {
+      if (verse !== null && typeof verse !== 'string') {
+        throw new Error(`${file}: chapter ${index + 1} holds a non-string verse`)
+      }
+    }
+  })
+
+  return {
+    book,
+    name,
+    abbreviation,
+    testament: testament as Testament,
+    chapters: chapters as (string | null)[][],
+  }
+}
+
 export function loadCanonicalBooks(directory: string = CANONICAL_TEXT_DIR): CanonicalBook[] {
   const files = readdirSync(directory)
     .filter((file) => file.endsWith('.json'))
     .sort()
 
-  const books = files.map((file) => JSON.parse(readFileSync(join(directory, file), 'utf8')))
-  return books.sort((a: CanonicalBook, b: CanonicalBook) => a.book - b.book)
+  return files
+    .map((file) => parseBook(file, readFileSync(join(directory, file), 'utf8')))
+    .sort((a, b) => a.book - b.book)
 }
 
 /**
