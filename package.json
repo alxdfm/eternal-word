@@ -27,9 +27,13 @@
     "@types/node": "^24.10.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"],
+    "overrides": {
+      "uuid@<11.1.1": ">=11.1.1"
+    }
   }
 }
