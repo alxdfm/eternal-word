@@ -12,6 +12,9 @@ out/
 *.tsbuildinfo
 
 # Rust / Anchor
+# Cobre também target/deploy/eternal_word-keypair.json — a keypair de upgrade
+# do programa. Quem tem esse arquivo pode substituir o bytecode em devnet e,
+# depois da S07, em mainnet. Nunca versionar; backup manual fora do repo.
 target/
 .anchor/
 test-ledger/

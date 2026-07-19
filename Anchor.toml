@@ -1,0 +1,23 @@
+[toolchain]
+anchor_version = "1.0.0"
+package_manager = "pnpm"
+
+[features]
+resolution = true
+skip-lint = false
+
+# Devnet apenas. Não há entrada [programs.localnet] de propósito: o projeto não
+# usa solana-test-validator (ver "O que NÃO usar" em docs/architecture/STACK.md).
+# Os testes do programa rodam in-process; a validação real é em devnet.
+[programs.devnet]
+eternal_word = "9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+# Os testes não são invocados por `anchor test` — rodam pelo Vitest do
+# workspace (`pnpm test`), que já é o runner do monorepo. Ver PG-06.
+[scripts]
+
+[hooks]
