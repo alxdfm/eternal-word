@@ -28,23 +28,9 @@ importers:
 
   apps/web: {}
 
-  packages/application:
-    dependencies:
-      '@eternal-word/domain':
-        specifier: workspace:*
-        version: link:../domain
-      '@eternal-word/shared':
-        specifier: workspace:*
-        version: link:../shared
+  packages/application: {}
 
-  packages/blockchain:
-    dependencies:
-      '@eternal-word/domain':
-        specifier: workspace:*
-        version: link:../domain
-      '@eternal-word/shared':
-        specifier: workspace:*
-        version: link:../shared
+  packages/blockchain: {}
 
   packages/catalog:
     dependencies:
@@ -61,14 +47,7 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
-  packages/infrastructure:
-    dependencies:
-      '@eternal-word/domain':
-        specifier: workspace:*
-        version: link:../domain
-      '@eternal-word/shared':
-        specifier: workspace:*
-        version: link:../shared
+  packages/infrastructure: {}
 
   packages/shared: {}
 
