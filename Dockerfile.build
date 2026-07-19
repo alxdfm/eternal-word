@@ -61,7 +61,17 @@ RUN sh -c "$(curl -sSfL https://release.anza.xyz/v${AGAVE_VERSION}/install)"
 
 # Anchor CLI via avm (Anchor Version Manager).
 # avm baixa binário pré-compilado do GitHub antes de tentar compilar do zero.
-RUN cargo install --git https://github.com/coral-xyz/anchor avm --locked \
+#
+# O `--tag` é obrigatório. Sem ele, `cargo install --git` compila o que estiver
+# no branch default do repositório do Anchor **no momento do build**: dois
+# builds desta mesma imagem em datas diferentes produziriam avm diferentes — e
+# é o avm que instala o Anchor que compila um programa que será imutável
+# on-chain. Sem pin, a reprodutibilidade que justifica esta imagem é falsa, e
+# existe uma via de supply chain direta até o bytecode.
+#
+# NÃO trocar por `cargo install avm` (crates.io): lá `avm` é outro pacote
+# ("Manages node.js installations"). O nome colide.
+RUN cargo install --git https://github.com/coral-xyz/anchor --tag v${ANCHOR_VERSION} avm --locked \
     && avm install ${ANCHOR_VERSION} \
     && avm use ${ANCHOR_VERSION}
 
