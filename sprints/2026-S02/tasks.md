@@ -6,7 +6,15 @@
 
 ## Spike bloqueador
 
-- [ ] **PG-00** Orçamento de transação e forma da árvore — **BLOQUEIA A SPRINT**.
+- [x] **PG-00** Orçamento de transação e forma da árvore — **BLOQUEIA A SPRINT**.
+      ✅ **Resolvido em 2026-07-19** — ADR
+      `docs/decisions/2026-07-19_forma-da-merkle-tree-e-orcamento-de-transacao.md`.
+      Medido com transações reais em `scripts/spike-pg00-transaction-budget.ts`
+      (`pnpm spike:pg00`): **(a) não cabe** — 1.264 B contra o limite de 1.232
+      já **sem** `ComputeBudget`; a estimativa da S01 errou ~38 B para menos
+      (esqueceu os prefixos de tamanho do Borsh e subestimou o envelope em 30 B).
+      **(b) escolhida**: 998 B em v0 com `ComputeBudget`, **234 B de folga**.
+      Falta ainda medir compute units e rent da config — vai no PG-08, em devnet.
       Medir de verdade (montando transações reais, não só somando bytes) as
       duas opções:
       - **(a) árvore global** — 31.098 folhas, 15 níveis, proof de 480 bytes;
@@ -22,8 +30,18 @@
 
 ## Programa
 
-- [ ] **PG-01** `anchor init programs/eternal-word` integrado ao workspace
+- [x] **PG-01** `anchor init programs/eternal-word` integrado ao workspace
       (Anchor + toolchain Solana fixados em `STACK.md` → **ADR** das versões).
+      ✅ **2026-07-19** — ADR `docs/decisions/2026-07-19_toolchain-do-programa-anchor.md`.
+      Agave 3.1.13 + Anchor CLI 1.0.0 no container; `anchor-lang` 1.1.2 fixado
+      pelo `Cargo.lock` versionado. `anchor build` verde, IDL gerado.
+      Program ID devnet: `9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG`.
+      Descartado o `rust-toolchain.toml` do scaffold (pinava Rust 1.89 contra
+      1.97 da imagem — dois pins discordantes). `Anchor.toml` sem localnet.
+      IDL versionado em `packages/blockchain/src/idl/` via `pnpm sync-idl`
+      (`target/` é gitignorado, então o IDL não chegava ao git sozinho).
+      **Pendente:** o scaffold ainda tem a instrução placeholder `initialize`
+      e as dev-dependencies `litesvm`/`solana-*` — saem no PG-02/PG-06.
 - [ ] **PG-02** Conta de configuração — guarda a(s) root(s), o identificador
       da tradução (`engwebp`) e metadados de proveniência. Definir **quem
       pode escrever nela e quando** (risco R3): a intenção é root gravada uma

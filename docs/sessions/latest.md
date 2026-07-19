@@ -6,8 +6,44 @@
 
 ---
 
-**Última atualização:** 2026-07-19 (fundação + sprints + pipeline)
+**Última atualização:** 2026-07-19 (S02 iniciada — PG-00 e PG-01 entregues)
 **Sessão anterior durou:** N/A — sessão inicial
+
+---
+
+## S02 em andamento (branch `s02`)
+
+**PG-00 fechado — e mudou a decisão.** Medido com transações reais
+(`pnpm spike:pg00`), não somando bytes: a **árvore global não cabe**, 1.264 B
+contra o limite de 1.232 já **sem** `ComputeBudget`. A estimativa da S01 errou
+~38 B para menos (esqueceu os prefixos de 4 B do Borsh em `String`/`Vec` e
+chutou o envelope em 240 B quando o real é 270). **Root por capítulo adotada**:
+998 B em v0 com `ComputeBudget`, **234 B de folga**. Risco **R1 encerrado**.
+Pior caso real confirmado por varredura dos 31.098: Ester 8:9 (o texto domina
+a profundidade da proof). A estimativa duplicada foi **removida** do
+`packages/catalog/src/cli/merkle.ts` — dimensionamento existe num lugar só.
+
+**PG-01 fechado.** `programs/eternal-word/` scaffoldado, `anchor build` verde,
+IDL gerado.
+
+```
+Program ID (devnet):  9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG
+Toolchain:            Agave 3.1.13 + Anchor CLI 1.0.0 (container)
+anchor-lang:          1.1.2 — fixado pelo Cargo.lock versionado
+```
+
+⚠️ **`target/deploy/eternal_word-keypair.json` só existe nesta VM** e não é
+versionada. É a keypair de upgrade do programa — backup manual pendente.
+
+**Ambiente definido pelo Alexandre (2026-07-19):**
+- Build em container (`Dockerfile.build`), por reprodutibilidade de bytecode
+- **Sem localnet**: nada de `solana-test-validator`; validação em devnet
+- **Node 24**, mesma major do runtime alvo das Lambdas (`nodejs24.x`)
+
+**Próximo:** PG-02 (conta de config como PDA de seeds fixas — risco R3) e a
+decisão pendente do PG-06: testes em Rust (litesvm, default do Anchor 1.0) ou
+em TypeScript (anchor-bankrun, consumindo as proofs do `packages/catalog`).
+O scaffold ainda tem a instrução placeholder `initialize` — sai no PG-02.
 
 ---
 
@@ -115,8 +151,8 @@ S03 (indexer) e S04 (jornada completa) — tabela no `sprints/ROADMAP.md`.
 - Decisões anteriores (Bíblia Livre PT, depois KJV) substituídas — ADRs
   antigas registram a cadeia; PT poderá voltar como exibição off-chain
 - `project-skeleton.zip` na raiz é o template original — pode ser removido
-- Alexandre trabalha numa VM (`callydus-vm`) via VS Code remote; arquivos
-  "em Downloads" podem estar na máquina host, não na VM
+- Alexandre trabalha numa VM Linux via VS Code remote; arquivos "em Downloads"
+  podem estar na máquina host, não na VM
 
 ---
 
