@@ -97,6 +97,12 @@ cliente. Prefixo: `WB`.
 recentes), dashboard global, perfil do adopter, busca textual e mapa de
 progresso por livro. Prefixo: `EX`.
 
+> Detalhe de UI a não esquecer: as quatro posições sem texto na WEB
+> (Lc 17:36, At 8:37, At 15:34, At 24:7) criam saltos na numeração — quem
+> ler Atos 8 vai de 36 para 38. A tela precisa explicar a ausência, senão
+> parece defeito. Só nota explicativa; o texto ausente **não** vai on-chain
+> (ver ADR do texto canônico).
+
 ### S06 — Endurecimento e prontidão para mainnet
 **Entrega:** checklist de go-live completa. Revisão de segurança do
 programa, **decisão sobre a upgrade authority** (ver riscos abaixo),

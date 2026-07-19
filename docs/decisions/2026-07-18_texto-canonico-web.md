@@ -39,6 +39,23 @@ on-chain (ficam fora da Merkle tree e do denominador do progresso).
 Totais oficiais do projeto: **66 livros, 1.189 capítulos, 31.098 versículos
 registráveis**.
 
+### Complemento (2026-07-19): as posições vazias não serão preenchidas
+
+Levantada a possibilidade de incluir os versículos ausentes a partir de outra
+fonte em domínio público (KJV), ficou decidido **manter o padrão WEB**
+(Alexandre: "vamos manter no padrão WEB").
+
+Apurado no processo: das cinco posições vazias, **apenas quatro são
+variantes textuais realmente ausentes** (Lc 17:36, At 8:37, At 15:34,
+At 24:7). Romanos 16:25 é só deslocamento de numeração — a doxologia está em
+Rm 14:24-26 e **é registrável**; nada de Romanos fica de fora.
+
+Preencher as quatro com texto da KJV seria, além de misturar traduções sob a
+mesma Merkle root, tomar posição permanente e irreversível numa questão de
+crítica textual em aberto. O registro on-chain permanece sendo exatamente a
+WEB. Explicar essas posições ao leitor é assunto da camada de exibição
+off-chain, que continua livre para evoluir.
+
 ---
 
 ## Consequências
