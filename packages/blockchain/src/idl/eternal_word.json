@@ -22,12 +22,5 @@
       "accounts": [],
       "args": []
     }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "CustomError",
-      "msg": "Custom error message"
-    }
   ]
 }
