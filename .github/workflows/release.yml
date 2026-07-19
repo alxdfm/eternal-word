@@ -1,0 +1,170 @@
+name: Release
+
+# Deploy dispara ao publicar uma release no GitHub. A tag da release é o
+# que vai para produção — nunca o topo da branch.
+#
+# O programa Anchor NÃO é deployado aqui, por decisão registrada em
+# docs/decisions/2026-07-19_pipeline-de-deploy.md: deploy de programa é
+# irreversível e permanece manual, com runbook próprio.
+on:
+  release:
+    types: [published]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verificação pré-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Detect workspace
+        id: workspace
+        run: |
+          if [ -f pnpm-workspace.yaml ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Workspace ainda não montado (S01/FD-01)."
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.workspace.outputs.ready == 'true'
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: ${{ steps.workspace.outputs.ready == 'true' && 'pnpm' || '' }}
+
+      - name: Install
+        if: steps.workspace.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # Nunca deployar sem a suíte verde na mesma tag: a release pode ter
+      # sido criada de um commit que não passou pelo CI da branch.
+      - name: Typecheck, lint & test
+        if: steps.workspace.outputs.ready == 'true'
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm test
+
+  deploy-web:
+    name: Deploy web (Vercel)
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Detect app
+        id: app
+        run: |
+          if [ -f apps/web/package.json ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::apps/web ainda não existe (S04) — deploy pulado."
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.app.outputs.ready == 'true'
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        if: steps.app.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Deploy
+        if: steps.app.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          pnpm dlx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          pnpm dlx vercel@latest build --prod --token="$VERCEL_TOKEN"
+          pnpm dlx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+  deploy-api:
+    name: Deploy API e indexer (AWS)
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write # OIDC — sem chave de acesso de longa duração no repo
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Detect app
+        id: app
+        run: |
+          if [ -f apps/api/package.json ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::apps/api ainda não existe (S03) — deploy pulado."
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.app.outputs.ready == 'true'
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        if: steps.app.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Credenciais AWS (OIDC)
+        if: steps.app.outputs.ready == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Install
+        if: steps.app.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # Ferramenta de deploy definida na S03 (provável SST). O comando
+      # abaixo é o placeholder documentado — ajustar ao fechar a escolha.
+      - name: Deploy
+        if: steps.app.outputs.ready == 'true'
+        run: pnpm --filter @eternal-word/api deploy:production
+
+  summary:
+    name: Resumo
+    needs: [deploy-web, deploy-api]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Registrar resultado
+        run: |
+          {
+            echo "### Release \`${{ github.event.release.tag_name }}\`"
+            echo ""
+            echo "| Alvo | Resultado |"
+            echo "|------|-----------|"
+            echo "| Web (Vercel) | ${{ needs.deploy-web.result }} |"
+            echo "| API + indexer (AWS) | ${{ needs.deploy-api.result }} |"
+            echo ""
+            echo "O programa Solana **não** é deployado por esta pipeline."
+            echo "Ver \`docs/decisions/2026-07-19_pipeline-de-deploy.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"
