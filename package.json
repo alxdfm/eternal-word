@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.11.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "typecheck": "tsc --build",
@@ -14,11 +14,17 @@
     "test:watch": "vitest",
     "catalog:build": "pnpm --filter @eternal-word/catalog build:dataset",
     "catalog:verify": "pnpm --filter @eternal-word/catalog verify",
-    "catalog:merkle": "pnpm --filter @eternal-word/catalog merkle"
+    "catalog:merkle": "pnpm --filter @eternal-word/catalog merkle",
+    "docker:build": "docker build -f Dockerfile.build -t eternal-word-build .",
+    "program:build": "docker run --rm -v $(pwd):/workspace eternal-word-build",
+    "program:keys": "docker run --rm -v $(pwd):/workspace eternal-word-build anchor keys sync",
+    "program:deploy": "docker run --rm -v $(pwd):/workspace -v $HOME/.config/solana:/root/.config/solana eternal-word-build anchor deploy --provider.cluster devnet",
+    "spike:pg00": "pnpm --filter @eternal-word/scripts spike:pg00",
+    "sync-idl": "pnpm --filter @eternal-word/scripts sync-idl"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/node": "^22.10.2",
+    "@types/node": "^24.10.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
