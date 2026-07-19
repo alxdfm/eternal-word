@@ -1,0 +1,16 @@
+{
+  "name": "@eternal-word/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "spike:pg00": "tsx spike-pg00-transaction-budget.ts",
+    "sync-idl": "tsx sync-idl.ts"
+  },
+  "dependencies": {
+    "@eternal-word/catalog": "workspace:*",
+    "@eternal-word/domain": "workspace:*",
+    "@solana/web3.js": "^1.98.4"
+  }
+}
