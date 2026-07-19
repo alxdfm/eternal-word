@@ -19,6 +19,31 @@
   código (guardrail do CLAUDE.md).
 - **`docs/sessions/latest.md` atualizado ao fim de cada sessão.**
 
+## Smoke tests — três, não um
+
+O provisionamento de infra externa (Supabase, AWS, RPC/webhook) foi adiado
+por decisão do Alexandre. Isso **não** empurra a validação real para o fim:
+cada camada tem seu smoke test no momento em que fica testável.
+
+| Quando | O que se valida | Precisa de infra? |
+|--------|-----------------|-------------------|
+| **Fim da S02** | Registro real on-chain em **devnet**: carteira assina, programa cria a conta, duplicidade é recusada, Ester 8:9 cabe na transação com `ComputeBudget` | **Não** — devnet é público e gratuito |
+| **Fim da S03** | Indexer real: registro feito direto no programa aparece no banco em segundos; reconciliação recupera evento derrubado de propósito | **Sim** — Supabase, AWS e provider de webhook |
+| **Fim da S04** | Jornada completa: site → carteira → programa → indexer → banco → tela, com `PENDING → REGISTERED` | Sim (a mesma da S03) |
+
+**Provisionar a infra ao final da S03, não ao final do desenvolvimento.** O
+desenvolvimento da S03 e da S04 continua local (Postgres em Docker,
+validador local ou devnet público, atrás de portas/adapters — ver FD-10),
+mas o comportamento que só aparece contra serviço real — entrega de webhook,
+cold start de Lambda, rate limit de RPC — precisa ser exercitado enquanto o
+indexer ainda está fresco. Descobrir na S04 que o provider se comporta
+diferente invalidaria trabalho da S03.
+
+O smoke test da S02 é o mais importante dos três: valida a única parte
+irreversível do sistema, e não custa nada nem depende de ninguém.
+
+---
+
 ## Definição de pronto (global)
 
 Vale para toda sprint, além do critério específico dela:

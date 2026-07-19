@@ -72,10 +72,11 @@
       (Alexandre). `project-skeleton.zip` e `scripts/onboarding.sh` ficam
       como referência do template; ambos inertes (zip ignorado no git, script
       com guard).
-- [ ] **FD-10** Contas e serviços externos — **Alexandre provisiona depois do
-      desenvolvimento, antes do primeiro smoke test** (decidido em
-      2026-07-19): projeto no Supabase, infra AWS (incl. role de OIDC para o
-      deploy) e provider de RPC/webhook.
+- [ ] **FD-10** Contas e serviços externos — **provisionar ao final da S03**
+      (refinado em 2026-07-19; ver a tabela de smoke tests no ROADMAP):
+      projeto no Supabase, infra AWS (incl. role de OIDC para o deploy) e
+      provider de RPC/webhook. O smoke test da S02 é on-chain em devnet e
+      **não depende de nada disso**.
       **Exceção — domínio:** único item cuja espera tem risco real (o nome
       pode ser registrado por outra pessoa). Verificar disponibilidade e
       garantir o nome cedo, mesmo sem apontar para nada.

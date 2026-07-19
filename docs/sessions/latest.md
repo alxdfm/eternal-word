@@ -94,11 +94,12 @@ com verificação de proof, testes dos caminhos de falha e deploy em devnet.
 
 Sequência completa e riscos abertos: `sprints/ROADMAP.md`.
 
-**Premissa de ambiente (2026-07-19):** infra externa (Supabase, AWS, RPC,
-domínio) só será provisionada depois do desenvolvimento, antes do primeiro
-smoke test. S03 e S04 devem rodar contra ambiente local — Postgres em
-Docker, validador local ou devnet público — com portas/adapters isolando
-serviço gerenciado.
+**Premissa de ambiente (2026-07-19):** desenvolvimento sempre contra
+ambiente local (Postgres em Docker, validador local ou devnet público), com
+portas/adapters isolando serviço gerenciado. Infra externa (Supabase, AWS,
+RPC/webhook) provisionada **ao final da S03** — o smoke test da S02 é
+on-chain em devnet e não depende dela. Três smoke tests: S02 (on-chain),
+S03 (indexer) e S04 (jornada completa) — tabela no `sprints/ROADMAP.md`.
 
 ---
 
