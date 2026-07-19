@@ -93,8 +93,11 @@ sprints/
   ROADMAP.md                 ← sequência de sprints, riscos abertos, DoD global
   2026-SXX/                  ← GOALS.md + tasks.md por sprint
 scripts/
-  onboarding.sh              ← perguntas de setup inicial do projeto
-  build-canonical-text.mjs   ← gera data/canonical-text/ a partir do VPL (eBible.org)
+  onboarding.sh              ← artefato do template, neutralizado (não reexecutar)
+apps/                        ← web (S04) e api/indexer (S03) — placeholders
+packages/
+  domain/  catalog/  shared/ ← implementados
+  application/ infrastructure/ blockchain/ ← placeholders
 .ripgrepignore               ← o que o agente NÃO deve ler
 .gitignore                   ← padrão
 ```
