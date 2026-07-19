@@ -71,6 +71,11 @@ que removeu a estimativa duplicada de orçamento do `catalog` no PG-00.)
 **Devnet apenas.** O `Anchor.toml` não tem `[programs.localnet]` nem
 `cluster = "localnet"`, de propósito.
 
+> **Correção (2026-07-19, mesma data):** a primeira versão desta ADR afirmava
+> reprodutibilidade que o `Dockerfile.build` não entregava — o `avm` era
+> instalado do branch default do Anchor, sem pin. Corrigido em
+> `2026-07-19_endurecimento-de-seguranca-do-build-e-do-ci.md`.
+
 ---
 
 ## Consequências
