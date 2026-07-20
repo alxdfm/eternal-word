@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::CHAPTERS_PER_BOOK;
+use crate::constants::chapters_in_book;
 
 /// Global configuration. One per program, at a PDA of fixed seeds.
 ///
@@ -47,14 +47,18 @@ pub struct BookRoots {
 
 impl BookRoots {
     pub fn mask_bytes(book: u8) -> usize {
-        let chapters = CHAPTERS_PER_BOOK[(book - 1) as usize] as usize;
-        chapters.div_ceil(8)
+        (chapters_in_book(book) as usize).div_ceil(8)
     }
 
     /// Exact account size for a book — deterministic, from the bytecode
     /// constant, so nobody can over- or under-allocate.
+    ///
+    /// Runs during account resolution, before the handler can validate `book`.
+    /// An out-of-range book yields a tiny account here; the handler then
+    /// rejects it with `BookOutOfRange` and the whole transaction reverts, so
+    /// nothing is created — but this must not panic to get there.
     pub fn space(book: u8) -> usize {
-        let chapters = CHAPTERS_PER_BOOK[(book - 1) as usize] as usize;
+        let chapters = chapters_in_book(book) as usize;
         8                                  // anchor discriminator
             + 1                            // book
             + 2                            // loaded
