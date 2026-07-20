@@ -130,6 +130,25 @@ Decorrências para a implementação:
 
 ---
 
+## Atualização (2026-07-19, após o PG-02/PG-05)
+
+Os números acima foram medidos quando `register_verse` tinha **4 contas**. O
+desenho final tem **5**: as chapter roots vivem numa conta por livro, que
+viaja junto. Uma chave a mais são 32 bytes a mais na transação.
+
+| Forma | v0 + ComputeBudget | Folga |
+|-------|--------------------|-------|
+| (a) global | **rejeitada pelo web3.js** | — |
+| (b) por capítulo | **1.031 B** | **201 B** |
+
+A decisão não muda; a folga passou de 234 para 201 bytes, ainda confortável. A
+opção (a) piorou: agora nem a versão **sem** `ComputeBudget` serializa.
+
+O spike (`pnpm spike:pg00`) monta a lista de contas idêntica à do programa, e é
+o lugar a atualizar se ela mudar de novo.
+
+---
+
 ## Revisão futura
 
 Os números aqui são **tamanho de transação**, medidos off-chain. O PG-08 mede

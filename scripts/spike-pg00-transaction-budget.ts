@@ -71,7 +71,14 @@ function encodeRegisterVerse(
   return Buffer.concat([discriminator, args, textLen, textBytes, proofLen, ...proof])
 }
 
-/** Account list of `register_verse`, with both PDAs derived for real. */
+/**
+ * Account list of `register_verse`, with every PDA derived for real.
+ *
+ * Kept in sync with `RegisterVerse` in the program (PG-02/PG-05). The chapter
+ * roots live in a per-book account, so that account travels here too — one
+ * more key, 32 more bytes on the wire than the first version of this spike
+ * assumed.
+ */
 function registerVerseAccounts(address: VerseAddress) {
   const [config] = PublicKey.findProgramAddressSync([Buffer.from('config')], PROGRAM_ID)
   const book = Buffer.alloc(1)
@@ -85,8 +92,11 @@ function registerVerseAccounts(address: VerseAddress) {
     PROGRAM_ID,
   )
 
+  const [bookRoots] = PublicKey.findProgramAddressSync([Buffer.from('roots'), book], PROGRAM_ID)
+
   return [
     { pubkey: config, isSigner: false, isWritable: false },
+    { pubkey: bookRoots, isSigner: false, isWritable: false },
     { pubkey: verseAccount, isSigner: false, isWritable: true },
     { pubkey: ADOPTER, isSigner: true, isWritable: true },
     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },

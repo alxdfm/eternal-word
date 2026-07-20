@@ -13,8 +13,9 @@
       (`pnpm spike:pg00`): **(a) não cabe** — 1.264 B contra o limite de 1.232
       já **sem** `ComputeBudget`; a estimativa da S01 errou ~38 B para menos
       (esqueceu os prefixos de tamanho do Borsh e subestimou o envelope em 30 B).
-      **(b) escolhida**: 998 B em v0 com `ComputeBudget`, **234 B de folga**.
-      Falta ainda medir compute units e rent da config — vai no PG-08, em devnet.
+      **(b) escolhida**: com o desenho final (5 contas, incluindo a de roots
+      por livro) são **1.031 B em v0 com `ComputeBudget`, 201 B de folga**;
+      a opção (a) nem serializa. Falta medir compute units e rent — PG-08.
       Medir de verdade (montando transações reais, não só somando bytes) as
       duas opções:
       - **(a) árvore global** — 31.098 folhas, 15 níveis, proof de 480 bytes;
@@ -64,13 +65,19 @@
       com pares ordenados isso não prendia a posição — dava para gravar uma root
       real no capítulo errado e torná-lo irregistrável para sempre. Agora a folha
       codifica `book|chapter|root`. Regressão coberta por teste.
-- [ ] **PG-03** `VerseAccount` — layout com espaço calculado por constantes
+- [x] **PG-03** `VerseAccount` — layout com espaço calculado por constantes
       nomeadas, sem número mágico. Campo **`adopter`**, nunca `owner`
       (glossário). Sem instrução de `update` nem de `close`.
-- [ ] **PG-04** PDA `["verse", book, chapter, verse]` com índices numéricos
+      ✅ **2026-07-19** — `VerseAccount::space(text_len)` soma constantes
+      nomeadas, sem número mágico. Guarda o texto on-chain (premissa do
+      produto): 58 B de overhead + texto. Sem `update`, sem `close`.
+- [x] **PG-04** PDA `["verse", book, chapter, verse]` com índices numéricos
       (1–66), nunca strings — a existência da conta é o que impede
       duplicidade.
-- [ ] **PG-05** `register_verse` — verificação da Merkle proof contra a root
+      ✅ **2026-07-19** — seeds `[VERSE_SEED, book u8, chapter u16le, verse
+      u16le]`. A constraint `init` do Anchor é o que recusa a duplicidade: a
+      segunda tentativa encontra o endereço já ocupado.
+- [x] **PG-05** `register_verse` — verificação da Merkle proof contra a root
       da config, criação da conta, gravação de `adopter` e `created_at`.
       Erros customizados com mensagem em inglês; `require!` em vez de
       `unwrap`/`panic`.
@@ -82,6 +89,10 @@
       sha256, prefixo `0x00` folha / `0x01` nó, pares ordenados por bytes,
       nó ímpar promovido; folha =
       `book:u8 | chapter:u16le | verse:u16le | textLen:u32le | text:utf8`.
+      ✅ **2026-07-19** — proof verificada contra a root do capítulo lida da
+      conta de roots do livro; proof limitada a 8 irmãos e texto a 493 B.
+      Só `require!`, sem `unwrap`/`panic`. As 5 posições vazias da WEB não
+      precisam de caso especial: não têm folha, então nenhuma proof verifica.
 - [~] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
       `anchor test` → **ADR**). Cobrir principalmente falhas:
       🔶 **Framework decidido em 2026-07-19** — ADR
@@ -90,15 +101,16 @@
       geradas pelo Catálogo (`pnpm catalog:fixtures`). `anchor-bankrun` foi
       descartado — parado desde out/2024; `litesvm` TS migrou para `@solana/kit`,
       que conflita com o web3.js v1 do STACK.
-      5 testes verdes cobrindo a Merkle e a tabela do canon. **Falta** a suíte
-      de `register_verse` (depende do PG-05) e os casos abaixo:
-      - registro feliz grava os campos corretos
-      - **segundo registro da mesma posição falha** (duplicidade)
-      - proof inválida falha
-      - texto que não bate com a proof falha (vandalismo)
-      - posição não-registrável (ex.: At 8:37) não tem folha → falha
-      - book/chapter/verse fora de faixa falha
-      - conta de config errada/forjada falha
+      11 testes verdes. Cobertos ao nível de Merkle e constantes:
+      - ✅ proof inválida falha (`rejects_a_proof_against_the_wrong_chapter_root`)
+      - ✅ texto adulterado no endereço certo falha (vandalismo)
+      - ✅ texto certo no endereço errado falha
+      - ✅ posições não-registráveis não têm folha (`omitted_positions_have_no_leaf`)
+      - ✅ book/chapter fora de faixa recusado (`chapter_counts_match_the_canon`)
+      **Falta**, e precisa de execução real no `litesvm` (não só da Merkle):
+      - [ ] registro feliz grava os campos corretos
+      - [ ] **segundo registro da mesma posição falha** (duplicidade)
+      - [ ] conta de config errada/forjada falha
 - [ ] **PG-07** Deploy em devnet — Program ID e hash do bytecode registrados;
       inicialização da config com a root da S01.
 - [ ] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
