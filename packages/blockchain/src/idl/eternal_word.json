@@ -56,7 +56,10 @@
           "name": "book_roots"
         },
         {
-          "name": "payer",
+          "name": "signer",
+          "docs": [
+            "Any signer: completing a book only reads commitment-validated state."
+          ],
           "signer": true
         }
       ],
@@ -218,7 +221,11 @@
           "writable": true
         },
         {
-          "name": "payer",
+          "name": "signer",
+          "docs": [
+            "Any signer: loading is permissionless and pays no rent (the account",
+            "already exists). Not named `payer` because nothing is paid here."
+          ],
           "signer": true
         }
       ],
@@ -272,10 +279,12 @@
         {
           "name": "config",
           "docs": [
-            "Fixed seeds are the whole security of the Merkle validation: if this",
-            "accepted any account passed as config, an attacker would supply their",
-            "own with a root of their choosing and every text check would become",
-            "decorative (risk R3)."
+            "Read only to gate registration on `sealed`: a verse cannot be adopted",
+            "until the canon is declared final. The Merkle check itself does not",
+            "need config — the chapter root is validated against the commitment when",
+            "it is loaded, and `book_roots` is bound by its own PDA seeds — but",
+            "opening registration against a half-loaded canon would let someone",
+            "permanently adopt a verse before the text set is complete."
           ],
           "pda": {
             "seeds": [
@@ -488,6 +497,11 @@
       "code": 6011,
       "name": "VerseNotCanonical",
       "msg": "Verse does not belong to the canonical text at this address"
+    },
+    {
+      "code": 6012,
+      "name": "CanonNotSealed",
+      "msg": "The canon is not sealed yet; registration is not open"
     }
   ],
   "types": [

@@ -10,10 +10,12 @@ use crate::state::{BookRoots, Config, VerseAccount};
 #[derive(Accounts)]
 #[instruction(book: u8, chapter: u16, verse: u16, text: String)]
 pub struct RegisterVerse<'info> {
-    /// Fixed seeds are the whole security of the Merkle validation: if this
-    /// accepted any account passed as config, an attacker would supply their
-    /// own with a root of their choosing and every text check would become
-    /// decorative (risk R3).
+    /// Read only to gate registration on `sealed`: a verse cannot be adopted
+    /// until the canon is declared final. The Merkle check itself does not
+    /// need config — the chapter root is validated against the commitment when
+    /// it is loaded, and `book_roots` is bound by its own PDA seeds — but
+    /// opening registration against a half-loaded canon would let someone
+    /// permanently adopt a verse before the text set is complete.
     #[account(seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
 
@@ -76,6 +78,10 @@ pub fn handle_register_verse(
     text: String,
     proof: Vec<[u8; 32]>,
 ) -> Result<()> {
+    require!(
+        ctx.accounts.config.sealed,
+        EternalWordError::CanonNotSealed
+    );
     require!(!text.is_empty(), EternalWordError::TextEmpty);
     require!(
         text.len() <= MAX_VERSE_BYTES,
