@@ -254,6 +254,97 @@
       ]
     },
     {
+      "name": "register_verse",
+      "docs": [
+        "Registers a verse, proving its text against the canonical Merkle root."
+      ],
+      "discriminator": [
+        93,
+        164,
+        18,
+        14,
+        68,
+        112,
+        197,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "docs": [
+            "Fixed seeds are the whole security of the Merkle validation: if this",
+            "accepted any account passed as config, an attacker would supply their",
+            "own with a root of their choosing and every text check would become",
+            "decorative (risk R3)."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots"
+        },
+        {
+          "name": "verse_account",
+          "docs": [
+            "Numeric seeds, never book names. `init` is what makes a second",
+            "registration of the same verse impossible: the address already exists."
+          ],
+          "writable": true
+        },
+        {
+          "name": "adopter",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        },
+        {
+          "name": "chapter",
+          "type": "u16"
+        },
+        {
+          "name": "verse",
+          "type": "u16"
+        },
+        {
+          "name": "text",
+          "type": "string"
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "seal",
       "docs": [
         "Closes the canon for good."
@@ -322,6 +413,19 @@
         204,
         130
       ]
+    },
+    {
+      "name": "VerseAccount",
+      "discriminator": [
+        148,
+        219,
+        198,
+        191,
+        150,
+        120,
+        83,
+        131
+      ]
     }
   ],
   "errors": [
@@ -364,6 +468,26 @@
       "code": 6007,
       "name": "CanonIncomplete",
       "msg": "Not every book is complete; all 66 must be loaded before sealing"
+    },
+    {
+      "code": 6008,
+      "name": "ChapterRootMissing",
+      "msg": "Chapter root has not been loaded yet"
+    },
+    {
+      "code": 6009,
+      "name": "TextTooLong",
+      "msg": "Verse text is longer than any verse in the canonical text"
+    },
+    {
+      "code": 6010,
+      "name": "TextEmpty",
+      "msg": "Verse text is empty"
+    },
+    {
+      "code": 6011,
+      "name": "VerseNotCanonical",
+      "msg": "Verse does not belong to the canonical text at this address"
     }
   ],
   "types": [
@@ -486,6 +610,62 @@
           }
         ]
       }
+    },
+    {
+      "name": "VerseAccount",
+      "docs": [
+        "A registered verse. One account per verse, created once and never written",
+        "again — the existence of the account *is* the registration.",
+        "",
+        "There is no `update` and no `close` instruction for this account anywhere",
+        "in the program. That is the whole guarantee: permanence comes from the",
+        "absence of a write path, not from a flag."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "adopter",
+            "docs": [
+              "Wallet that paid for and registered this verse. Never named `owner`:",
+              "on Solana that word already means the program that owns the account",
+              "(docs/conventions/UBIQUITOUS_LANGUAGE.md)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Unix timestamp of the registering slot."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "book",
+            "type": "u8"
+          },
+          {
+            "name": "chapter",
+            "type": "u16"
+          },
+          {
+            "name": "verse",
+            "type": "u16"
+          },
+          {
+            "name": "text",
+            "docs": [
+              "The canonical text itself. On-chain by design — the premise of the",
+              "product is that the text lives on the chain, not a pointer to it."
+            ],
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     }
   ],
   "constants": [
@@ -504,6 +684,11 @@
       ],
       "type": "bytes",
       "value": "[99, 111, 110, 102, 105, 103]"
+    },
+    {
+      "name": "VERSE_SEED",
+      "type": "bytes",
+      "value": "[118, 101, 114, 115, 101]"
     }
   ]
 }

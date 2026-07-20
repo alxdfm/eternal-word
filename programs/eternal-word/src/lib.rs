@@ -46,6 +46,18 @@ pub mod eternal_word {
         handle_load_chapter_root(ctx, book, chapter, root, proof)
     }
 
+    /// Registers a verse, proving its text against the canonical Merkle root.
+    pub fn register_verse(
+        ctx: Context<RegisterVerse>,
+        book: u8,
+        chapter: u16,
+        verse: u16,
+        text: String,
+        proof: Vec<[u8; 32]>,
+    ) -> Result<()> {
+        handle_register_verse(ctx, book, chapter, verse, text, proof)
+    }
+
     /// Marks a book as fully loaded.
     pub fn complete_book(ctx: Context<CompleteBook>, book: u8) -> Result<()> {
         handle_complete_book(ctx, book)

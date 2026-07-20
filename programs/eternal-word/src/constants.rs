@@ -8,6 +8,8 @@ use anchor_lang::prelude::*;
 pub const CONFIG_SEED: &[u8] = b"config";
 #[constant]
 pub const BOOK_ROOTS_SEED: &[u8] = b"roots";
+#[constant]
+pub const VERSE_SEED: &[u8] = b"verse";
 
 /// Books in the protestant canon.
 pub const BOOK_COUNT: u8 = 66;
@@ -33,6 +35,17 @@ pub const TOTAL_CHAPTERS: u16 = 1189;
 /// Longest inclusion proof in the commitment tree: ceil(log2(1189)).
 /// A proof may be shorter when a node was promoted, never longer.
 pub const MAX_COMMITMENT_PROOF: usize = 11;
+
+/// Longest inclusion proof inside a chapter tree: the largest chapter is
+/// Psalm 119 with 176 verses, so 8 siblings. Sending more is not an attack —
+/// the sender burns their own compute units — but rejecting it early keeps the
+/// contract explicit and avoids pointless work.
+pub const MAX_VERSE_PROOF: usize = 8;
+
+/// Longest verse in the CanonicalText (Esther 8:9) in UTF-8 bytes. Registering
+/// anything longer cannot prove into the canon, so it is rejected before the
+/// account is sized.
+pub const MAX_VERSE_BYTES: usize = 493;
 
 /// Translation identifier of the frozen snapshot (eBible `engwebp`).
 pub const TRANSLATION: [u8; 8] = *b"engwebp\0";
