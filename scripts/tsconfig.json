@@ -8,6 +8,9 @@
   "include": ["**/*.ts"],
   "references": [
     {
+      "path": "../packages/blockchain"
+    },
+    {
       "path": "../packages/catalog"
     },
     {
