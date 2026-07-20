@@ -53,7 +53,8 @@
           }
         },
         {
-          "name": "book_roots"
+          "name": "book_roots",
+          "writable": true
         },
         {
           "name": "signer",
@@ -528,6 +529,16 @@
               "How many roots are filled. Complete when it equals the book's chapters."
             ],
             "type": "u16"
+          },
+          {
+            "name": "completed",
+            "docs": [
+              "Set once by `complete_book`. Without it, calling `complete_book` twice",
+              "for the same book would increment `Config::books_complete` twice, and a",
+              "single loaded book completed 66 times would let `seal` close an",
+              "incomplete canon — permanently. This flag makes completion idempotent."
+            ],
+            "type": "bool"
           },
           {
             "name": "loaded_mask",

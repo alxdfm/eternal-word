@@ -168,6 +168,7 @@ impl Harness {
         let book_roots = BookRoots {
             book,
             loaded: 1,
+            completed: false,
             loaded_mask,
             roots,
             bump,
@@ -251,6 +252,33 @@ fn ix_register_verse(
         ],
         data,
     }
+}
+
+/// Completing a book twice must not count it twice. A retry — which the launch
+/// runbook will do — has to fail cleanly, not inflate `books_complete` toward
+/// an early, permanent seal of an incomplete canon.
+#[test]
+fn completing_a_book_twice_fails() {
+    let f = fixtures();
+    let commitment = hex32(f["rootsCommitment"].as_str().unwrap());
+    let (root, proof) = chapter_fixture(&f, 31, 1);
+
+    let Some(mut h) = setup() else { return };
+    let auth = h.authority.insecure_clone();
+    h.send(ix_initialize_config(&auth.pubkey(), commitment), &[&auth]).unwrap();
+    h.send(ix_initialize_book_roots(&auth.pubkey(), 31), &[&auth]).unwrap();
+    h.send(ix_load_chapter_root(&auth.pubkey(), 31, 1, root, &proof), &[&auth]).unwrap();
+    h.send(ix_complete_book(&auth.pubkey(), 31), &[&auth]).expect("first completion");
+
+    // A distinct signer keeps the retry from deduping as AlreadyProcessed;
+    // completion is permissionless, so any signer reaches the same guard.
+    let retry = Keypair::new();
+    h.svm.airdrop(&retry.pubkey(), 10_000_000_000).unwrap();
+    let err = h
+        .send(ix_complete_book(&retry.pubkey(), 31), &[&retry])
+        .expect_err("a second completion of the same book must fail");
+    // BookAlreadyComplete is error index 5 → 6005.
+    assert!(err.contains("Custom(6005)"), "expected BookAlreadyComplete, got {err}");
 }
 
 // ─── tests: register_verse, running the real bytecode ───────────────────────
@@ -485,7 +513,7 @@ fn ix_complete_book(signer: &Pubkey, book: u8) -> Instruction {
         program_id: program_id(),
         accounts: vec![
             AccountMeta::new(config_pda(), false),
-            AccountMeta::new_readonly(book_roots_pda(book), false),
+            AccountMeta::new(book_roots_pda(book), false),
             AccountMeta::new_readonly(*signer, true),
         ],
         data,

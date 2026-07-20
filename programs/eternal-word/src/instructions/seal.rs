@@ -9,7 +9,7 @@ use crate::state::{BookRoots, Config};
 pub struct CompleteBook<'info> {
     #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
-    #[account(seeds = [BOOK_ROOTS_SEED, &[book]], bump = book_roots.bump)]
+    #[account(mut, seeds = [BOOK_ROOTS_SEED, &[book]], bump = book_roots.bump)]
     pub book_roots: Account<'info, BookRoots>,
     /// Any signer: completing a book only reads commitment-validated state.
     pub signer: Signer<'info>,
@@ -21,21 +21,23 @@ pub struct CompleteBook<'info> {
 /// accounts in one transaction. Permissionless: it only reads state that the
 /// commitment already validated.
 pub fn handle_complete_book(ctx: Context<CompleteBook>, book: u8) -> Result<()> {
-    let book_roots = &ctx.accounts.book_roots;
+    let book_roots = &mut ctx.accounts.book_roots;
     require!(!ctx.accounts.config.sealed, EternalWordError::ConfigSealed);
     require!(book_roots.book == book, EternalWordError::BookOutOfRange);
     require!(
         book_roots.loaded == chapters_in_book(book),
         EternalWordError::BookIncomplete
     );
-
-    let config = &mut ctx.accounts.config;
-    // The bitmap makes `loaded` reach the total only once per book, but the
-    // counter is global state — guard it so a replay cannot inflate it.
+    // The per-book flag is what makes this idempotent: a second call for the
+    // same book fails here instead of counting it twice. Without it, one book
+    // completed 66 times would let `seal` close an incomplete canon.
     require!(
-        config.books_complete < BOOK_COUNT,
+        !book_roots.completed,
         EternalWordError::BookAlreadyComplete
     );
+    book_roots.completed = true;
+
+    let config = &mut ctx.accounts.config;
     config.books_complete += 1;
     Ok(())
 }

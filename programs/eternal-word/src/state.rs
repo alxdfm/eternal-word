@@ -37,6 +37,11 @@ pub struct BookRoots {
     pub book: u8,
     /// How many roots are filled. Complete when it equals the book's chapters.
     pub loaded: u16,
+    /// Set once by `complete_book`. Without it, calling `complete_book` twice
+    /// for the same book would increment `Config::books_complete` twice, and a
+    /// single loaded book completed 66 times would let `seal` close an
+    /// incomplete canon — permanently. This flag makes completion idempotent.
+    pub completed: bool,
     /// Bitmap of loaded chapters, so a rewrite is never counted twice.
     /// One bit per chapter, `(chapter - 1)` indexed.
     pub loaded_mask: Vec<u8>,
@@ -62,6 +67,7 @@ impl BookRoots {
         8                                  // anchor discriminator
             + 1                            // book
             + 2                            // loaded
+            + 1                            // completed
             + 4 + Self::mask_bytes(book)   // loaded_mask (vec len + bytes)
             + 4 + chapters * 32            // roots (vec len + entries)
             + 1 // bump
