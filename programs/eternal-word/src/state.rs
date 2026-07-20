@@ -78,3 +78,51 @@ impl BookRoots {
         }
     }
 }
+
+/// A registered verse. One account per verse, created once and never written
+/// again — the existence of the account *is* the registration.
+///
+/// There is no `update` and no `close` instruction for this account anywhere
+/// in the program. That is the whole guarantee: permanence comes from the
+/// absence of a write path, not from a flag.
+#[account]
+pub struct VerseAccount {
+    /// Wallet that paid for and registered this verse. Never named `owner`:
+    /// on Solana that word already means the program that owns the account
+    /// (docs/conventions/UBIQUITOUS_LANGUAGE.md).
+    pub adopter: Pubkey,
+    /// Unix timestamp of the registering slot.
+    pub created_at: i64,
+    pub book: u8,
+    pub chapter: u16,
+    pub verse: u16,
+    /// The canonical text itself. On-chain by design — the premise of the
+    /// product is that the text lives on the chain, not a pointer to it.
+    pub text: String,
+    pub bump: u8,
+}
+
+impl VerseAccount {
+    /// Exact size for a verse of `text_len` UTF-8 bytes. Every term is named;
+    /// no magic number.
+    pub fn space(text_len: usize) -> usize {
+        const DISCRIMINATOR: usize = 8;
+        const ADOPTER: usize = 32;
+        const CREATED_AT: usize = 8;
+        const BOOK: usize = 1;
+        const CHAPTER: usize = 2;
+        const VERSE: usize = 2;
+        const STRING_PREFIX: usize = 4;
+        const BUMP: usize = 1;
+
+        DISCRIMINATOR
+            + ADOPTER
+            + CREATED_AT
+            + BOOK
+            + CHAPTER
+            + VERSE
+            + STRING_PREFIX
+            + text_len
+            + BUMP
+    }
+}

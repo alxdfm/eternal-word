@@ -4,9 +4,11 @@
 pub mod initialize_book_roots;
 pub mod initialize_config;
 pub mod load_chapter_root;
+pub mod register_verse;
 pub mod seal;
 
 pub use initialize_book_roots::*;
 pub use initialize_config::*;
 pub use load_chapter_root::*;
+pub use register_verse::*;
 pub use seal::*;
