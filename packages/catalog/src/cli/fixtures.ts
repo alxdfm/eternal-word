@@ -59,7 +59,7 @@ const artifact = {
       chapter,
       root: toHex(tree.tree.root),
       leaf: toHex(encodeChapterRootLeaf(book, chapter, tree.tree.root)),
-      proof: chapterRootProof(chapters, book, chapter).map(toHex),
+      proof: chapterRootProof(chapters, book, chapter, commitment).map(toHex),
     }
   }),
   verses: VERSES.map(([book, chapter, verse, why]) => {

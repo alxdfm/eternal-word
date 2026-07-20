@@ -125,17 +125,24 @@ export function buildChapterRootsTree(chapters: readonly ChapterTree[]): MerkleT
   )
 }
 
-/** Sibling hashes proving a chapter's root sits at its own address. */
+/**
+ * Sibling hashes proving a chapter's root sits at its own address.
+ *
+ * The commitment tree is passed in, not rebuilt: constructing it is O(1,189)
+ * and callers that need several proofs (the fixtures) would otherwise rebuild
+ * it once per chapter. It defaults to a fresh tree for one-off use.
+ */
 export function chapterRootProof(
   chapters: readonly ChapterTree[],
   book: number,
   chapter: number,
+  commitment: MerkleTree = buildChapterRootsTree(chapters),
 ): Hash[] {
   const index = chapters.findIndex(
     (candidate) => candidate.book === book && candidate.chapter === chapter,
   )
   if (index === -1) throw new Error(`chapter not in the canon: ${book}:${chapter}`)
-  return merkleProof(buildChapterRootsTree(chapters), index)
+  return merkleProof(commitment, index)
 }
 
 export function proofForAddress(source: CanonicalTree, address: VerseAddress): Hash[] {
