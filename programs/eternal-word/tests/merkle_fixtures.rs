@@ -147,3 +147,158 @@ fn chapter_counts_match_the_canon() {
     assert!(!chapter_exists(67, 1), "book 67 is not in the canon");
     assert!(!chapter_exists(1, 0), "chapter 0 does not exist");
 }
+
+// ─── register_verse: verse leaves against their chapter root ────────────────
+
+struct VerseFixture {
+    book: u8,
+    chapter: u16,
+    verse: u16,
+    text: String,
+    leaf: Vec<u8>,
+    chapter_root: [u8; 32],
+    proof: Vec<[u8; 32]>,
+}
+
+fn load_verses() -> Vec<VerseFixture> {
+    let raw = fs::read_to_string(repo_root().join("data/test-fixtures.json")).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    json["verses"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| VerseFixture {
+            book: v["book"].as_u64().unwrap() as u8,
+            chapter: v["chapter"].as_u64().unwrap() as u16,
+            verse: v["verse"].as_u64().unwrap() as u16,
+            text: v["text"].as_str().unwrap().to_string(),
+            leaf: hex_bytes(v["leaf"].as_str().unwrap()),
+            chapter_root: hex32(v["chapterRoot"].as_str().unwrap()),
+            proof: v["proof"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|p| hex32(p.as_str().unwrap()))
+                .collect(),
+        })
+        .collect()
+}
+
+/// Mirrors `verse_leaf` in instructions/register_verse.rs.
+fn verse_leaf(book: u8, chapter: u16, verse: u16, text: &str) -> [u8; 32] {
+    let bytes = text.as_bytes();
+    let mut payload = Vec::with_capacity(9 + bytes.len());
+    payload.push(book);
+    payload.extend_from_slice(&chapter.to_le_bytes());
+    payload.extend_from_slice(&verse.to_le_bytes());
+    payload.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
+    payload.extend_from_slice(bytes);
+    hash_leaf(&payload)
+}
+
+#[test]
+fn accepts_every_verse_proof_the_catalog_produces() {
+    let verses = load_verses();
+    assert!(!verses.is_empty());
+
+    for fixture in &verses {
+        let leaf = verse_leaf(
+            fixture.book,
+            fixture.chapter,
+            fixture.verse,
+            &fixture.text,
+        );
+        assert!(
+            verify_proof(leaf, &fixture.proof, &fixture.chapter_root),
+            "rejected a valid verse proof for {}:{}:{}",
+            fixture.book,
+            fixture.chapter,
+            fixture.verse
+        );
+    }
+}
+
+#[test]
+fn verse_leaf_encoding_matches_the_catalog_byte_for_byte() {
+    for fixture in &load_verses() {
+        let bytes = fixture.text.as_bytes();
+        let mut expected = vec![fixture.book];
+        expected.extend_from_slice(&fixture.chapter.to_le_bytes());
+        expected.extend_from_slice(&fixture.verse.to_le_bytes());
+        expected.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
+        expected.extend_from_slice(bytes);
+        assert_eq!(fixture.leaf, expected);
+    }
+}
+
+/// Vandalism: right address, altered text. This is the check the whole Merkle
+/// design exists for.
+#[test]
+fn rejects_tampered_text_at_a_valid_address() {
+    let verses = load_verses();
+    let fixture = &verses[0];
+
+    for tampered in [
+        format!("{} ", fixture.text),
+        fixture.text.replace('a', "e"),
+        fixture.text.to_uppercase(),
+    ] {
+        if tampered == fixture.text {
+            continue;
+        }
+        let leaf = verse_leaf(fixture.book, fixture.chapter, fixture.verse, &tampered);
+        assert!(
+            !verify_proof(leaf, &fixture.proof, &fixture.chapter_root),
+            "accepted tampered text: {tampered:?}"
+        );
+    }
+}
+
+/// Right text, wrong address — the leaf carries the address, so it must fail.
+#[test]
+fn rejects_valid_text_at_the_wrong_address() {
+    let verses = load_verses();
+    let fixture = &verses[0];
+
+    let leaf = verse_leaf(
+        fixture.book,
+        fixture.chapter,
+        fixture.verse + 1,
+        &fixture.text,
+    );
+    assert!(!verify_proof(leaf, &fixture.proof, &fixture.chapter_root));
+}
+
+/// A verse proof must not verify against another chapter's root.
+#[test]
+fn rejects_a_proof_against_the_wrong_chapter_root() {
+    let verses = load_verses();
+    assert!(verses.len() >= 2);
+    let leaf = verse_leaf(
+        verses[0].book,
+        verses[0].chapter,
+        verses[0].verse,
+        &verses[0].text,
+    );
+    assert!(!verify_proof(leaf, &verses[0].proof, &verses[1].chapter_root));
+}
+
+/// The five WEB gaps must be absent from the fixtures — they have no leaf, so
+/// no proof exists and `register_verse` can never succeed for them.
+#[test]
+fn omitted_positions_have_no_leaf() {
+    let raw = fs::read_to_string(repo_root().join("data/test-fixtures.json")).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&raw).unwrap();
+    let omitted = json["omitted"].as_array().unwrap();
+
+    assert_eq!(omitted.len(), 5, "the WEB leaves exactly five positions empty");
+    for position in omitted {
+        let book = position["book"].as_u64().unwrap() as u8;
+        let chapter = position["chapter"].as_u64().unwrap() as u16;
+        // The address itself is inside the canon; only the verse has no text.
+        assert!(
+            chapter_exists(book, chapter),
+            "omitted position {book}:{chapter} should still be a real chapter"
+        );
+    }
+}

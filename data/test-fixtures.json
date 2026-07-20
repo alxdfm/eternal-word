@@ -96,5 +96,100 @@
         "79fd449347937d93386d5ce79b98b0f098eae1dca78f637ad2f0df7c08453225"
       ]
     }
+  ],
+  "verses": [
+    {
+      "why": "first verse of the canon",
+      "book": 1,
+      "chapter": 1,
+      "verse": 1,
+      "text": "In the beginning, God created the heavens and the earth.",
+      "textBytes": 56,
+      "leaf": "010100010038000000496e2074686520626567696e6e696e672c20476f642063726561746564207468652068656176656e7320616e64207468652065617274682e",
+      "chapterRoot": "cccdbc2803fc3a0fbd66aa23fb046c76048fc2d228461452276fe2b96628bbd2",
+      "proof": [
+        "8912d36e2582df1be7d20fe04d8ac9afcf0eb9f29a6161b6a11cf2beaaff9d0e",
+        "a6e288da0ba0c1c019195039bc5f34e14422c5b8d261c16c4baa24777e743f22",
+        "9a9d88cf2c190ab29a4c2d67d48f5c80c4c3772d810699de99b2c981bb4a0524",
+        "478f10322bee32e8ffa5ae6df72ee60785b3a2098c4508be7da74598a1ff9390",
+        "338cc7794dbde6382e148e5a1c29aaa1d8693b399efce37a22cc8b8a04dc3cc8"
+      ]
+    },
+    {
+      "why": "longest verse — the transaction budget worst case",
+      "book": 17,
+      "chapter": 8,
+      "verse": 9,
+      "text": "Then the king’s scribes were called at that time, in the third month, which is the month Sivan, on the twenty-third day of the month; and it was written according to all that Mordecai commanded to the Jews, and to the local governors, and the governors and princes of the provinces which are from India to Ethiopia, one hundred twenty-seven provinces, to every province according to its writing, and to every people in their language, and to the Jews in their writing, and in their language.",
+      "textBytes": 493,
+      "leaf": "1108000900ed0100005468656e20746865206b696e67e2809973207363726962657320776572652063616c6c656420617420746861742074696d652c20696e20746865207468697264206d6f6e74682c20776869636820697320746865206d6f6e746820536976616e2c206f6e20746865207477656e74792d746869726420646179206f6620746865206d6f6e74683b20616e6420697420776173207772697474656e206163636f7264696e6720746f20616c6c2074686174204d6f72646563616920636f6d6d616e64656420746f20746865204a6577732c20616e6420746f20746865206c6f63616c20676f7665726e6f72732c20616e642074686520676f7665726e6f727320616e64207072696e636573206f66207468652070726f76696e636573207768696368206172652066726f6d20496e64696120746f20457468696f7069612c206f6e652068756e64726564207477656e74792d736576656e2070726f76696e6365732c20746f2065766572792070726f76696e6365206163636f7264696e6720746f206974732077726974696e672c20616e6420746f2065766572792070656f706c6520696e207468656972206c616e67756167652c20616e6420746f20746865204a65777320696e2074686569722077726974696e672c20616e6420696e207468656972206c616e67756167652e",
+      "chapterRoot": "b2cdb0445c458e8b0b97b462f5bc3ac7334249aba27674b75a8f13013bebbb80",
+      "proof": [
+        "16fcec685b085d40dfe240c60cab210f477350ca6a1d34978b5c143ed7b5888f",
+        "60ef5aa63154d5d7d4603cf2db7ca1b8837ddfcc6143414e7ecdc19fe5f08685",
+        "29c8283172c4772ff8d315253da6c4fd74313a00aaff059f1fde270d609490e3",
+        "9e4ed8c1bda0799a90489961ddbd387302ee2e2ebbe61596111372c425570f1e",
+        "6829aef69c76a991a64e663aa928657bb4461ca06a3ae0858003929a0a5386bf"
+      ]
+    },
+    {
+      "why": "last verse of the largest chapter, deepest proof",
+      "book": 19,
+      "chapter": 119,
+      "verse": 176,
+      "text": "I have gone astray like a lost sheep. Seek your servant, for I don’t forget your commandments.",
+      "textBytes": 96,
+      "leaf": "137700b0006000000049206861766520676f6e6520617374726179206c696b652061206c6f73742073686565702e205365656b20796f75722073657276616e742c20666f72204920646f6ee280997420666f7267657420796f757220636f6d6d616e646d656e74732e",
+      "chapterRoot": "0cf408a6f9296c6bcd758ae7c2534af5316021eb14b3c45d08bf637a9eff7eda",
+      "proof": [
+        "241084769017ab5eb6398c6b7020fcd450442424acd40fdfe4ce3874184dc59b",
+        "d11c5fe5982d4e6041710a7f17c2cbcd2c027bc0b306c12f53f117cbf8a76196",
+        "e96bcf862fdcfea74880d586f2292588ce36dbc8626e2932c970982d9281c1a8",
+        "6159fdb7be684f9bee26bf676ebdf2e5edaac288eb3501ea3e268fbb9f968719",
+        "f23dddba86b4dbd40cf2280b44a7332f18717ca1778d32aed5d813f08e149b09",
+        "ae8053595d7b0c053995bcf07b0e297374c4edf24ed19e6716070c4a5068ab86"
+      ]
+    },
+    {
+      "why": "last verse of the canon",
+      "book": 66,
+      "chapter": 22,
+      "verse": 21,
+      "text": "The grace of the Lord Jesus Christ be with all the saints. Amen.",
+      "textBytes": 64,
+      "leaf": "421600150040000000546865206772616365206f6620746865204c6f7264204a6573757320436872697374206265207769746820616c6c20746865207361696e74732e20416d656e2e",
+      "chapterRoot": "e1bfd1cb429a36df35b8eb94ad8991e2a7612e1093478d212668df0388ff78d6",
+      "proof": [
+        "2a6c56a99505e1166c96fbe4cf6aa4d7f3440b08bdf576f8f8f6537c5f09abd0",
+        "a41557f8496ca4758539361bc2b3e9d57f80d22e5d1796893a600afabacebcac"
+      ]
+    }
+  ],
+  "omitted": [
+    {
+      "book": 42,
+      "chapter": 17,
+      "verse": 36
+    },
+    {
+      "book": 44,
+      "chapter": 8,
+      "verse": 37
+    },
+    {
+      "book": 44,
+      "chapter": 15,
+      "verse": 34
+    },
+    {
+      "book": 44,
+      "chapter": 24,
+      "verse": 7
+    },
+    {
+      "book": 45,
+      "chapter": 16,
+      "verse": 25
+    }
   ]
 }
