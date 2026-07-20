@@ -74,15 +74,26 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      # Sem toolchain Solana e sem container: estes testes compilam para o
-      # host, não para BPF. O Rust que já vem no runner basta, e o build do
-      # `Dockerfile.build` (que compila o avm) levaria minutos à toa.
-      # O container continua sendo o que produz o bytecode — ver a ADR da
-      # toolchain; aqui o objetivo é só exercitar a lógica.
-      - name: Versões
-        run: cargo --version && rustc --version
+      # Os testes rodam no host (litesvm carrega o .so e executa o BPF
+      # in-process — sem validator). Mas os testes de execução precisam do .so
+      # compilado, então instalamos o Agave só para o `cargo build-sbf`.
+      # Binário pré-compilado, não o `Dockerfile.build` (que compila o avm do
+      # zero) — o container continua sendo o que gera o bytecode de release.
+      - name: Instalar Agave (cargo-build-sbf)
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.13/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
-      # Cruza a Merkle do programa contra as proofs geradas pelo Catálogo em
-      # TypeScript. É o teste que impede as duas implementações de divergirem.
+      - name: Versões
+        run: cargo --version && rustc --version && cargo build-sbf --version
+
+      # Compila o .so. Sem ele, os testes de execução pulam (guard em
+      # setup()); com ele, exercitam o bytecode de verdade.
+      - name: Build do programa (BPF)
+        run: cargo build-sbf --manifest-path programs/eternal-word/Cargo.toml
+
+      # Cruza a Merkle do programa contra as proofs do Catálogo (TypeScript) e
+      # roda o programa em litesvm: registro feliz, duplicidade recusada, config
+      # forjada rejeitada, gate de selo. É a rede antes do deploy (PG-07/08).
       - name: cargo test
         run: cargo test --manifest-path programs/eternal-word/Cargo.toml
