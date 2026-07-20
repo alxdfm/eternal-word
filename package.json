@@ -20,7 +20,8 @@
     "program:keys": "docker run --rm -v $(pwd):/workspace eternal-word-build anchor keys sync",
     "program:deploy": "docker run --rm -v $(pwd):/workspace -v $HOME/.config/solana:/root/.config/solana eternal-word-build anchor deploy --provider.cluster devnet",
     "spike:pg00": "pnpm --filter @eternal-word/scripts spike:pg00",
-    "sync-idl": "pnpm --filter @eternal-word/scripts sync-idl"
+    "sync-idl": "pnpm --filter @eternal-word/scripts sync-idl",
+    "catalog:fixtures": "pnpm --filter @eternal-word/catalog fixtures"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
