@@ -51,6 +51,29 @@ pode corrompê-la.
 Não há `update` nem `close` em lugar nenhum do programa — a imutabilidade vem
 de não existir caminho de escrita, não de uma flag que alguém precisa respeitar.
 
+### Registro só abre depois do selo
+
+`register_verse` exige `config.sealed`. Um versículo não pode ser adotado
+enquanto o canon está em montagem, mesmo que a root daquele capítulo já esteja
+carregada e provada.
+
+Tecnicamente a validação Merkle não precisaria disso — uma root carregada já é
+provadamente canônica. A razão é de produto: adoção é permanente e
+irreversível, e não se deve permitir que alguém adote um versículo contra um
+conjunto de textos ainda incompleto. O selo é o momento em que o projeto
+declara o canon final; antes dele, o estado ainda avança (`books_complete`
+sobe, roots entram). Abrir o registro antes disso registraria permanência
+contra algo que ainda não é permanente.
+
+Foi essa checagem que deu função à conta `config` em `register_verse` — sem
+ela, a conta era carregada e nunca lida, custando 32 bytes na transação mais
+apertada do sistema sem invariante nenhum em troca (achado de code review).
+
+> **Reavaliar antes do PG-08:** o smoke test em devnet passa a exigir o canon
+> inteiro carregado e selado (1.189 `load_chapter_root` + 66 `complete_book` +
+> `seal`) antes de qualquer registro. É a jornada real, mas é cara de montar —
+> vale um script de bootstrap para o PG-07/PG-08.
+
 ---
 
 ## A falha encontrada durante a implementação

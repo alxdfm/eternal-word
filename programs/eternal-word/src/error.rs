@@ -26,4 +26,6 @@ pub enum EternalWordError {
     TextEmpty,
     #[msg("Verse does not belong to the canonical text at this address")]
     VerseNotCanonical,
+    #[msg("The canon is not sealed yet; registration is not open")]
+    CanonNotSealed,
 }
