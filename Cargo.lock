@@ -1222,8 +1222,10 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "litesvm",
+ "serde_json",
  "solana-keypair",
  "solana-message",
+ "solana-sha256-hasher",
  "solana-signer",
  "solana-transaction",
 ]
