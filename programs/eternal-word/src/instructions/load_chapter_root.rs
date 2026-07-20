@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{BOOK_ROOTS_SEED, CONFIG_SEED, MAX_COMMITMENT_PROOF};
+use crate::constants::{chapter_exists, BOOK_ROOTS_SEED, CONFIG_SEED, MAX_COMMITMENT_PROOF};
 use crate::error::EternalWordError;
 use crate::merkle::{hash_leaf, verify_proof};
-use crate::constants::chapter_exists;
 use crate::state::{BookRoots, Config};
 
 #[derive(Accounts)]
@@ -17,7 +16,9 @@ pub struct LoadChapterRoot<'info> {
         bump = book_roots.bump,
     )]
     pub book_roots: Account<'info, BookRoots>,
-    pub payer: Signer<'info>,
+    /// Any signer: loading is permissionless and pays no rent (the account
+    /// already exists). Not named `payer` because nothing is paid here.
+    pub signer: Signer<'info>,
 }
 
 /// Commitment leaf: the chapter's address bound to its root.
