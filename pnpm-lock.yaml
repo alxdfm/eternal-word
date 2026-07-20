@@ -36,7 +36,17 @@ importers:
 
   packages/application: {}
 
-  packages/blockchain: {}
+  packages/blockchain:
+    dependencies:
+      '@eternal-word/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@eternal-word/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@solana/web3.js':
+        specifier: ^1.98.4
+        version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
 
   packages/catalog:
     dependencies:
