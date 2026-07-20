@@ -6,21 +6,504 @@
     "spec": "0.1.0",
     "description": "Permanent on-chain registry of Bible verses — one account per verse"
   },
+  "docs": [
+    "Eternal Word — permanent, collaborative registry of the Bible on Solana.",
+    "",
+    "There is deliberately no `update` and no `close` instruction anywhere in",
+    "this program: immutability comes from no write path existing, not from a",
+    "flag someone has to respect.",
+    "",
+    "Handlers are called by full path (`instructions::x::handler`) because the",
+    "instruction name and its module name collide otherwise — `seal` is both."
+  ],
   "instructions": [
     {
-      "name": "initialize",
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
+      "name": "complete_book",
+      "docs": [
+        "Marks a book as fully loaded."
       ],
-      "accounts": [],
+      "discriminator": [
+        238,
+        123,
+        226,
+        160,
+        210,
+        50,
+        137,
+        120
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots"
+        },
+        {
+          "name": "payer",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_book_roots",
+      "docs": [
+        "Allocates the roots account of one book, sized from a bytecode constant."
+      ],
+      "discriminator": [
+        197,
+        101,
+        106,
+        180,
+        44,
+        116,
+        155,
+        22
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_config",
+      "docs": [
+        "Creates the config with the commitment over the canonical chapter roots."
+      ],
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "roots_commitment",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "load_chapter_root",
+      "docs": [
+        "Stores one chapter root, only if it proves into the commitment."
+      ],
+      "discriminator": [
+        145,
+        166,
+        170,
+        213,
+        213,
+        18,
+        246,
+        226
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        },
+        {
+          "name": "chapter",
+          "type": "u16"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "seal",
+      "docs": [
+        "Closes the canon for good."
+      ],
+      "discriminator": [
+        102,
+        202,
+        171,
+        163,
+        27,
+        152,
+        105,
+        242
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
       "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BookRoots",
+      "discriminator": [
+        29,
+        126,
+        242,
+        241,
+        224,
+        222,
+        235,
+        98
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ConfigSealed",
+      "msg": "Config is sealed; the canonical text can no longer be changed"
+    },
+    {
+      "code": 6001,
+      "name": "BookOutOfRange",
+      "msg": "Book index is outside the canon (expected 1 to 66)"
+    },
+    {
+      "code": 6002,
+      "name": "ChapterOutOfRange",
+      "msg": "Chapter does not exist in this book"
+    },
+    {
+      "code": 6003,
+      "name": "ProofTooLong",
+      "msg": "Merkle proof is longer than the commitment tree allows"
+    },
+    {
+      "code": 6004,
+      "name": "RootNotCommitted",
+      "msg": "Chapter root does not belong to the committed canonical text"
+    },
+    {
+      "code": 6005,
+      "name": "BookAlreadyComplete",
+      "msg": "Book roots are already complete"
+    },
+    {
+      "code": 6006,
+      "name": "BookIncomplete",
+      "msg": "Book roots are incomplete; every chapter must be loaded first"
+    },
+    {
+      "code": 6007,
+      "name": "CanonIncomplete",
+      "msg": "Not every book is complete; all 66 must be loaded before sealing"
+    }
+  ],
+  "types": [
+    {
+      "name": "BookRoots",
+      "docs": [
+        "Chapter roots of a single book, at a PDA seeded by the book index.",
+        "",
+        "Sharded per book because all 1,189 roots in one account would be 38,048",
+        "bytes — over the 10,240-byte limit the runtime allows an account to grow",
+        "per instruction. The largest book (Psalms, 150 chapters) needs 4,800 bytes",
+        "and fits in a single creation, so no account here ever needs realloc."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "book",
+            "type": "u8"
+          },
+          {
+            "name": "loaded",
+            "docs": [
+              "How many roots are filled. Complete when it equals the book's chapters."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "loaded_mask",
+            "docs": [
+              "Bitmap of loaded chapters, so a rewrite is never counted twice.",
+              "One bit per chapter, `(chapter - 1)` indexed."
+            ],
+            "type": "bytes"
+          },
+          {
+            "name": "roots",
+            "docs": [
+              "Chapter roots, `(chapter - 1)` indexed."
+            ],
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "docs": [
+        "Global configuration. One per program, at a PDA of fixed seeds.",
+        "",
+        "The fixed seeds are the whole security of the Merkle validation: if",
+        "`register_verse` accepted any account passed as config, an attacker would",
+        "supply their own with a root of their choosing and every text check would",
+        "become decorative (risk R3, task PG-02)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Can create roots accounts and seal. Cannot choose what gets written:",
+              "every root is checked against `roots_commitment` first."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "roots_commitment",
+            "docs": [
+              "Merkle root over the 1,189 chapter roots, in canonical order. Written",
+              "once at creation and never writable again."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "translation",
+            "docs": [
+              "Translation identifier of the frozen snapshot."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "books_complete",
+            "docs": [
+              "Books whose roots are fully loaded. Sealing requires all 66."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "sealed",
+            "docs": [
+              "Once true, no instruction writes to config or roots ever again."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "BOOK_ROOTS_SEED",
+      "type": "bytes",
+      "value": "[114, 111, 111, 116, 115]"
+    },
+    {
+      "name": "CONFIG_SEED",
+      "docs": [
+        "PDA seeds.",
+        "",
+        "Seeds are numeric on purpose: book names never appear in an address",
+        "(docs/conventions/UBIQUITOUS_LANGUAGE.md bans string seeds)."
+      ],
+      "type": "bytes",
+      "value": "[99, 111, 110, 102, 105, 103]"
     }
   ]
 }
