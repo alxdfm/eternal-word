@@ -40,10 +40,33 @@ versionada. É a keypair de upgrade do programa — backup manual pendente.
 - **Sem localnet**: nada de `solana-test-validator`; validação em devnet
 - **Node 24**, mesma major do runtime alvo das Lambdas (`nodejs24.x`)
 
-**Próximo:** PG-02 (conta de config como PDA de seeds fixas — risco R3) e a
-decisão pendente do PG-06: testes em Rust (litesvm, default do Anchor 1.0) ou
-em TypeScript (anchor-bankrun, consumindo as proofs do `packages/catalog`).
-O scaffold ainda tem a instrução placeholder `initialize` — sai no PG-02.
+**PG-02 fechado.** Config em PDA `["config"]` com o `roots_commitment` gravado
+na criação e nunca reescrito; 66 contas `["roots", book]` (maior: Salmos,
+4.800 B, sem realloc). `load_chapter_root` só aceita root que prove contra o
+commitment — a authority escolhe *quando* carregar, nunca *o quê*, então não
+há janela de confiança nem antes do `seal()`, que é irreversível. Sem `update`
+nem `close` em lugar nenhum. **Risco R3 fechado por construção.**
+
+⚠️ **Falha encontrada e corrigida durante o PG-02:** a folha do commitment era
+a chapter root crua. Com pares ordenados e sem bits de direção, isso não
+prendia a posição — dava para gravar uma root real no slot de outro capítulo e
+torná-lo **permanentemente irregistrável**. Texto não podia ser forjado (o leaf
+do versículo carrega o próprio endereço), mas era vandalismo irreversível. A
+folha passou a codificar `book:u8 | chapter:u16le | root:32`. Mudou só o
+`rootsCommitment` do `merkle-root.json`; a global root segue `112e5318…`.
+
+**PG-06: framework decidido.** Rust + `litesvm`, com proofs vindas de
+`data/test-fixtures.json` geradas pelo Catálogo. `anchor-bankrun` foi
+descartado (parado desde out/2024) e o `litesvm` TS migrou para `@solana/kit`,
+que conflita com o web3.js v1 do STACK. 5 testes Rust verdes; a suíte de
+`register_verse` depende do PG-05.
+
+```
+commitment das roots:  d36e745881ff874a1e877f347d9b8ff3986a3749f08ee1ce1de301bc30e82efc
+root global (S01):     112e5318594829adc058b35543812bf976ec999c4afdfec03a94e8ee5b3f7adb
+```
+
+**Próximo:** PG-03 (`VerseAccount`) → PG-04 (PDA) → PG-05 (`register_verse`).
 
 ---
 

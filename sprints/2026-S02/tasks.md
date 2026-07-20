@@ -40,9 +40,11 @@
       1.97 da imagem — dois pins discordantes). `Anchor.toml` sem localnet.
       IDL versionado em `packages/blockchain/src/idl/` via `pnpm sync-idl`
       (`target/` é gitignorado, então o IDL não chegava ao git sozinho).
-      **Pendente:** o scaffold ainda tem a instrução placeholder `initialize`
-      e as dev-dependencies `litesvm`/`solana-*` — saem no PG-02/PG-06.
-- [ ] **PG-02** Conta de configuração — guarda a(s) root(s), o identificador
+      Resíduo do scaffold resolvido no PG-02: a instrução placeholder
+      `initialize` e o `CustomError` saíram; as dev-dependencies `litesvm`/
+      `solana-*` deixaram de ser resíduo e passaram a ser intencionais quando
+      o PG-06 escolheu testar em Rust.
+- [x] **PG-02** Conta de configuração — guarda a(s) root(s), o identificador
       da tradução (`engwebp`) e metadados de proveniência. Definir **quem
       pode escrever nela e quando** (risco R3): a intenção é root gravada uma
       vez e nunca mais alterável.
@@ -53,6 +55,15 @@
       passa a conseguir gravar qualquer texto. É a falha clássica de
       "missing account validation" e o único caminho conhecido para
       contornar a proteção do texto. Teste correspondente: PG-06.
+      ✅ **2026-07-19** — ADR `docs/decisions/2026-07-19_conta-de-configuracao-e-carga-das-roots.md`.
+      Config em PDA de seeds fixas; 66 contas `["roots", book]` (a maior, Salmos,
+      4.800 B — sem realloc). Commitment gravado na criação e nunca reescrito:
+      cada root só entra se provar contra ele, então a authority escolhe *quando*
+      carregar, nunca *o quê*. `seal()` irreversível. Sem `update` nem `close`.
+      **Falha corrigida no caminho:** a folha do commitment era a root crua, e
+      com pares ordenados isso não prendia a posição — dava para gravar uma root
+      real no capítulo errado e torná-lo irregistrável para sempre. Agora a folha
+      codifica `book|chapter|root`. Regressão coberta por teste.
 - [ ] **PG-03** `VerseAccount` — layout com espaço calculado por constantes
       nomeadas, sem número mágico. Campo **`adopter`**, nunca `owner`
       (glossário). Sem instrução de `update` nem de `close`.
@@ -71,8 +82,16 @@
       sha256, prefixo `0x00` folha / `0x01` nó, pares ordenados por bytes,
       nó ímpar promovido; folha =
       `book:u8 | chapter:u16le | verse:u16le | textLen:u32le | text:utf8`.
-- [ ] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
+- [~] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
       `anchor test` → **ADR**). Cobrir principalmente falhas:
+      🔶 **Framework decidido em 2026-07-19** — ADR
+      `docs/decisions/2026-07-19_testes-do-programa-em-rust-com-fixtures.md`:
+      Rust + `litesvm`, com as proofs vindas de `data/test-fixtures.json`
+      geradas pelo Catálogo (`pnpm catalog:fixtures`). `anchor-bankrun` foi
+      descartado — parado desde out/2024; `litesvm` TS migrou para `@solana/kit`,
+      que conflita com o web3.js v1 do STACK.
+      5 testes verdes cobrindo a Merkle e a tabela do canon. **Falta** a suíte
+      de `register_verse` (depende do PG-05) e os casos abaixo:
       - registro feliz grava os campos corretos
       - **segundo registro da mesma posição falha** (duplicidade)
       - proof inválida falha
