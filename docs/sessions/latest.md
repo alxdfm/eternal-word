@@ -66,7 +66,24 @@ commitment das roots:  d36e745881ff874a1e877f347d9b8ff3986a3749f08ee1ce1de301bc3
 root global (S01):     112e5318594829adc058b35543812bf976ec999c4afdfec03a94e8ee5b3f7adb
 ```
 
-**Próximo:** PG-03 (`VerseAccount`) → PG-04 (PDA) → PG-05 (`register_verse`).
+**PG-03/04/05 fechados** — `VerseAccount` (texto on-chain, `space()` sem
+número mágico), PDA `["verse", book, chapter, verse]` numérica (duplicidade
+via `init`), `register_verse` espelhando a Merkle do Catálogo. Budget remedido
+com 5 contas: 1.031 B / 201 B de folga.
+
+**PG-06 fechado — o programa foi executado de verdade.** 20 testes Rust: 11 de
+Merkle + 8 rodando o bytecode no `litesvm` + 1 unit. Os 8 de execução provam o
+que só rodando o programa se prova: registro feliz grava os campos,
+**duplicidade recusada pelo `init`** (conta fica com o primeiro adopter),
+config forjada rejeitada (R3), texto adulterado recusado, gate de `sealed`
+segura, fluxo de carga completo. Para chegar em `sealed` sem 1.255 transações,
+os testes semeiam config+roots com `set_account`. CI ganhou job que compila o
+`.so` com `cargo build-sbf` e roda tudo; sem `.so`, os de execução pulam limpo.
+
+**Próximo: PG-07** (deploy em devnet) → **PG-08** (smoke test real). Atenção: o
+gate de `sealed` faz o PG-08 exigir o canon inteiro carregado e selado antes do
+primeiro registro — vai precisar de um script de bootstrap (1.189 load + 66
+complete + seal). Depois PG-09 (`packages/blockchain`) e PG-10 (docs).
 
 ---
 

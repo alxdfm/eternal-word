@@ -93,24 +93,26 @@
       conta de roots do livro; proof limitada a 8 irmãos e texto a 493 B.
       Só `require!`, sem `unwrap`/`panic`. As 5 posições vazias da WEB não
       precisam de caso especial: não têm folha, então nenhuma proof verifica.
-- [~] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
+- [x] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
       `anchor test` → **ADR**). Cobrir principalmente falhas:
-      🔶 **Framework decidido em 2026-07-19** — ADR
+      ✅ **2026-07-19** — ADR
       `docs/decisions/2026-07-19_testes-do-programa-em-rust-com-fixtures.md`:
-      Rust + `litesvm`, com as proofs vindas de `data/test-fixtures.json`
-      geradas pelo Catálogo (`pnpm catalog:fixtures`). `anchor-bankrun` foi
-      descartado — parado desde out/2024; `litesvm` TS migrou para `@solana/kit`,
-      que conflita com o web3.js v1 do STACK.
-      11 testes verdes. Cobertos ao nível de Merkle e constantes:
-      - ✅ proof inválida falha (`rejects_a_proof_against_the_wrong_chapter_root`)
-      - ✅ texto adulterado no endereço certo falha (vandalismo)
-      - ✅ texto certo no endereço errado falha
-      - ✅ posições não-registráveis não têm folha (`omitted_positions_have_no_leaf`)
-      - ✅ book/chapter fora de faixa recusado (`chapter_counts_match_the_canon`)
-      **Falta**, e precisa de execução real no `litesvm` (não só da Merkle):
-      - [ ] registro feliz grava os campos corretos
-      - [ ] **segundo registro da mesma posição falha** (duplicidade)
-      - [ ] conta de config errada/forjada falha
+      Rust + `litesvm`, proofs em `data/test-fixtures.json` geradas pelo
+      Catálogo. `anchor-bankrun` descartado (parado desde out/2024; `litesvm`
+      TS migrou para `@solana/kit`, incompatível com o web3.js v1 do STACK).
+      **20 testes Rust verdes** — 11 de Merkle (`merkle_fixtures.rs`) + 8 de
+      execução real no litesvm (`program_flow.rs`) + 1 unit:
+      - ✅ registro feliz grava todos os campos (adopter, texto, created_at)
+      - ✅ **segundo registro da mesma posição falha** — o `init` recusa o
+        endereço e a conta permanece com o primeiro adopter, sem sobrescrita
+      - ✅ config forjada rejeitada pela constraint `seeds` (defesa do R3)
+      - ✅ texto adulterado falha (`VerseNotCanonical`)
+      - ✅ registro antes do selo falha (`CanonNotSealed`)
+      - ✅ fluxo de carga completo (init_config → book_roots → load → complete)
+      - ✅ root fora do commitment e complete_book prematuro recusados
+      - ✅ (Merkle) proof inválida, endereço trocado, posições omitidas, faixa
+      CI: novo job compila o `.so` com `cargo build-sbf` (Agave pré-compilado,
+      não o container) e roda tudo. Sem o `.so`, os testes de execução pulam.
 - [ ] **PG-07** Deploy em devnet — Program ID e hash do bytecode registrados;
       inicialização da config com a root da S01.
 - [ ] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
