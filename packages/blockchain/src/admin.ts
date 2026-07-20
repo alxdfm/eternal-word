@@ -1,8 +1,4 @@
-import {
-  type PublicKey,
-  SystemProgram,
-  TransactionInstruction,
-} from '@solana/web3.js'
+import { type PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
 import { bookRootsPda, configPda } from './pdas.js'
 import { PROGRAM_ID, instructionDiscriminator } from './program.js'
 

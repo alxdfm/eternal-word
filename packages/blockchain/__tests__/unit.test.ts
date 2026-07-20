@@ -161,7 +161,13 @@ describe('admin instructions', () => {
 
   it('round-trips the load_chapter_root arguments', () => {
     const proof = [new Uint8Array(32).fill(7), new Uint8Array(32).fill(9)]
-    const { data } = loadChapterRootInstruction(authority, 19, 119, new Uint8Array(32).fill(3), proof)
+    const { data } = loadChapterRootInstruction(
+      authority,
+      19,
+      119,
+      new Uint8Array(32).fill(3),
+      proof,
+    )
     expect(data.readUInt8(8)).toBe(19) // book
     expect(data.readUInt16LE(9)).toBe(119) // chapter
     expect([...data.subarray(11, 43)]).toEqual(Array(32).fill(3)) // root
