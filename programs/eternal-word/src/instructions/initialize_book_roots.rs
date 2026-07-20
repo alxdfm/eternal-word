@@ -34,6 +34,7 @@ pub fn handle_initialize_book_roots(ctx: Context<InitializeBookRoots>, book: u8)
     let book_roots = &mut ctx.accounts.book_roots;
     book_roots.book = book;
     book_roots.loaded = 0;
+    book_roots.completed = false;
     book_roots.loaded_mask = vec![0u8; BookRoots::mask_bytes(book)];
     book_roots.roots = vec![[0u8; 32]; chapters];
     book_roots.bump = ctx.bumps.book_roots;

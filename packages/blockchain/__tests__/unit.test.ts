@@ -13,10 +13,15 @@ import {
   IDL,
   PROGRAM_ID,
   bookRootsPda,
+  completeBookInstruction,
   configPda,
   encodeRegisterVerse,
+  initializeBookRootsInstruction,
+  initializeConfigInstruction,
   instructionDiscriminator,
+  loadChapterRootInstruction,
   registerVerseTransaction,
+  sealInstruction,
   versePda,
 } from '../src/index.js'
 
@@ -121,5 +126,49 @@ describe('transaction budget', () => {
     })
 
     expect(transaction.serialize().length).toBeLessThanOrEqual(1232)
+  })
+})
+
+describe('admin instructions', () => {
+  const authority = Keypair.generate().publicKey
+
+  it('prefixes each with the discriminator the IDL declares', () => {
+    const cases: [Buffer, string][] = [
+      [initializeConfigInstruction(authority, new Uint8Array(32)).data, 'initialize_config'],
+      [initializeBookRootsInstruction(authority, 1).data, 'initialize_book_roots'],
+      [
+        loadChapterRootInstruction(authority, 1, 1, new Uint8Array(32), []).data,
+        'load_chapter_root',
+      ],
+      [completeBookInstruction(authority, 1).data, 'complete_book'],
+      [sealInstruction(authority).data, 'seal'],
+    ]
+    for (const [data, name] of cases) {
+      expect([...data.subarray(0, 8)], name).toEqual([...instructionDiscriminator(name)])
+    }
+  })
+
+  it('keeps the account order and signer/writable flags from the IDL', () => {
+    const ix = loadChapterRootInstruction(authority, 1, 1, new Uint8Array(32), [])
+    const idlAccounts = IDL.instructions.find((i) => i.name === 'load_chapter_root')?.accounts
+    expect(ix.keys.map((k) => ({ signer: k.isSigner, writable: k.isWritable }))).toEqual([
+      { signer: false, writable: false }, // config
+      { signer: false, writable: true }, // book_roots
+      { signer: true, writable: false }, // signer
+    ])
+    expect(idlAccounts?.map((a) => a.name)).toEqual(['config', 'book_roots', 'signer'])
+  })
+
+  it('round-trips the load_chapter_root arguments', () => {
+    const proof = [new Uint8Array(32).fill(7), new Uint8Array(32).fill(9)]
+    const { data } = loadChapterRootInstruction(authority, 19, 119, new Uint8Array(32).fill(3), proof)
+    expect(data.readUInt8(8)).toBe(19) // book
+    expect(data.readUInt16LE(9)).toBe(119) // chapter
+    expect([...data.subarray(11, 43)]).toEqual(Array(32).fill(3)) // root
+    expect(data.readUInt32LE(43)).toBe(2) // proof length
+  })
+
+  it('rejects a commitment that is not 32 bytes', () => {
+    expect(() => initializeConfigInstruction(authority, new Uint8Array(31))).toThrow(/32 bytes/)
   })
 })
