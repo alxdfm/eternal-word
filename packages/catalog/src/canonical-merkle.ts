@@ -92,10 +92,50 @@ export function buildChapterTrees(verses: readonly CanonicalVerse[]): ChapterTre
   })
 }
 
+/**
+ * Leaf payload of the commitment tree — the address of a chapter bound to its
+ * root.
+ *
+ *   book      u8
+ *   chapter   u16 little-endian
+ *   root      32 bytes
+ *
+ * The address must be inside the leaf. Pairs are hashed in sorted order and
+ * proofs carry no direction bits, so a proof over bare roots would prove only
+ * that a root belongs *somewhere* in the tree, not *where*. That is enough to
+ * let someone store a real chapter root in the wrong chapter's slot — no text
+ * could be forged (a verse leaf carries its own address), but the affected
+ * chapter would become permanently unregistrable in a program that has no
+ * update path. Binding the address here removes that.
+ */
+export function encodeChapterRootLeaf(book: number, chapter: number, root: Hash): Buffer {
+  const header = Buffer.alloc(3)
+  header.writeUInt8(book, 0)
+  header.writeUInt16LE(chapter, 1)
+  return Buffer.concat([header, root])
+}
+
 /** Commitment over the chapter roots, so a single 32-byte value still
  * fixes the whole CanonicalText even in the per-chapter design. */
 export function buildChapterRootsTree(chapters: readonly ChapterTree[]): MerkleTree {
-  return buildMerkleTree(chapters.map((chapter) => chapter.tree.root))
+  return buildMerkleTree(
+    chapters.map((chapter) =>
+      hashLeaf(encodeChapterRootLeaf(chapter.book, chapter.chapter, chapter.tree.root)),
+    ),
+  )
+}
+
+/** Sibling hashes proving a chapter's root sits at its own address. */
+export function chapterRootProof(
+  chapters: readonly ChapterTree[],
+  book: number,
+  chapter: number,
+): Hash[] {
+  const index = chapters.findIndex(
+    (candidate) => candidate.book === book && candidate.chapter === chapter,
+  )
+  if (index === -1) throw new Error(`chapter not in the canon: ${book}:${chapter}`)
+  return merkleProof(buildChapterRootsTree(chapters), index)
 }
 
 export function proofForAddress(source: CanonicalTree, address: VerseAddress): Hash[] {
