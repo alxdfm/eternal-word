@@ -61,3 +61,28 @@ jobs:
       # on-chain. É a base da auditabilidade pública do projeto.
       - name: Verificar reprodutibilidade da Merkle root
         run: pnpm catalog:merkle --check
+
+      # As fixtures alimentam os testes do programa em Rust. Se o Catálogo
+      # mudar e elas não forem regeneradas, os testes passam a validar contra
+      # dados obsoletos — falham calados, que é o pior modo de falhar.
+      - name: Verificar fixtures dos testes do programa
+        run: pnpm catalog:fixtures --check
+
+  program:
+    name: Testes do programa (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Sem toolchain Solana e sem container: estes testes compilam para o
+      # host, não para BPF. O Rust que já vem no runner basta, e o build do
+      # `Dockerfile.build` (que compila o avm) levaria minutos à toa.
+      # O container continua sendo o que produz o bytecode — ver a ADR da
+      # toolchain; aqui o objetivo é só exercitar a lógica.
+      - name: Versões
+        run: cargo --version && rustc --version
+
+      # Cruza a Merkle do programa contra as proofs geradas pelo Catálogo em
+      # TypeScript. É o teste que impede as duas implementações de divergirem.
+      - name: cargo test
+        run: cargo test --manifest-path programs/eternal-word/Cargo.toml
