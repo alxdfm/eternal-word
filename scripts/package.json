@@ -6,9 +6,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "spike:pg00": "tsx spike-pg00-transaction-budget.ts",
-    "sync-idl": "tsx sync-idl.ts"
+    "sync-idl": "tsx sync-idl.ts",
+    "bootstrap": "tsx bootstrap-devnet.ts"
   },
   "dependencies": {
+    "@eternal-word/blockchain": "workspace:*",
     "@eternal-word/catalog": "workspace:*",
     "@eternal-word/domain": "workspace:*",
     "@eternal-word/shared": "workspace:*",

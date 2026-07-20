@@ -68,6 +68,12 @@ jobs:
       - name: Verificar fixtures dos testes do programa
         run: pnpm catalog:fixtures --check
 
+      # O bootstrap computa o commitment que vai on-chain a partir do Catálogo.
+      # O dry-run falha se esse valor divergir do artefato commitado — a mesma
+      # root que o programa valida cada load contra.
+      - name: Verificar bootstrap (dry-run)
+        run: pnpm bootstrap:devnet -- --dry-run
+
   program:
     name: Testes do programa (Rust)
     runs-on: ubuntu-latest

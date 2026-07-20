@@ -118,9 +118,24 @@
 - [ ] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
       longo, com `ComputeBudget` anexado) e uma tentativa de duplicidade
       recusada. Medir rent e compute units reais.
-- [ ] **PG-09** `packages/blockchain` — derivação de PDA, construção da
+- [x] **PG-09** `packages/blockchain` — derivação de PDA, construção da
       transação de registro e proof client-side (consumindo o Catálogo da
       S01), com o IDL tipado. É o que a S04 vai usar.
+      ✅ **2026-07-19** — cliente enxuto em `@solana/web3.js` v1 (o TS client do
+      Anchor só chegou em 0.32, mismatch com o CLI 1.0). Discriminadores e
+      ordem de contas lidos **direto do IDL sincronizado**, não recodificados.
+      `configPda`/`bookRootsPda`/`versePda`, `registerVerseTransaction` (v0 +
+      ComputeBudget), `CatalogProver` (proof do cliente), instruções admin
+      (init/load/complete/seal). 24 testes: proof do cliente verifica contra a
+      root do capítulo, transação de pior caso ≤ 1232 B.
+      **Bug encontrado e corrigido escrevendo o bootstrap:** `complete_book`
+      não era idempotente — um retry contava o livro duas vezes e `seal` podia
+      fechar um canon incompleto. Flag `completed` por livro; teste
+      `completing_a_book_twice_fails`.
+      Script `scripts/bootstrap-devnet.ts` (`pnpm bootstrap:devnet`): carga
+      completa idempotente do canon. `--dry-run` valida que o commitment bate
+      com o artefato e que os 1.189 loads cabem — no CI. **Executar em devnet
+      é PG-07/08.**
 
 ## Documentação
 
