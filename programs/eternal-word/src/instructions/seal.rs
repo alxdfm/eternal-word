@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{BOOK_COUNT, BOOK_ROOTS_SEED, CHAPTERS_PER_BOOK, CONFIG_SEED};
+use crate::constants::{chapters_in_book, BOOK_COUNT, BOOK_ROOTS_SEED, CONFIG_SEED};
 use crate::error::EternalWordError;
 use crate::state::{BookRoots, Config};
 
@@ -11,7 +11,8 @@ pub struct CompleteBook<'info> {
     pub config: Account<'info, Config>,
     #[account(seeds = [BOOK_ROOTS_SEED, &[book]], bump = book_roots.bump)]
     pub book_roots: Account<'info, BookRoots>,
-    pub payer: Signer<'info>,
+    /// Any signer: completing a book only reads commitment-validated state.
+    pub signer: Signer<'info>,
 }
 
 /// Records that a book has every chapter root loaded.
@@ -24,7 +25,7 @@ pub fn handle_complete_book(ctx: Context<CompleteBook>, book: u8) -> Result<()> 
     require!(!ctx.accounts.config.sealed, EternalWordError::ConfigSealed);
     require!(book_roots.book == book, EternalWordError::BookOutOfRange);
     require!(
-        book_roots.loaded == CHAPTERS_PER_BOOK[(book - 1) as usize],
+        book_roots.loaded == chapters_in_book(book),
         EternalWordError::BookIncomplete
     );
 

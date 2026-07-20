@@ -50,14 +50,23 @@ pub const MAX_VERSE_BYTES: usize = 493;
 /// Translation identifier of the frozen snapshot (eBible `engwebp`).
 pub const TRANSLATION: [u8; 8] = *b"engwebp\0";
 
+/// Chapters in a book, or 0 when the book is outside the canon.
+///
+/// Returning 0 rather than indexing blindly is what keeps callers panic-free:
+/// `BookRoots::space` runs during account resolution, before any `require!`
+/// can reject a bad `book`, so it must never index out of range.
+pub fn chapters_in_book(book: u8) -> u16 {
+    if book == 0 || book > BOOK_COUNT {
+        return 0;
+    }
+    CHAPTERS_PER_BOOK[(book - 1) as usize]
+}
+
 /// Whether `(book, chapter)` exists in the canon.
 ///
 /// The commitment leaf binds the address, so verification does not need the
 /// leaf's index in the tree — but a reference outside the canon must still be
 /// rejected before any account is touched.
 pub fn chapter_exists(book: u8, chapter: u16) -> bool {
-    if book == 0 || book > BOOK_COUNT || chapter == 0 {
-        return false;
-    }
-    chapter <= CHAPTERS_PER_BOOK[(book - 1) as usize]
+    chapter >= 1 && chapter <= chapters_in_book(book)
 }
