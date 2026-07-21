@@ -84,7 +84,10 @@ Prefixo: `PG`.
 **Entrega:** um registro feito **direto no programa** (sem site) aparece no
 banco em segundos, e a reconciliação corrige um evento perdido de propósito.
 Schema Drizzle, seed das 31.098 posições, indexer nas 3 camadas, alerta de
-atraso do indexer. Prefixos: `DB`, `IX`.
+atraso do indexer. Inclui um upgrade pontual do programa (evento
+`VerseRegistered` on-chain via `emit!`, na janela antes da revogação da
+authority — R2/S06; ver ADR `2026-07-21_evento-onchain-no-register-verse.md`).
+Prefixos: `DB`, `IX` (+ `PG-11`, carryover do programa).
 
 ### S04 — Registro pela web
 **Entrega:** qualquer pessoa com carteira registra um versículo pelo site em

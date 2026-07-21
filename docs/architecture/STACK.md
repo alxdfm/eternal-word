@@ -28,7 +28,8 @@ i18n:           English-first, toda string via mensagens — lib a confirmar
 ## Backend
 
 ```
-Framework:      AWS Lambda (TypeScript) — framework de deploy a confirmar (provável: SST)
+Framework:      AWS Lambda (TypeScript) — deploy via SST (v3 / Ion); ADR do
+                pipeline fecha na S03 (IX-05)
 ORM / DB:       Drizzle ORM + Supabase Postgres
 Auth:           carteira Solana (conexão + assinatura de mensagem) — sem contas tradicionais
 ```
@@ -36,7 +37,8 @@ Auth:           carteira Solana (conexão + assinatura de mensagem) — sem cont
 ## Infra & Deploy
 
 ```
-Hosting:        a definir (provável: Vercel para apps/web, AWS para apps/api e indexer)
+Hosting:        apps/api e indexer: AWS via SST (S03); apps/web: a definir
+                (provável Vercel)
 CI/CD:          indefinido
 Monitoramento:  nenhum por ora
 ```

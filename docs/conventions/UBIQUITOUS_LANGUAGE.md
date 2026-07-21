@@ -75,8 +75,17 @@ Caso de uso: `registerVerse`.
 
 ### Eventos
 
-**VerseRegistered** — Disparado quando o indexer confirma uma nova
-VerseAccount. Payload: `{ book, chapter, verse, adopter, transaction, registeredAt }`.
+**VerseRegistered** — Evento de um novo registro, em dois níveis:
+- **On-chain** (Anchor, emitido por `register_verse` — ver
+  `docs/decisions/2026-07-21_evento-onchain-no-register-verse.md`):
+  `{ book, chapter, verse, adopter, created_at }` — só o que o programa conhece
+  no momento do registro.
+- **De domínio** (o indexer normaliza o on-chain e enriquece): acrescenta
+  `transaction` (assinatura) e `slot` (confirmação); `registeredAt` deriva de
+  `created_at`. É o payload consumido pela aplicação.
+
+Mapa dos nomes: on-chain `created_at` → coluna `verses.registered_at` → evento
+de domínio `registeredAt`.
 
 ---
 
