@@ -26,3 +26,10 @@ export function instructionDiscriminator(name: string): Buffer {
   if (instruction === undefined) throw new Error(`instruction not in IDL: ${name}`)
   return Buffer.from(instruction.discriminator)
 }
+
+/** The 8-byte Anchor discriminator of an account, taken from the IDL. */
+export function accountDiscriminator(name: string): Buffer {
+  const account = idl.accounts.find((candidate) => candidate.name === name)
+  if (account === undefined) throw new Error(`account not in IDL: ${name}`)
+  return Buffer.from(account.discriminator)
+}

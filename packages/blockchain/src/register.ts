@@ -7,6 +7,7 @@ import {
   TransactionMessage,
   VersionedTransaction,
 } from '@solana/web3.js'
+import { u8, u16le, u32le } from './encoding.js'
 import { bookRootsPda, configPda, versePda } from './pdas.js'
 import { PROGRAM_ID, instructionDiscriminator } from './program.js'
 
@@ -24,23 +25,14 @@ export function encodeRegisterVerse(
   proof: readonly Uint8Array[],
 ): Buffer {
   const textBytes = Buffer.from(text, 'utf8')
-  const args = Buffer.alloc(5)
-  args.writeUInt8(address.book, 0)
-  args.writeUInt16LE(address.chapter, 1)
-  args.writeUInt16LE(address.verse, 3)
-
-  const textLen = Buffer.alloc(4)
-  textLen.writeUInt32LE(textBytes.length, 0)
-
-  const proofLen = Buffer.alloc(4)
-  proofLen.writeUInt32LE(proof.length, 0)
-
   return Buffer.concat([
     REGISTER_VERSE,
-    args,
-    textLen,
+    u8(address.book),
+    u16le(address.chapter),
+    u16le(address.verse),
+    u32le(textBytes.length),
     textBytes,
-    proofLen,
+    u32le(proof.length),
     ...proof.map((sibling) => Buffer.from(sibling)),
   ])
 }

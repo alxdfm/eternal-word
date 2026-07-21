@@ -12,9 +12,12 @@ import {
   CatalogProver,
   IDL,
   PROGRAM_ID,
+  accountDiscriminator,
   bookRootsPda,
   completeBookInstruction,
   configPda,
+  decodeBookRoots,
+  decodeConfig,
   encodeRegisterVerse,
   initializeBookRootsInstruction,
   initializeConfigInstruction,
@@ -176,5 +179,48 @@ describe('admin instructions', () => {
 
   it('rejects a commitment that is not 32 bytes', () => {
     expect(() => initializeConfigInstruction(authority, new Uint8Array(31))).toThrow(/32 bytes/)
+  })
+})
+
+describe('account decoders', () => {
+  it('reads the sealed flag from a Config account', () => {
+    const build = (sealed: number) =>
+      Buffer.concat([
+        accountDiscriminator('Config'),
+        Buffer.alloc(32), // authority
+        Buffer.alloc(32), // roots_commitment
+        Buffer.alloc(8), // translation
+        Buffer.from([66]), // books_complete
+        Buffer.from([sealed]),
+        Buffer.from([255]), // bump
+      ])
+    expect(decodeConfig(build(1)).sealed).toBe(true)
+    expect(decodeConfig(build(0)).sealed).toBe(false)
+    expect(decodeConfig(build(1)).booksComplete).toBe(66)
+  })
+
+  it('reads loaded chapters from a BookRoots bitmap', () => {
+    const mask = Buffer.alloc(7) // Genesis: 50 chapters -> 7 mask bytes
+    mask[0] = 0b0000_0101 // chapters 1 and 3 loaded
+    const data = Buffer.concat([
+      accountDiscriminator('BookRoots'),
+      Buffer.from([1]), // book
+      Buffer.from([2, 0]), // loaded = 2 (u16le)
+      Buffer.from([0]), // completed = false
+      Buffer.from([mask.length, 0, 0, 0]), // mask length (u32le)
+      mask,
+    ])
+    const state = decodeBookRoots(data)
+    expect(state.book).toBe(1)
+    expect(state.loaded).toBe(2)
+    expect(state.completed).toBe(false)
+    expect(state.isChapterLoaded(1)).toBe(true)
+    expect(state.isChapterLoaded(2)).toBe(false)
+    expect(state.isChapterLoaded(3)).toBe(true)
+    expect(state.isChapterLoaded(50)).toBe(false)
+  })
+
+  it('rejects data whose discriminator is not the expected account', () => {
+    expect(() => decodeConfig(Buffer.alloc(83))).toThrow(/not a Config/)
   })
 })

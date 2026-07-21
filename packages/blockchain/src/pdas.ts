@@ -1,5 +1,6 @@
 import type { VerseAddress } from '@eternal-word/domain'
 import { PublicKey } from '@solana/web3.js'
+import { u8, u16le } from './encoding.js'
 import { PROGRAM_ID, SEEDS } from './program.js'
 
 /**
@@ -9,18 +10,6 @@ import { PROGRAM_ID, SEEDS } from './program.js'
  * derive a different address than the program expects and every transaction
  * would fail account resolution.
  */
-
-function u8(value: number): Buffer {
-  const buffer = Buffer.alloc(1)
-  buffer.writeUInt8(value, 0)
-  return buffer
-}
-
-function u16le(value: number): Buffer {
-  const buffer = Buffer.alloc(2)
-  buffer.writeUInt16LE(value, 0)
-  return buffer
-}
 
 /** The single config account: PDA of fixed seeds (risk R3). */
 export function configPda(programId: PublicKey = PROGRAM_ID): [PublicKey, number] {
