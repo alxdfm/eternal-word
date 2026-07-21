@@ -110,7 +110,12 @@
           "writable": true
         },
         {
-          "name": "authority",
+          "name": "payer",
+          "docs": [
+            "Any wallet: allocating a book's roots account is permissionless. The",
+            "account can only be created once (`init`) and its size is fixed by the",
+            "bytecode, so an early creator only does the bootstrap's work for free."
+          ],
           "writable": true,
           "signer": true
         },
@@ -129,7 +134,8 @@
     {
       "name": "initialize_config",
       "docs": [
-        "Creates the config with the commitment over the canonical chapter roots."
+        "Creates the singleton config. The canon's commitment is a bytecode",
+        "constant, so there is no parameter and no privileged caller."
       ],
       "discriminator": [
         208,
@@ -162,7 +168,12 @@
           }
         },
         {
-          "name": "authority",
+          "name": "payer",
+          "docs": [
+            "Any wallet: creating the config is permissionless. The commitment it",
+            "validates against is the `ROOTS_COMMITMENT` constant, so whoever creates",
+            "it — including a front-runner — installs the same, real canon."
+          ],
           "writable": true,
           "signer": true
         },
@@ -171,17 +182,7 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": [
-        {
-          "name": "roots_commitment",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        }
-      ]
+      "args": []
     },
     {
       "name": "load_chapter_root",
@@ -390,7 +391,12 @@
           }
         },
         {
-          "name": "authority",
+          "name": "signer",
+          "docs": [
+            "Any signer: sealing only succeeds when all 66 books are already loaded",
+            "and completed against the hardcoded commitment, so there is nothing to",
+            "gate — whoever triggers it just finalizes the one correct canon."
+          ],
           "signer": true
         }
       ],
@@ -574,35 +580,16 @@
       "docs": [
         "Global configuration. One per program, at a PDA of fixed seeds.",
         "",
-        "The fixed seeds are the whole security of the Merkle validation: if",
-        "`register_verse` accepted any account passed as config, an attacker would",
-        "supply their own with a root of their choosing and every text check would",
-        "become decorative (risk R3, task PG-02)."
+        "Holds no commitment and no authority: the commitment is the",
+        "`ROOTS_COMMITMENT` constant in the bytecode, and every bootstrap",
+        "instruction is permissionless. This account only tracks progress —",
+        "how many books are loaded and whether the canon is sealed. Its fixed seeds",
+        "still matter: `register_verse` reads `sealed` from it, so accepting an",
+        "arbitrary account here would let someone fake a sealed canon."
       ],
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "authority",
-            "docs": [
-              "Can create roots accounts and seal. Cannot choose what gets written:",
-              "every root is checked against `roots_commitment` first."
-            ],
-            "type": "pubkey"
-          },
-          {
-            "name": "roots_commitment",
-            "docs": [
-              "Merkle root over the 1,189 chapter roots, in canonical order. Written",
-              "once at creation and never writable again."
-            ],
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
           {
             "name": "translation",
             "docs": [

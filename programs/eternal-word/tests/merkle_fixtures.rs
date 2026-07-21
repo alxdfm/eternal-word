@@ -9,7 +9,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use eternal_word::constants::{chapter_exists, CHAPTERS_PER_BOOK, TOTAL_CHAPTERS};
+use eternal_word::constants::{chapter_exists, CHAPTERS_PER_BOOK, ROOTS_COMMITMENT, TOTAL_CHAPTERS};
 use eternal_word::merkle::{hash_leaf, verify_proof};
 
 fn repo_root() -> PathBuf {
@@ -76,6 +76,19 @@ fn commitment_leaf(book: u8, chapter: u16, root: &[u8; 32]) -> [u8; 32] {
     payload[1..3].copy_from_slice(&chapter.to_le_bytes());
     payload[3..].copy_from_slice(root);
     hash_leaf(&payload)
+}
+
+/// The commitment baked into the bytecode must equal the one the catalog
+/// generates. If it drifts, every `load_chapter_root` fails against the wrong
+/// root and the canon can never be built — a typo in the const would brick the
+/// program silently, so this guards it.
+#[test]
+fn hardcoded_commitment_matches_the_catalog() {
+    let (commitment, _) = load();
+    assert_eq!(
+        ROOTS_COMMITMENT, commitment,
+        "ROOTS_COMMITMENT in the bytecode differs from the catalog commitment"
+    );
 }
 
 #[test]

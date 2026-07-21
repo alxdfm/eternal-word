@@ -7,26 +7,25 @@ use crate::state::Config;
 pub struct InitializeConfig<'info> {
     #[account(
         init,
-        payer = authority,
+        payer = payer,
         space = 8 + Config::INIT_SPACE,
         seeds = [CONFIG_SEED],
         bump,
     )]
     pub config: Account<'info, Config>,
+    /// Any wallet: creating the config is permissionless. The commitment it
+    /// validates against is the `ROOTS_COMMITMENT` constant, so whoever creates
+    /// it — including a front-runner — installs the same, real canon.
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
-/// Creates the config with the commitment already inside it.
-///
-/// The commitment arrives at creation and there is no instruction that writes
-/// it again — that is what makes every later root write checkable rather than
-/// trusted. `init` also means a second call fails: the account already exists.
-pub fn handle_initialize_config(ctx: Context<InitializeConfig>, roots_commitment: [u8; 32]) -> Result<()> {
+/// Creates the singleton config. There is no commitment parameter: the canon's
+/// commitment lives in the bytecode (`ROOTS_COMMITMENT`), so no caller can
+/// choose it. `init` also means a second call fails — the account exists.
+pub fn handle_initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
     let config = &mut ctx.accounts.config;
-    config.authority = ctx.accounts.authority.key();
-    config.roots_commitment = roots_commitment;
     config.translation = TRANSLATION;
     config.books_complete = 0;
     config.sealed = false;

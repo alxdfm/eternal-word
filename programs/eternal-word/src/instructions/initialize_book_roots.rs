@@ -11,14 +11,17 @@ pub struct InitializeBookRoots<'info> {
     pub config: Account<'info, Config>,
     #[account(
         init,
-        payer = authority,
+        payer = payer,
         space = BookRoots::space(book),
         seeds = [BOOK_ROOTS_SEED, &[book]],
         bump,
     )]
     pub book_roots: Account<'info, BookRoots>,
-    #[account(mut, address = config.authority)]
-    pub authority: Signer<'info>,
+    /// Any wallet: allocating a book's roots account is permissionless. The
+    /// account can only be created once (`init`) and its size is fixed by the
+    /// bytecode, so an early creator only does the bootstrap's work for free.
+    #[account(mut)]
+    pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 

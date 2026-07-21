@@ -46,8 +46,10 @@ pub fn handle_complete_book(ctx: Context<CompleteBook>, book: u8) -> Result<()> 
 pub struct Seal<'info> {
     #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
-    #[account(address = config.authority)]
-    pub authority: Signer<'info>,
+    /// Any signer: sealing only succeeds when all 66 books are already loaded
+    /// and completed against the hardcoded commitment, so there is nothing to
+    /// gate — whoever triggers it just finalizes the one correct canon.
+    pub signer: Signer<'info>,
 }
 
 /// Closes the canon. Irreversible: no instruction clears `sealed`.
