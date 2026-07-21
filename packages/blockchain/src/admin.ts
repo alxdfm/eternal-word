@@ -18,30 +18,29 @@ const LOAD_CHAPTER_ROOT = instructionDiscriminator('load_chapter_root')
 const COMPLETE_BOOK = instructionDiscriminator('complete_book')
 const SEAL = instructionDiscriminator('seal')
 
-/** `initialize_config(roots_commitment)` — creates the config with the
- * commitment fixed at birth; there is no instruction that rewrites it. */
+/** `initialize_config()` — creates the singleton config. Permissionless: the
+ * commitment is a bytecode constant, so there is nothing for a caller to
+ * choose. `payer` funds the account's rent. */
 export function initializeConfigInstruction(
-  authority: PublicKey,
-  rootsCommitment: Uint8Array,
+  payer: PublicKey,
   programId: PublicKey = PROGRAM_ID,
 ): TransactionInstruction {
-  if (rootsCommitment.length !== 32) throw new Error('roots_commitment must be 32 bytes')
   const [config] = configPda(programId)
   return new TransactionInstruction({
     programId,
     keys: [
       { pubkey: config, isSigner: false, isWritable: true },
-      { pubkey: authority, isSigner: true, isWritable: true },
+      { pubkey: payer, isSigner: true, isWritable: true },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
-    data: Buffer.concat([INITIALIZE_CONFIG, Buffer.from(rootsCommitment)]),
+    data: INITIALIZE_CONFIG,
   })
 }
 
-/** `initialize_book_roots(book)` — allocates one book's roots account. Only the
- * config authority may call it. */
+/** `initialize_book_roots(book)` — allocates one book's roots account.
+ * Permissionless; `payer` funds the rent. */
 export function initializeBookRootsInstruction(
-  authority: PublicKey,
+  payer: PublicKey,
   book: number,
   programId: PublicKey = PROGRAM_ID,
 ): TransactionInstruction {
@@ -52,7 +51,7 @@ export function initializeBookRootsInstruction(
     keys: [
       { pubkey: config, isSigner: false, isWritable: false },
       { pubkey: bookRoots, isSigner: false, isWritable: true },
-      { pubkey: authority, isSigner: true, isWritable: true },
+      { pubkey: payer, isSigner: true, isWritable: true },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     data: Buffer.concat([INITIALIZE_BOOK_ROOTS, u8(book)]),
@@ -110,9 +109,10 @@ export function completeBookInstruction(
   })
 }
 
-/** `seal()` — closes the canon for good. Only the config authority. */
+/** `seal()` — closes the canon for good. Permissionless: it only succeeds once
+ * all 66 books are complete against the hardcoded commitment. */
 export function sealInstruction(
-  authority: PublicKey,
+  signer: PublicKey,
   programId: PublicKey = PROGRAM_ID,
 ): TransactionInstruction {
   const [config] = configPda(programId)
@@ -120,7 +120,7 @@ export function sealInstruction(
     programId,
     keys: [
       { pubkey: config, isSigner: false, isWritable: true },
-      { pubkey: authority, isSigner: true, isWritable: false },
+      { pubkey: signer, isSigner: true, isWritable: false },
     ],
     data: Buffer.from(SEAL),
   })
