@@ -1,4 +1,5 @@
 import { type PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
+import { u8, u16le, u32le } from './encoding.js'
 import { bookRootsPda, configPda } from './pdas.js'
 import { PROGRAM_ID, instructionDiscriminator } from './program.js'
 
@@ -16,24 +17,6 @@ const INITIALIZE_BOOK_ROOTS = instructionDiscriminator('initialize_book_roots')
 const LOAD_CHAPTER_ROOT = instructionDiscriminator('load_chapter_root')
 const COMPLETE_BOOK = instructionDiscriminator('complete_book')
 const SEAL = instructionDiscriminator('seal')
-
-function u8(value: number): Buffer {
-  const buffer = Buffer.alloc(1)
-  buffer.writeUInt8(value, 0)
-  return buffer
-}
-
-function u16le(value: number): Buffer {
-  const buffer = Buffer.alloc(2)
-  buffer.writeUInt16LE(value, 0)
-  return buffer
-}
-
-function u32le(value: number): Buffer {
-  const buffer = Buffer.alloc(4)
-  buffer.writeUInt32LE(value, 0)
-  return buffer
-}
 
 /** `initialize_config(roots_commitment)` — creates the config with the
  * commitment fixed at birth; there is no instruction that rewrites it. */
