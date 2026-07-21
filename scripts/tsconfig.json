@@ -1,0 +1,23 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["**/*.ts"],
+  "references": [
+    {
+      "path": "../packages/blockchain"
+    },
+    {
+      "path": "../packages/catalog"
+    },
+    {
+      "path": "../packages/domain"
+    },
+    {
+      "path": "../packages/shared"
+    }
+  ]
+}

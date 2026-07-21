@@ -14,18 +14,22 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+# Default restritivo; cada job amplia só o que precisa (deploy-api usa OIDC).
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verificação pré-deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -53,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.release.tag_name }}
 
@@ -69,10 +73,10 @@ jobs:
             echo "::notice::apps/web ainda não é deployável (S04) — deploy pulado."
           fi
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         if: steps.app.outputs.ready == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.app.outputs.ready == 'true'
         with:
           node-version-file: .nvmrc
@@ -84,6 +88,11 @@ jobs:
         if: steps.app.outputs.ready == 'true'
         run: pnpm install --frozen-lockfile
 
+      # A CLI do Vercel lê VERCEL_TOKEN do ambiente — passar `--token` na linha
+      # de comando exporia o segredo no argv do processo no runner.
+      #
+      # Versão fixada de propósito: `vercel@latest` daria a este step, que
+      # carrega o token de deploy, qualquer release publicada da CLI.
       - name: Deploy
         if: steps.app.outputs.ready == 'true'
         env:
@@ -91,9 +100,9 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          pnpm dlx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
-          pnpm dlx vercel@latest build --prod --token="$VERCEL_TOKEN"
-          pnpm dlx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          pnpm dlx vercel@56.3.2 pull --yes --environment=production
+          pnpm dlx vercel@56.3.2 build --prod
+          pnpm dlx vercel@56.3.2 deploy --prebuilt --prod
 
   deploy-api:
     name: Deploy API e indexer (AWS)
@@ -104,7 +113,7 @@ jobs:
       id-token: write # OIDC — sem chave de acesso de longa duração no repo
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.release.tag_name }}
 
@@ -120,10 +129,10 @@ jobs:
             echo "::notice::apps/api ainda não é deployável (S03) — deploy pulado."
           fi
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         if: steps.app.outputs.ready == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.app.outputs.ready == 'true'
         with:
           node-version-file: .nvmrc
@@ -131,7 +140,7 @@ jobs:
 
       - name: Credenciais AWS (OIDC)
         if: steps.app.outputs.ready == 'true'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
@@ -152,15 +161,24 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      # O nome da tag chega por `env`, nunca interpolado direto no shell:
+      # `${{ }}` dentro de `run:` é substituído como texto antes da execução,
+      # então uma tag contendo `$(...)` ou crase viraria comando no runner.
+      # Hoje só quem tem write access publica release, mas basta um bot de
+      # release entrar no fluxo para isso deixar de ser verdade.
       - name: Registrar resultado
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          WEB_RESULT: ${{ needs.deploy-web.result }}
+          API_RESULT: ${{ needs.deploy-api.result }}
         run: |
           {
-            echo "### Release \`${{ github.event.release.tag_name }}\`"
+            echo "### Release \`${TAG_NAME}\`"
             echo ""
             echo "| Alvo | Resultado |"
             echo "|------|-----------|"
-            echo "| Web (Vercel) | ${{ needs.deploy-web.result }} |"
-            echo "| API + indexer (AWS) | ${{ needs.deploy-api.result }} |"
+            echo "| Web (Vercel) | ${WEB_RESULT} |"
+            echo "| API + indexer (AWS) | ${API_RESULT} |"
             echo ""
             echo "O programa Solana **não** é deployado por esta pipeline."
             echo "Ver \`docs/decisions/2026-07-19_pipeline-de-deploy.md\`."

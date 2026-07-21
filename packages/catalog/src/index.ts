@@ -30,6 +30,8 @@ export {
   buildCanonicalTree,
   buildChapterTrees,
   buildChapterRootsTree,
+  chapterRootProof,
+  encodeChapterRootLeaf,
   proofForAddress,
   toHex,
 } from './canonical-merkle.js'

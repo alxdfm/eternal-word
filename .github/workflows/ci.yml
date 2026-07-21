@@ -9,16 +9,21 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Repositório público: o default do repo pode conceder escrita ao GITHUB_TOKEN.
+# Nada aqui escreve — declarado explicitamente para não depender desse default.
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Typecheck, lint & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -35,11 +40,11 @@ jobs:
     name: Integridade do CanonicalText
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -56,3 +61,45 @@ jobs:
       # on-chain. É a base da auditabilidade pública do projeto.
       - name: Verificar reprodutibilidade da Merkle root
         run: pnpm catalog:merkle --check
+
+      # As fixtures alimentam os testes do programa em Rust. Se o Catálogo
+      # mudar e elas não forem regeneradas, os testes passam a validar contra
+      # dados obsoletos — falham calados, que é o pior modo de falhar.
+      - name: Verificar fixtures dos testes do programa
+        run: pnpm catalog:fixtures --check
+
+      # O bootstrap computa o commitment que vai on-chain a partir do Catálogo.
+      # O dry-run falha se esse valor divergir do artefato commitado — a mesma
+      # root que o programa valida cada load contra.
+      - name: Verificar bootstrap (dry-run)
+        run: pnpm bootstrap:devnet -- --dry-run
+
+  program:
+    name: Testes do programa (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Os testes rodam no host (litesvm carrega o .so e executa o BPF
+      # in-process — sem validator). Mas os testes de execução precisam do .so
+      # compilado, então instalamos o Agave só para o `cargo build-sbf`.
+      # Binário pré-compilado, não o `Dockerfile.build` (que compila o avm do
+      # zero) — o container continua sendo o que gera o bytecode de release.
+      - name: Instalar Agave (cargo-build-sbf)
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.1.13/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Versões
+        run: cargo --version && rustc --version && cargo build-sbf --version
+
+      # Compila o .so. Sem ele, os testes de execução pulam (guard em
+      # setup()); com ele, exercitam o bytecode de verdade.
+      - name: Build do programa (BPF)
+        run: cargo build-sbf --manifest-path programs/eternal-word/Cargo.toml
+
+      # Cruza a Merkle do programa contra as proofs do Catálogo (TypeScript) e
+      # roda o programa em litesvm: registro feliz, duplicidade recusada, config
+      # forjada rejeitada, gate de selo. É a rede antes do deploy (PG-07/08).
+      - name: cargo test
+        run: cargo test --manifest-path programs/eternal-word/Cargo.toml

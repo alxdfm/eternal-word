@@ -19,7 +19,7 @@
     "proofBytes": 480
   },
   "perChapter": {
-    "rootsCommitment": "af5b4a235d5c8a01a5f72e32a7820fca3b1c554494a727b3f99b900a7e08cefd",
+    "rootsCommitment": "d36e745881ff874a1e877f347d9b8ff3986a3749f08ee1ce1de301bc30e82efc",
     "chapterCount": 1189,
     "maxDepth": 8,
     "maxProofBytes": 256,

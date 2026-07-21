@@ -1,7 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "files": {
-    "ignore": ["dist", "data/canonical-text/*.json", ".anchor", "target"]
+    "ignore": [
+      "dist",
+      "data/canonical-text/*.json",
+      "packages/blockchain/src/idl/*.json",
+      ".anchor",
+      "target"
+    ]
   },
   "organizeImports": { "enabled": true },
   "formatter": {
