@@ -19,6 +19,8 @@ import {
   bookRootsPda,
   completeBookInstruction,
   configPda,
+  decodeBookRoots,
+  decodeConfig,
   initializeBookRootsInstruction,
   initializeConfigInstruction,
   loadChapterRootInstruction,
@@ -43,6 +45,13 @@ import {
 } from '@solana/web3.js'
 
 const TRANSACTION_LIMIT = 1232
+/** Two loads share the config/book_roots/signer accounts and fit under the
+ * packet limit (the deepest load instruction is ~399 B). Halves the ~1,189
+ * load transactions. The dry-run proves the batch fits. */
+const LOADS_PER_TX = 2
+/** Generous cap; load verifies up to 11 sha256 (a handful of thousand CU). The
+ * exact figure is measured in PG-08 — this only has to be safely above it. */
+const COMPUTE_UNIT_LIMIT = 400_000
 
 interface Options {
   dryRun: boolean
@@ -90,9 +99,27 @@ function byBook(chapters: ReturnType<typeof buildCanonPlan>['chapters']) {
   return [...groups.entries()].sort(([a], [b]) => a - b)
 }
 
-function assertFits(instruction: TransactionInstruction, payer: PublicKey, label: string) {
+const computeBudget = (): TransactionInstruction[] => [
+  ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_UNIT_LIMIT }),
+  ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 }),
+]
+
+/** Splits an array into chunks of at most `size`. */
+function chunk<T>(items: readonly T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size))
+  return chunks
+}
+
+/** Asserts a transaction built from these instructions fits the packet limit —
+ * the same composition (with ComputeBudget) the real run sends. */
+function assertFits(
+  instructions: readonly TransactionInstruction[],
+  payer: PublicKey,
+  label: string,
+) {
   const transaction = new Transaction({ feePayer: payer, recentBlockhash: PROGRAM_ID.toBase58() })
-  transaction.add(instruction)
+  transaction.add(...computeBudget(), ...instructions)
   const size = 1 + 64 + transaction.compileMessage().serialize().length
   if (size > TRANSACTION_LIMIT) {
     throw new Error(`${label} does not fit: ${size} B of ${TRANSACTION_LIMIT}`)
@@ -128,18 +155,25 @@ async function main() {
       )
     }
 
-    // Validate every instruction serializes within the packet limit, using a
-    // throwaway payer. The per-chapter load is the tight one (PG-00).
+    // Validate the batched load transaction — the exact composition the real
+    // run sends (ComputeBudget + up to LOADS_PER_TX loads). Uses the deepest
+    // proofs so a passing dry-run guarantees the tightest real batch fits too.
     const payer = Keypair.generate().publicKey
-    assertFits(initializeConfigInstruction(payer, commitment), payer, 'initialize_config')
-    let worst = 0
-    for (const { book, chapter, root, proof } of chapters) {
-      const instruction = loadChapterRootInstruction(payer, book, chapter, root, proof)
-      assertFits(instruction, payer, `load ${book}:${chapter}`)
-      worst = Math.max(worst, instruction.data.length)
+    assertFits([initializeConfigInstruction(payer, commitment)], payer, 'initialize_config')
+    const deepest = [...chapters].sort((a, b) => b.proof.length - a.proof.length)
+    for (const [, group] of byBook(deepest)) {
+      for (const batch of chunk(group.slice(0, LOADS_PER_TX), LOADS_PER_TX)) {
+        assertFits(
+          batch.map((c) => loadChapterRootInstruction(payer, c.book, c.chapter, c.root, c.proof)),
+          payer,
+          `load batch in book ${batch[0]?.book}`,
+        )
+      }
     }
+    const worst = Math.max(...chapters.map((c) => 8 + 1 + 2 + 32 + 4 + c.proof.length * 32))
     process.stdout.write(
-      `dry run OK — commitment matches the artifact, ${chapters.length} loads validated, largest instruction ${worst} B\n`,
+      `dry run OK — commitment matches the artifact, ${chapters.length} loads validated ` +
+        `(${LOADS_PER_TX}/tx), largest instruction ${worst} B\n`,
     )
     return
   }
@@ -151,53 +185,56 @@ async function main() {
   const authority = keypair.publicKey
   process.stdout.write(`authority:    ${authority.toBase58()}\n\n`)
 
-  const priorityFee = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
-  const send = async (instruction: TransactionInstruction) => {
-    const transaction = new Transaction().add(priorityFee, instruction)
+  const send = async (instructions: TransactionInstruction[]) => {
+    const transaction = new Transaction().add(...computeBudget(), ...instructions)
     const { blockhash } = await connection.getLatestBlockhash()
     transaction.recentBlockhash = blockhash
     transaction.feePayer = authority
     const signature = await connection.sendTransaction(transaction, [keypair])
     await connection.confirmTransaction(signature, 'confirmed')
   }
-  const exists = async (pda: PublicKey) => (await connection.getAccountInfo(pda)) !== null
+  const fetch = (pda: PublicKey) => connection.getAccountInfo(pda)
 
+  // Idempotency reads state, never error strings: Anchor surfaces custom errors
+  // as hex (`0x1775`), so matching the decimal `6005` would silently never fire.
   const [config] = configPda()
-  if (await exists(config)) {
-    process.stdout.write('config already exists — skipping initialize_config\n')
-  } else {
-    await send(initializeConfigInstruction(authority, commitment))
+  const configInfo = await fetch(config)
+  if (configInfo === null) {
+    await send([initializeConfigInstruction(authority, commitment)])
     process.stdout.write('config created\n')
+  } else if (decodeConfig(configInfo.data).sealed) {
+    process.stdout.write('canon is already sealed — nothing to do\n')
+    return
+  } else {
+    process.stdout.write('config already exists — resuming\n')
   }
 
   for (const [book, bookChapters] of books) {
     const [bookRoots] = bookRootsPda(book)
-    if (!(await exists(bookRoots))) {
-      await send(initializeBookRootsInstruction(authority, book))
+    const info = await fetch(bookRoots)
+    const state = info === null ? null : decodeBookRoots(info.data)
+    if (state === null) {
+      await send([initializeBookRootsInstruction(authority, book)])
     }
-    for (const { chapter, root, proof } of bookChapters) {
-      // load_chapter_root is idempotent — a re-load writes the same value — so
-      // resending on a resumed run is safe.
-      await send(loadChapterRootInstruction(authority, book, chapter, root, proof))
+
+    // Skip chapters already stored — a resume does only what remains.
+    const pending = bookChapters.filter((c) => !(state?.isChapterLoaded(c.chapter) ?? false))
+    for (const batch of chunk(pending, LOADS_PER_TX)) {
+      await send(
+        batch.map((c) => loadChapterRootInstruction(authority, book, c.chapter, c.root, c.proof)),
+      )
     }
-    try {
-      await send(completeBookInstruction(authority, book))
-    } catch (error) {
-      if (!String(error).includes('6005')) throw error // BookAlreadyComplete
+
+    if (!(state?.completed ?? false)) {
+      await send([completeBookInstruction(authority, book)])
     }
-    process.stdout.write(`book ${book}: ${bookChapters.length} chapters loaded and completed\n`)
+    process.stdout.write(
+      `book ${book}: ${bookChapters.length} chapters — ${pending.length} loaded, completed\n`,
+    )
   }
 
-  try {
-    await send(sealInstruction(authority))
-    process.stdout.write('\ncanon sealed — registration is now open\n')
-  } catch (error) {
-    if (String(error).includes('6000')) {
-      process.stdout.write('\ncanon was already sealed\n')
-    } else {
-      throw error
-    }
-  }
+  await send([sealInstruction(authority)])
+  process.stdout.write('\ncanon sealed — registration is now open\n')
 }
 
 main().catch((error) => {
