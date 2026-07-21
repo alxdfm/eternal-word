@@ -1,0 +1,706 @@
+{
+  "address": "9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG",
+  "metadata": {
+    "name": "eternal_word",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Permanent on-chain registry of Bible verses — one account per verse"
+  },
+  "docs": [
+    "Eternal Word — permanent, collaborative registry of the Bible on Solana.",
+    "",
+    "There is deliberately no `update` and no `close` instruction anywhere in",
+    "this program: immutability comes from no write path existing, not from a",
+    "flag someone has to respect.",
+    "",
+    "Handlers are called by full path (`instructions::x::handler`) because the",
+    "instruction name and its module name collide otherwise — `seal` is both."
+  ],
+  "instructions": [
+    {
+      "name": "complete_book",
+      "docs": [
+        "Marks a book as fully loaded."
+      ],
+      "discriminator": [
+        238,
+        123,
+        226,
+        160,
+        210,
+        50,
+        137,
+        120
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots",
+          "writable": true
+        },
+        {
+          "name": "signer",
+          "docs": [
+            "Any signer: completing a book only reads commitment-validated state."
+          ],
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_book_roots",
+      "docs": [
+        "Allocates the roots account of one book, sized from a bytecode constant."
+      ],
+      "discriminator": [
+        197,
+        101,
+        106,
+        180,
+        44,
+        116,
+        155,
+        22
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "docs": [
+            "Any wallet: allocating a book's roots account is permissionless. The",
+            "account can only be created once (`init`) and its size is fixed by the",
+            "bytecode, so an early creator only does the bootstrap's work for free."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize_config",
+      "docs": [
+        "Creates the singleton config. The canon's commitment is a bytecode",
+        "constant, so there is no parameter and no privileged caller."
+      ],
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer",
+          "docs": [
+            "Any wallet: creating the config is permissionless. The commitment it",
+            "validates against is the `ROOTS_COMMITMENT` constant, so whoever creates",
+            "it — including a front-runner — installs the same, real canon."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "load_chapter_root",
+      "docs": [
+        "Stores one chapter root, only if it proves into the commitment."
+      ],
+      "discriminator": [
+        145,
+        166,
+        170,
+        213,
+        213,
+        18,
+        246,
+        226
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots",
+          "writable": true
+        },
+        {
+          "name": "signer",
+          "docs": [
+            "Any signer: loading is permissionless and pays no rent (the account",
+            "already exists). Not named `payer` because nothing is paid here."
+          ],
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        },
+        {
+          "name": "chapter",
+          "type": "u16"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "register_verse",
+      "docs": [
+        "Registers a verse, proving its text against the canonical Merkle root."
+      ],
+      "discriminator": [
+        93,
+        164,
+        18,
+        14,
+        68,
+        112,
+        197,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "docs": [
+            "Read only to gate registration on `sealed`: a verse cannot be adopted",
+            "until the canon is declared final. The Merkle check itself does not",
+            "need config — the chapter root is validated against the commitment when",
+            "it is loaded, and `book_roots` is bound by its own PDA seeds — but",
+            "opening registration against a half-loaded canon would let someone",
+            "permanently adopt a verse before the text set is complete."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "book_roots"
+        },
+        {
+          "name": "verse_account",
+          "docs": [
+            "Numeric seeds, never book names. `init` is what makes a second",
+            "registration of the same verse impossible: the address already exists."
+          ],
+          "writable": true
+        },
+        {
+          "name": "adopter",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "book",
+          "type": "u8"
+        },
+        {
+          "name": "chapter",
+          "type": "u16"
+        },
+        {
+          "name": "verse",
+          "type": "u16"
+        },
+        {
+          "name": "text",
+          "type": "string"
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "seal",
+      "docs": [
+        "Closes the canon for good."
+      ],
+      "discriminator": [
+        102,
+        202,
+        171,
+        163,
+        27,
+        152,
+        105,
+        242
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "signer",
+          "docs": [
+            "Any signer: sealing only succeeds when all 66 books are already loaded",
+            "and completed against the hardcoded commitment, so there is nothing to",
+            "gate — whoever triggers it just finalizes the one correct canon."
+          ],
+          "signer": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BookRoots",
+      "discriminator": [
+        29,
+        126,
+        242,
+        241,
+        224,
+        222,
+        235,
+        98
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "VerseAccount",
+      "discriminator": [
+        148,
+        219,
+        198,
+        191,
+        150,
+        120,
+        83,
+        131
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ConfigSealed",
+      "msg": "Config is sealed; the canonical text can no longer be changed"
+    },
+    {
+      "code": 6001,
+      "name": "BookOutOfRange",
+      "msg": "Book index is outside the canon (expected 1 to 66)"
+    },
+    {
+      "code": 6002,
+      "name": "ChapterOutOfRange",
+      "msg": "Chapter does not exist in this book"
+    },
+    {
+      "code": 6003,
+      "name": "ProofTooLong",
+      "msg": "Merkle proof is longer than the commitment tree allows"
+    },
+    {
+      "code": 6004,
+      "name": "RootNotCommitted",
+      "msg": "Chapter root does not belong to the committed canonical text"
+    },
+    {
+      "code": 6005,
+      "name": "BookAlreadyComplete",
+      "msg": "Book roots are already complete"
+    },
+    {
+      "code": 6006,
+      "name": "BookIncomplete",
+      "msg": "Book roots are incomplete; every chapter must be loaded first"
+    },
+    {
+      "code": 6007,
+      "name": "CanonIncomplete",
+      "msg": "Not every book is complete; all 66 must be loaded before sealing"
+    },
+    {
+      "code": 6008,
+      "name": "ChapterRootMissing",
+      "msg": "Chapter root has not been loaded yet"
+    },
+    {
+      "code": 6009,
+      "name": "TextTooLong",
+      "msg": "Verse text is longer than any verse in the canonical text"
+    },
+    {
+      "code": 6010,
+      "name": "TextEmpty",
+      "msg": "Verse text is empty"
+    },
+    {
+      "code": 6011,
+      "name": "VerseNotCanonical",
+      "msg": "Verse does not belong to the canonical text at this address"
+    },
+    {
+      "code": 6012,
+      "name": "CanonNotSealed",
+      "msg": "The canon is not sealed yet; registration is not open"
+    }
+  ],
+  "types": [
+    {
+      "name": "BookRoots",
+      "docs": [
+        "Chapter roots of a single book, at a PDA seeded by the book index.",
+        "",
+        "Sharded per book because all 1,189 roots in one account would be 38,048",
+        "bytes — over the 10,240-byte limit the runtime allows an account to grow",
+        "per instruction. The largest book (Psalms, 150 chapters) needs 4,800 bytes",
+        "and fits in a single creation, so no account here ever needs realloc."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "book",
+            "type": "u8"
+          },
+          {
+            "name": "loaded",
+            "docs": [
+              "How many roots are filled. Complete when it equals the book's chapters."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "completed",
+            "docs": [
+              "Set once by `complete_book`. Without it, calling `complete_book` twice",
+              "for the same book would increment `Config::books_complete` twice, and a",
+              "single loaded book completed 66 times would let `seal` close an",
+              "incomplete canon — permanently. This flag makes completion idempotent."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "loaded_mask",
+            "docs": [
+              "Bitmap of loaded chapters, so a rewrite is never counted twice.",
+              "One bit per chapter, `(chapter - 1)` indexed."
+            ],
+            "type": "bytes"
+          },
+          {
+            "name": "roots",
+            "docs": [
+              "Chapter roots, `(chapter - 1)` indexed."
+            ],
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "docs": [
+        "Global configuration. One per program, at a PDA of fixed seeds.",
+        "",
+        "Holds no commitment and no authority: the commitment is the",
+        "`ROOTS_COMMITMENT` constant in the bytecode, and every bootstrap",
+        "instruction is permissionless. This account only tracks progress —",
+        "how many books are loaded and whether the canon is sealed. Its fixed seeds",
+        "still matter: `register_verse` reads `sealed` from it, so accepting an",
+        "arbitrary account here would let someone fake a sealed canon."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "translation",
+            "docs": [
+              "Translation identifier of the frozen snapshot."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "books_complete",
+            "docs": [
+              "Books whose roots are fully loaded. Sealing requires all 66."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "sealed",
+            "docs": [
+              "Once true, no instruction writes to config or roots ever again."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VerseAccount",
+      "docs": [
+        "A registered verse. One account per verse, created once and never written",
+        "again — the existence of the account *is* the registration.",
+        "",
+        "There is no `update` and no `close` instruction for this account anywhere",
+        "in the program. That is the whole guarantee: permanence comes from the",
+        "absence of a write path, not from a flag."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "adopter",
+            "docs": [
+              "Wallet that paid for and registered this verse. Never named `owner`:",
+              "on Solana that word already means the program that owns the account",
+              "(docs/conventions/UBIQUITOUS_LANGUAGE.md)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Unix timestamp of the registering slot."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "book",
+            "type": "u8"
+          },
+          {
+            "name": "chapter",
+            "type": "u16"
+          },
+          {
+            "name": "verse",
+            "type": "u16"
+          },
+          {
+            "name": "text",
+            "docs": [
+              "The canonical text itself. On-chain by design — the premise of the",
+              "product is that the text lives on the chain, not a pointer to it."
+            ],
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "BOOK_ROOTS_SEED",
+      "type": "bytes",
+      "value": "[114, 111, 111, 116, 115]"
+    },
+    {
+      "name": "CONFIG_SEED",
+      "docs": [
+        "PDA seeds.",
+        "",
+        "Seeds are numeric on purpose: book names never appear in an address",
+        "(docs/conventions/UBIQUITOUS_LANGUAGE.md bans string seeds)."
+      ],
+      "type": "bytes",
+      "value": "[99, 111, 110, 102, 105, 103]"
+    },
+    {
+      "name": "VERSE_SEED",
+      "type": "bytes",
+      "value": "[118, 101, 114, 115, 101]"
+    }
+  ]
+}

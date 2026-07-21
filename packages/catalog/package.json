@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "build:dataset": "tsx src/cli/build-dataset.ts",
     "verify": "tsx src/cli/verify.ts",
-    "merkle": "tsx src/cli/merkle.ts"
+    "merkle": "tsx src/cli/merkle.ts",
+    "fixtures": "tsx src/cli/fixtures.ts"
   },
   "dependencies": {
     "@eternal-word/domain": "workspace:*",

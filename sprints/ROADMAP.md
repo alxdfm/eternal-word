@@ -127,7 +127,7 @@ fixa — priorizar por demanda real da comunidade.
 
 | # | Risco | Onde se resolve |
 |---|-------|-----------------|
-| R1 | **Orçamento de transação sem margem** — pior caso (Ester 8:9 + proof de 15 níveis) fica a ~8 bytes do limite de 1.232; uma instrução `ComputeBudget` estoura. Mitigação analisada: root por capítulo (proof cai para 256 bytes). | Spike **PG-00** (S02) → vira ADR |
+| ~~R1~~ | ~~**Orçamento de transação sem margem**~~ — **encerrado em 2026-07-19** pelo spike PG-00. Medido com transações reais, era pior do que se pensava: a árvore global dava 1.264 B e **não cabia nem sem `ComputeBudget`** (a estimativa antiga errou ~38 B para menos). Root por capítulo adotada: 998 B em v0 com `ComputeBudget`, 234 B de folga. Ver ADR `2026-07-19_forma-da-merkle-tree-e-orcamento-de-transacao.md`. | Resolvido |
 | R2 | **Upgrade authority do programa** — um programa "eterno" que continua atualizável contradiz a promessa. Revogar a authority (imutável de verdade) versus manter para correções de segurança é decisão de produto, não só técnica. | **HD** (S06) → vira ADR antes do go-live |
 | R3 | **Autoridade da Merkle root** — se a conta de config permite trocar a root depois do lançamento, existe um caminho para reescrever o que é "canônico". Relacionado ao R2. | Desenho do programa (S02) + **HD** (S06) |
 | R4 | **Indexer parado passa despercebido** — o site continua servindo dado velho sem erro visível. Precisa de alerta por atraso (heartbeat/lag), não só health check. | **IX** (S03), endurecido em **HD** (S06) |

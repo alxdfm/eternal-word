@@ -6,8 +6,125 @@
 
 ---
 
-**Última atualização:** 2026-07-19 (fundação + sprints + pipeline)
+**Última atualização:** 2026-07-19 (S02 iniciada — PG-00 e PG-01 entregues)
 **Sessão anterior durou:** N/A — sessão inicial
+
+---
+
+## S02 em andamento (branch `s02`)
+
+**PG-00 fechado — e mudou a decisão.** Medido com transações reais
+(`pnpm spike:pg00`), não somando bytes: a **árvore global não cabe**, 1.264 B
+contra o limite de 1.232 já **sem** `ComputeBudget`. A estimativa da S01 errou
+~38 B para menos (esqueceu os prefixos de 4 B do Borsh em `String`/`Vec` e
+chutou o envelope em 240 B quando o real é 270). **Root por capítulo adotada**:
+998 B em v0 com `ComputeBudget`, **234 B de folga**. Risco **R1 encerrado**.
+Pior caso real confirmado por varredura dos 31.098: Ester 8:9 (o texto domina
+a profundidade da proof). A estimativa duplicada foi **removida** do
+`packages/catalog/src/cli/merkle.ts` — dimensionamento existe num lugar só.
+
+**PG-01 fechado.** `programs/eternal-word/` scaffoldado, `anchor build` verde,
+IDL gerado.
+
+```
+Program ID (devnet):  9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG
+Toolchain:            Agave 3.1.13 + Anchor CLI 1.0.0 (container)
+anchor-lang:          1.1.2 — fixado pelo Cargo.lock versionado
+```
+
+⚠️ **`target/deploy/eternal_word-keypair.json` só existe nesta VM** e não é
+versionada. É a keypair de upgrade do programa — backup manual pendente.
+
+**Ambiente definido pelo Alexandre (2026-07-19):**
+- Build em container (`Dockerfile.build`), por reprodutibilidade de bytecode
+- **Sem localnet**: nada de `solana-test-validator`; validação em devnet
+- **Node 24**, mesma major do runtime alvo das Lambdas (`nodejs24.x`)
+
+**PG-02 fechado.** Config em PDA `["config"]` com o `roots_commitment` gravado
+na criação e nunca reescrito; 66 contas `["roots", book]` (maior: Salmos,
+4.800 B, sem realloc). `load_chapter_root` só aceita root que prove contra o
+commitment — a authority escolhe *quando* carregar, nunca *o quê*, então não
+há janela de confiança nem antes do `seal()`, que é irreversível. Sem `update`
+nem `close` em lugar nenhum. **Risco R3 fechado por construção.**
+
+⚠️ **Falha encontrada e corrigida durante o PG-02:** a folha do commitment era
+a chapter root crua. Com pares ordenados e sem bits de direção, isso não
+prendia a posição — dava para gravar uma root real no slot de outro capítulo e
+torná-lo **permanentemente irregistrável**. Texto não podia ser forjado (o leaf
+do versículo carrega o próprio endereço), mas era vandalismo irreversível. A
+folha passou a codificar `book:u8 | chapter:u16le | root:32`. Mudou só o
+`rootsCommitment` do `merkle-root.json`; a global root segue `112e5318…`.
+
+**PG-06: framework decidido.** Rust + `litesvm`, com proofs vindas de
+`data/test-fixtures.json` geradas pelo Catálogo. `anchor-bankrun` foi
+descartado (parado desde out/2024) e o `litesvm` TS migrou para `@solana/kit`,
+que conflita com o web3.js v1 do STACK. 5 testes Rust verdes; a suíte de
+`register_verse` depende do PG-05.
+
+```
+commitment das roots:  d36e745881ff874a1e877f347d9b8ff3986a3749f08ee1ce1de301bc30e82efc
+root global (S01):     112e5318594829adc058b35543812bf976ec999c4afdfec03a94e8ee5b3f7adb
+```
+
+**PG-03/04/05 fechados** — `VerseAccount` (texto on-chain, `space()` sem
+número mágico), PDA `["verse", book, chapter, verse]` numérica (duplicidade
+via `init`), `register_verse` espelhando a Merkle do Catálogo. Budget remedido
+com 5 contas: 1.031 B / 201 B de folga.
+
+**PG-06 fechado — o programa foi executado de verdade.** 20 testes Rust: 11 de
+Merkle + 8 rodando o bytecode no `litesvm` + 1 unit. Os 8 de execução provam o
+que só rodando o programa se prova: registro feliz grava os campos,
+**duplicidade recusada pelo `init`** (conta fica com o primeiro adopter),
+config forjada rejeitada (R3), texto adulterado recusado, gate de `sealed`
+segura, fluxo de carga completo. Para chegar em `sealed` sem 1.255 transações,
+os testes semeiam config+roots com `set_account`. CI ganhou job que compila o
+`.so` com `cargo build-sbf` e roda tudo; sem `.so`, os de execução pulam limpo.
+
+**PG-07 concluído (2026-07-21) — programa vivo em devnet:**
+
+```
+Program Id:        9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG
+ProgramData:       FkRZPX48U4pyYKz8zcos4fYHHQPG1rh5rGneTZpKzxrA
+Upgrade authority: 83n4Vyyz3UyzchsSRRQVzhyu2ycDgTtCQZ53AAH7q8Ud (a carteira; R2/S06)
+Deploy slot:       477844909
+Bytecode sha256:   68b88a1ba359adbe22d06d165dbacdc50b43997d033f6be1ed473b49b61e7ac5
+```
+
+Auditoria de segurança fechada antes do deploy (3 lentes: 2 minhas + 1 agente
+independente) — nada de confiança alta. Achado crítico (front-run de
+`initialize_config`) corrigido antes: commitment no bytecode + bootstrap
+permissionless (ADR `2026-07-21_...`).
+
+Nota operacional do deploy: o RPC público de devnet estourou "max retries" no
+1º `anchor deploy` (buffer parcial, 1.58 SOL presos — recuperados com
+`solana program close`). Redeploy com `solana program deploy --max-sign-attempts
+1000 --with-compute-unit-price 20000` funcionou. RPC dedicado fica para a S03.
+
+**PG-08 concluído (2026-07-21) — canon carregado, selado e smoke test verde.**
+
+Bootstrap (`pnpm bootstrap:devnet`): config + 1.189 loads (2/tx) + 66 completes
++ seal, tudo permissionless, ~0,34 SOL (rent dos 66 `book_roots`). O retry loop
+segurou o RPC público congestionado sem intervenção. Smoke test
+(`pnpm smoke:devnet`) — **números medidos em devnet:**
+
+| | Gênesis 1:1 | Ester 8:9 (mais longo) |
+|---|---|---|
+| texto | 56 B | 493 B |
+| transação (v0 + ComputeBudget) | 594 B | **1031 B** de 1232 |
+| compute units | 22.459 | 15.616 |
+| conta / rent | 114 B → 0,001684 SOL | 551 B → 0,004726 SOL |
+
+- Ester 8:9 = **1031 B**, idêntico à previsão do spike PG-00 (201 B de folga) —
+  a análise off-chain confirmada na chain.
+- Duplicidade de Gênesis 1:1 **recusada** pelo `init` (conta já existe).
+- CU real ~15-22k, muito abaixo do default de 200k; o limite de 400k do cliente
+  tem folga enorme.
+
+Assinaturas (devnet): Gn 1:1 `5L97vDDf…AVzMv5x`, Et 8:9 `2GGAjM9Q…DisDbVxJ`.
+
+**PG-10:** estimativas substituídas pelos números acima. Rent worst-case medido
+(0,0047 SOL) bate com a estimativa da ADR. **S02 completa** — resta só o merge
+para `main` (branch nunca pushada).
 
 ---
 
@@ -115,8 +232,8 @@ S03 (indexer) e S04 (jornada completa) — tabela no `sprints/ROADMAP.md`.
 - Decisões anteriores (Bíblia Livre PT, depois KJV) substituídas — ADRs
   antigas registram a cadeia; PT poderá voltar como exibição off-chain
 - `project-skeleton.zip` na raiz é o template original — pode ser removido
-- Alexandre trabalha numa VM (`callydus-vm`) via VS Code remote; arquivos
-  "em Downloads" podem estar na máquina host, não na VM
+- Alexandre trabalha numa VM Linux via VS Code remote; arquivos "em Downloads"
+  podem estar na máquina host, não na VM
 
 ---
 

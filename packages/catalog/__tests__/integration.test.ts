@@ -111,8 +111,9 @@ describe('merkle commitment', () => {
   })
 
   it('keeps the proof within the transaction budget in the per-chapter shape', () => {
-    // Risk R1 / spike PG-00: the global tree leaves almost no room, the
-    // per-chapter shape leaves plenty. Guard the number we are counting on.
+    // Spike PG-00 settled risk R1: the global tree does not fit at all, the
+    // per-chapter shape leaves 234 bytes spare. This depth is the number the
+    // decision rests on — PG-05 caps the on-chain proof at these 8 siblings.
     const maxDepth = chapters.reduce((max, chapter) => Math.max(max, chapter.tree.depth), 0)
     expect(chapters).toHaveLength(EXPECTED_CHAPTERS)
     expect(maxDepth).toBeLessThanOrEqual(8)

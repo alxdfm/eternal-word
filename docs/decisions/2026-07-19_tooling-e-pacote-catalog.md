@@ -22,7 +22,7 @@ prevista na lista de pacotes de `STACK.md`.
 | Opção | Prós | Contras |
 |-------|------|---------|
 | ESLint + Prettier | Ecossistema maior; plugins para tudo | Duas ferramentas, dois configs; lento em monorepo |
-| Biome — a escolhida | Uma ferramenta para lint e formatação, config única, ordens de grandeza mais rápido; já em uso pelo Alexandre no `callydus-pacifica-trading-bot` | Menos plugins de nicho |
+| Biome — a escolhida | Uma ferramenta para lint e formatação, config única, ordens de grandeza mais rápido; já em uso pelo Alexandre em outro projeto | Menos plugins de nicho |
 
 ### Onde mora o Catálogo
 

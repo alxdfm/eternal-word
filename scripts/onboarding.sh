@@ -48,7 +48,7 @@ echo ""
 # =============================================================================
 section "1/5 — IDENTIDADE DO PROJETO"
 
-ask "Nome do projeto (sem espaços, ex: callydus-trading):"
+ask "Nome do projeto (sem espaços, ex: meu-projeto):"
 read -r PROJECT_NAME
 
 ask "Descrição em uma frase (ex: 'Bot de trading automatizado para Solana perpetuals'):"

@@ -1,0 +1,80 @@
+# Dockerfile de build do programa Anchor do Eternal Word.
+#
+# Por que este arquivo existe?
+# Reprodutibilidade da toolchain, não compatibilidade de sistema. Esta VM é
+# Ubuntu 24.04 (glibc 2.39) e conseguiria rodar Agave 3.x nativamente — mas o
+# programa é a única parte irreversível do projeto (ver sprints/2026-S02/GOALS.md).
+# Um bytecode compilado com toolchain diferente da que gerou o hash registrado
+# em devnet é indistinguível de um bytecode adulterado. Fixar Agave e Anchor
+# numa imagem torna o build verificável por qualquer pessoa, hoje e depois do
+# lançamento em mainnet.
+#
+# (O mesmo padrão vale quando o host é antigo demais para rodar Agave 3.x
+# nativamente — aí o container deixa de ser conveniência e vira requisito.)
+#
+# Como usar:
+#   pnpm docker:build        constrói a imagem (só ao mudar as versões abaixo)
+#   pnpm program:build       compila o programa
+#   pnpm program:keys        anchor keys sync
+#
+# O código-fonte é montado via volume — sem rebuild de imagem a cada mudança.
+#
+# Node NÃO é instalado aqui de propósito: os testes do programa rodam no host
+# com anchor-bankrun (BPF VM in-process, sem validator) e o deploy é em devnet.
+# O container só compila e faz deploy — ver docs/decisions/ (ADR do PG-01).
+
+FROM ubuntu:24.04
+
+# Versões fixadas para garantir reprodutibilidade do bytecode.
+ARG AGAVE_VERSION=3.1.13
+ARG ANCHOR_VERSION=1.0.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV HOME=/root
+
+# PATH inclui:
+# - /root/.cargo/bin       → rustc, cargo (Rust via rustup)
+# - active_release/bin     → solana, cargo-build-sbf (Agave CLI)
+# - /root/.avm/bin         → anchor (Anchor CLI via avm)
+ENV PATH="${HOME}/.cargo/bin:${HOME}/.local/share/solana/install/active_release/bin:${HOME}/.avm/bin:${PATH}"
+
+# Dependências de sistema para compilar crates Rust com dependências nativas.
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    pkg-config \
+    build-essential \
+    libssl-dev \
+    libudev-dev \
+    python3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Rust via rustup — stable (1.85+, suporta edition2024).
+# --profile minimal: apenas rustc e cargo.
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y \
+    --default-toolchain stable \
+    --profile minimal
+
+# Agave 3.1.13 — inclui platform-tools v1.43 (cargo 1.85, edition2024).
+RUN sh -c "$(curl -sSfL https://release.anza.xyz/v${AGAVE_VERSION}/install)"
+
+# Anchor CLI via avm (Anchor Version Manager).
+# avm baixa binário pré-compilado do GitHub antes de tentar compilar do zero.
+#
+# O `--tag` é obrigatório. Sem ele, `cargo install --git` compila o que estiver
+# no branch default do repositório do Anchor **no momento do build**: dois
+# builds desta mesma imagem em datas diferentes produziriam avm diferentes — e
+# é o avm que instala o Anchor que compila um programa que será imutável
+# on-chain. Sem pin, a reprodutibilidade que justifica esta imagem é falsa, e
+# existe uma via de supply chain direta até o bytecode.
+#
+# NÃO trocar por `cargo install avm` (crates.io): lá `avm` é outro pacote
+# ("Manages node.js installations"). O nome colide.
+RUN cargo install --git https://github.com/coral-xyz/anchor --tag v${ANCHOR_VERSION} avm --locked \
+    && avm install ${ANCHOR_VERSION} \
+    && avm use ${ANCHOR_VERSION}
+
+WORKDIR /workspace
+
+CMD ["anchor", "build"]

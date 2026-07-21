@@ -87,6 +87,9 @@ docs/
   decisions/
     _TEMPLATE.md             ← template para registrar decisões
     YYYY-MM-DD_*.md          ← decisões registradas
+  modules/
+    <modulo>.md              ← referência de cada módulo (o que ELE é);
+                               ex.: eternal-word-program.md, blockchain-client.md
   sessions/
     latest.md                ← contexto da última sessão (fallback sem MCP)
 sprints/

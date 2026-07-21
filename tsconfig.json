@@ -8,6 +8,7 @@
     { "path": "packages/infrastructure" },
     { "path": "packages/blockchain" },
     { "path": "apps/web" },
-    { "path": "apps/api" }
+    { "path": "apps/api" },
+    { "path": "scripts" }
   ]
 }

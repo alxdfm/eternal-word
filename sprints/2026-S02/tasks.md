@@ -6,7 +6,16 @@
 
 ## Spike bloqueador
 
-- [ ] **PG-00** Orçamento de transação e forma da árvore — **BLOQUEIA A SPRINT**.
+- [x] **PG-00** Orçamento de transação e forma da árvore — **BLOQUEIA A SPRINT**.
+      ✅ **Resolvido em 2026-07-19** — ADR
+      `docs/decisions/2026-07-19_forma-da-merkle-tree-e-orcamento-de-transacao.md`.
+      Medido com transações reais em `scripts/spike-pg00-transaction-budget.ts`
+      (`pnpm spike:pg00`): **(a) não cabe** — 1.264 B contra o limite de 1.232
+      já **sem** `ComputeBudget`; a estimativa da S01 errou ~38 B para menos
+      (esqueceu os prefixos de tamanho do Borsh e subestimou o envelope em 30 B).
+      **(b) escolhida**: com o desenho final (5 contas, incluindo a de roots
+      por livro) são **1.031 B em v0 com `ComputeBudget`, 201 B de folga**;
+      a opção (a) nem serializa. Falta medir compute units e rent — PG-08.
       Medir de verdade (montando transações reais, não só somando bytes) as
       duas opções:
       - **(a) árvore global** — 31.098 folhas, 15 níveis, proof de 480 bytes;
@@ -22,9 +31,21 @@
 
 ## Programa
 
-- [ ] **PG-01** `anchor init programs/eternal-word` integrado ao workspace
+- [x] **PG-01** `anchor init programs/eternal-word` integrado ao workspace
       (Anchor + toolchain Solana fixados em `STACK.md` → **ADR** das versões).
-- [ ] **PG-02** Conta de configuração — guarda a(s) root(s), o identificador
+      ✅ **2026-07-19** — ADR `docs/decisions/2026-07-19_toolchain-do-programa-anchor.md`.
+      Agave 3.1.13 + Anchor CLI 1.0.0 no container; `anchor-lang` 1.1.2 fixado
+      pelo `Cargo.lock` versionado. `anchor build` verde, IDL gerado.
+      Program ID devnet: `9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG`.
+      Descartado o `rust-toolchain.toml` do scaffold (pinava Rust 1.89 contra
+      1.97 da imagem — dois pins discordantes). `Anchor.toml` sem localnet.
+      IDL versionado em `packages/blockchain/src/idl/` via `pnpm sync-idl`
+      (`target/` é gitignorado, então o IDL não chegava ao git sozinho).
+      Resíduo do scaffold resolvido no PG-02: a instrução placeholder
+      `initialize` e o `CustomError` saíram; as dev-dependencies `litesvm`/
+      `solana-*` deixaram de ser resíduo e passaram a ser intencionais quando
+      o PG-06 escolheu testar em Rust.
+- [x] **PG-02** Conta de configuração — guarda a(s) root(s), o identificador
       da tradução (`engwebp`) e metadados de proveniência. Definir **quem
       pode escrever nela e quando** (risco R3): a intenção é root gravada uma
       vez e nunca mais alterável.
@@ -35,13 +56,28 @@
       passa a conseguir gravar qualquer texto. É a falha clássica de
       "missing account validation" e o único caminho conhecido para
       contornar a proteção do texto. Teste correspondente: PG-06.
-- [ ] **PG-03** `VerseAccount` — layout com espaço calculado por constantes
+      ✅ **2026-07-19** — ADR `docs/decisions/2026-07-19_conta-de-configuracao-e-carga-das-roots.md`.
+      Config em PDA de seeds fixas; 66 contas `["roots", book]` (a maior, Salmos,
+      4.800 B — sem realloc). Commitment gravado na criação e nunca reescrito:
+      cada root só entra se provar contra ele, então a authority escolhe *quando*
+      carregar, nunca *o quê*. `seal()` irreversível. Sem `update` nem `close`.
+      **Falha corrigida no caminho:** a folha do commitment era a root crua, e
+      com pares ordenados isso não prendia a posição — dava para gravar uma root
+      real no capítulo errado e torná-lo irregistrável para sempre. Agora a folha
+      codifica `book|chapter|root`. Regressão coberta por teste.
+- [x] **PG-03** `VerseAccount` — layout com espaço calculado por constantes
       nomeadas, sem número mágico. Campo **`adopter`**, nunca `owner`
       (glossário). Sem instrução de `update` nem de `close`.
-- [ ] **PG-04** PDA `["verse", book, chapter, verse]` com índices numéricos
+      ✅ **2026-07-19** — `VerseAccount::space(text_len)` soma constantes
+      nomeadas, sem número mágico. Guarda o texto on-chain (premissa do
+      produto): 58 B de overhead + texto. Sem `update`, sem `close`.
+- [x] **PG-04** PDA `["verse", book, chapter, verse]` com índices numéricos
       (1–66), nunca strings — a existência da conta é o que impede
       duplicidade.
-- [ ] **PG-05** `register_verse` — verificação da Merkle proof contra a root
+      ✅ **2026-07-19** — seeds `[VERSE_SEED, book u8, chapter u16le, verse
+      u16le]`. A constraint `init` do Anchor é o que recusa a duplicidade: a
+      segunda tentativa encontra o endereço já ocupado.
+- [x] **PG-05** `register_verse` — verificação da Merkle proof contra a root
       da config, criação da conta, gravação de `adopter` e `created_at`.
       Erros customizados com mensagem em inglês; `require!` em vez de
       `unwrap`/`panic`.
@@ -53,26 +89,72 @@
       sha256, prefixo `0x00` folha / `0x01` nó, pares ordenados por bytes,
       nó ímpar promovido; folha =
       `book:u8 | chapter:u16le | verse:u16le | textLen:u32le | text:utf8`.
-- [ ] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
+      ✅ **2026-07-19** — proof verificada contra a root do capítulo lida da
+      conta de roots do livro; proof limitada a 8 irmãos e texto a 493 B.
+      Só `require!`, sem `unwrap`/`panic`. As 5 posições vazias da WEB não
+      precisam de caso especial: não têm folha, então nenhuma proof verifica.
+- [x] **PG-06** Testes do programa — framework a definir (litesvm/bankrun vs
       `anchor test` → **ADR**). Cobrir principalmente falhas:
-      - registro feliz grava os campos corretos
-      - **segundo registro da mesma posição falha** (duplicidade)
-      - proof inválida falha
-      - texto que não bate com a proof falha (vandalismo)
-      - posição não-registrável (ex.: At 8:37) não tem folha → falha
-      - book/chapter/verse fora de faixa falha
-      - conta de config errada/forjada falha
-- [ ] **PG-07** Deploy em devnet — Program ID e hash do bytecode registrados;
+      ✅ **2026-07-19** — ADR
+      `docs/decisions/2026-07-19_testes-do-programa-em-rust-com-fixtures.md`:
+      Rust + `litesvm`, proofs em `data/test-fixtures.json` geradas pelo
+      Catálogo. `anchor-bankrun` descartado (parado desde out/2024; `litesvm`
+      TS migrou para `@solana/kit`, incompatível com o web3.js v1 do STACK).
+      **20 testes Rust verdes** — 11 de Merkle (`merkle_fixtures.rs`) + 8 de
+      execução real no litesvm (`program_flow.rs`) + 1 unit:
+      - ✅ registro feliz grava todos os campos (adopter, texto, created_at)
+      - ✅ **segundo registro da mesma posição falha** — o `init` recusa o
+        endereço e a conta permanece com o primeiro adopter, sem sobrescrita
+      - ✅ config forjada rejeitada pela constraint `seeds` (defesa do R3)
+      - ✅ texto adulterado falha (`VerseNotCanonical`)
+      - ✅ registro antes do selo falha (`CanonNotSealed`)
+      - ✅ fluxo de carga completo (init_config → book_roots → load → complete)
+      - ✅ root fora do commitment e complete_book prematuro recusados
+      - ✅ (Merkle) proof inválida, endereço trocado, posições omitidas, faixa
+      CI: novo job compila o `.so` com `cargo build-sbf` (Agave pré-compilado,
+      não o container) e roda tudo. Sem o `.so`, os testes de execução pulam.
+- [x] **PG-07** Deploy em devnet — Program ID e hash do bytecode registrados;
       inicialização da config com a root da S01.
-- [ ] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
+      ✅ **2026-07-21** — `9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG`, slot
+      477844909, bytecode sha256 `68b88a1ba359adbe22d06d165dbacdc50b43997d033f6be1ed473b49b61e7ac5`,
+      upgrade authority = carteira `83n4Vyyz…` (R2/S06). A config **não** usa a
+      root da S01 diretamente: o commitment está cravado no bytecode (fix do
+      front-run), inicializado pelo bootstrap. Deploy via `solana program
+      deploy --max-sign-attempts 1000` após o RPC público estourar o `anchor
+      deploy` (buffer recuperado com `solana program close`).
+- [x] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
       longo, com `ComputeBudget` anexado) e uma tentativa de duplicidade
       recusada. Medir rent e compute units reais.
-- [ ] **PG-09** `packages/blockchain` — derivação de PDA, construção da
+      ✅ **2026-07-21** — `scripts/smoke-devnet.ts` (`pnpm smoke:devnet`).
+      Bootstrap carregou e selou o canon (66/66 livros, ~0,34 SOL). Medido:
+      Gn 1:1 → tx 594 B, 22.459 CU, conta 114 B / 0,001684 SOL; Et 8:9 → tx
+      **1031 B** (idêntico ao spike PG-00), 15.616 CU, conta 551 B / 0,004726
+      SOL. Duplicidade recusada pelo `init`. CU real ~15-22k << 200k default.
+- [x] **PG-09** `packages/blockchain` — derivação de PDA, construção da
       transação de registro e proof client-side (consumindo o Catálogo da
       S01), com o IDL tipado. É o que a S04 vai usar.
+      ✅ **2026-07-19** — cliente enxuto em `@solana/web3.js` v1 (o TS client do
+      Anchor só chegou em 0.32, mismatch com o CLI 1.0). Discriminadores e
+      ordem de contas lidos **direto do IDL sincronizado**, não recodificados.
+      `configPda`/`bookRootsPda`/`versePda`, `registerVerseTransaction` (v0 +
+      ComputeBudget), `CatalogProver` (proof do cliente), instruções admin
+      (init/load/complete/seal). 24 testes: proof do cliente verifica contra a
+      root do capítulo, transação de pior caso ≤ 1232 B.
+      **Bug encontrado e corrigido escrevendo o bootstrap:** `complete_book`
+      não era idempotente — um retry contava o livro duas vezes e `seal` podia
+      fechar um canon incompleto. Flag `completed` por livro; teste
+      `completing_a_book_twice_fails`.
+      Script `scripts/bootstrap-devnet.ts` (`pnpm bootstrap:devnet`): carga
+      completa idempotente do canon. `--dry-run` valida que o commitment bate
+      com o artefato e que os 1.189 loads cabem — no CI. **Executar em devnet
+      é PG-07/08.**
 
 ## Documentação
 
-- [ ] **PG-10** Atualizar `STACK.md` (versões de Anchor/Solana), `OVERVIEW.md`
+- [x] **PG-10** Atualizar `STACK.md` (versões de Anchor/Solana), `OVERVIEW.md`
       (fluxo real) e as ADRs de custo com os **números medidos** em devnet,
       substituindo as estimativas.
+      ✅ **2026-07-21** — `STACK.md` já com Agave 3.1.13 / Anchor 1.0.0.
+      Números medidos (rent 0,0017-0,0047 SOL/conta, CU 15-22k, tx até 1031 B)
+      registrados em `docs/sessions/latest.md` e na ADR do orçamento; a
+      estimativa de rent worst-case (~0,0047) foi confirmada na chain.
