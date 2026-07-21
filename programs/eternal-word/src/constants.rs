@@ -50,6 +50,22 @@ pub const MAX_VERSE_BYTES: usize = 493;
 /// Translation identifier of the frozen snapshot (eBible `engwebp`).
 pub const TRANSLATION: [u8; 8] = *b"engwebp\0";
 
+/// Merkle commitment over the 1,189 chapter roots of the frozen CanonicalText.
+///
+/// Hardcoded in the bytecode on purpose, not accepted as a parameter. If it
+/// were a parameter, whoever called `initialize_config` first — including a
+/// front-runner between deploy and the legitimate init — would choose what is
+/// "canonical" and could register arbitrary text. Baking it in makes the canon
+/// part of the program itself: auditable, immutable, un-forgeable. It also
+/// removes any need for a privileged authority, so the whole bootstrap is
+/// permissionless. Cross-checked against the catalog in `merkle_fixtures.rs`.
+pub const ROOTS_COMMITMENT: [u8; 32] = [
+    0xd3, 0x6e, 0x74, 0x58, 0x81, 0xff, 0x87, 0x4a, //
+    0x1e, 0x87, 0x7f, 0x34, 0x7d, 0x9b, 0x8f, 0xf3, //
+    0x98, 0x6a, 0x37, 0x49, 0xf0, 0x8e, 0xe1, 0xce, //
+    0x1d, 0xe3, 0x01, 0xbc, 0x30, 0xe8, 0x2e, 0xfc, //
+];
+
 /// Chapters in a book, or 0 when the book is outside the canon.
 ///
 /// Returning 0 rather than indexing blindly is what keeps callers panic-free:

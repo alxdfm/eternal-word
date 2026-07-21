@@ -22,12 +22,10 @@ declare_id!("9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG");
 pub mod eternal_word {
     use super::*;
 
-    /// Creates the config with the commitment over the canonical chapter roots.
-    pub fn initialize_config(
-        ctx: Context<InitializeConfig>,
-        roots_commitment: [u8; 32],
-    ) -> Result<()> {
-        handle_initialize_config(ctx, roots_commitment)
+    /// Creates the singleton config. The canon's commitment is a bytecode
+    /// constant, so there is no parameter and no privileged caller.
+    pub fn initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
+        handle_initialize_config(ctx)
     }
 
     /// Allocates the roots account of one book, sized from a bytecode constant.

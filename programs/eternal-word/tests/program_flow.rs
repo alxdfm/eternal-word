@@ -145,8 +145,6 @@ impl Harness {
     fn seed_config(&mut self, sealed: bool) {
         let (pda, bump) = Pubkey::find_program_address(&[CONFIG_SEED], &program_id());
         let config = Config {
-            authority: anchor_key(&self.authority.pubkey()),
-            roots_commitment: [0u8; 32],
             translation: *b"engwebp\0",
             books_complete: 66,
             sealed,
@@ -260,12 +258,11 @@ fn ix_register_verse(
 #[test]
 fn completing_a_book_twice_fails() {
     let f = fixtures();
-    let commitment = hex32(f["rootsCommitment"].as_str().unwrap());
     let (root, proof) = chapter_fixture(&f, 31, 1);
 
     let Some(mut h) = setup() else { return };
     let auth = h.authority.insecure_clone();
-    h.send(ix_initialize_config(&auth.pubkey(), commitment), &[&auth]).unwrap();
+    h.send(ix_initialize_config(&auth.pubkey()), &[&auth]).unwrap();
     h.send(ix_initialize_book_roots(&auth.pubkey(), 31), &[&auth]).unwrap();
     h.send(ix_load_chapter_root(&auth.pubkey(), 31, 1, root, &proof), &[&auth]).unwrap();
     h.send(ix_complete_book(&auth.pubkey(), 31), &[&auth]).expect("first completion");
@@ -425,8 +422,6 @@ fn a_forged_config_account_is_rejected() {
     // A second, attacker-owned "config" at an address that is not the PDA.
     let forged = Pubkey::new_unique();
     let config = Config {
-        authority: anchor_key(&h.authority.pubkey()),
-        roots_commitment: [0xAA; 32],
         translation: *b"engwebp\0",
         books_complete: 66,
         sealed: true,
@@ -451,17 +446,15 @@ fn a_forged_config_account_is_rejected() {
 
 // ─── instruction builders ───────────────────────────────────────────────────
 
-fn ix_initialize_config(authority: &Pubkey, commitment: [u8; 32]) -> Instruction {
-    let mut data = discriminator("initialize_config").to_vec();
-    data.extend_from_slice(&commitment);
+fn ix_initialize_config(payer: &Pubkey) -> Instruction {
     Instruction {
         program_id: program_id(),
         accounts: vec![
             AccountMeta::new(config_pda(), false),
-            AccountMeta::new(*authority, true),
+            AccountMeta::new(*payer, true),
             AccountMeta::new_readonly(solana_pubkey::Pubkey::default(), false), // system program
         ],
-        data,
+        data: discriminator("initialize_config").to_vec(),
     }
 }
 
@@ -527,13 +520,12 @@ fn ix_complete_book(signer: &Pubkey, book: u8) -> Instruction {
 #[test]
 fn loads_and_completes_a_single_chapter_book() {
     let f = fixtures();
-    let commitment = hex32(f["rootsCommitment"].as_str().unwrap());
     let (root, proof) = chapter_fixture(&f, 31, 1);
 
     let Some(mut h) = setup() else { return };
     let auth = h.authority.insecure_clone();
 
-    h.send(ix_initialize_config(&auth.pubkey(), commitment), &[&auth])
+    h.send(ix_initialize_config(&auth.pubkey()), &[&auth])
         .expect("initialize_config");
     h.send(ix_initialize_book_roots(&auth.pubkey(), 31), &[&auth])
         .expect("initialize_book_roots");
@@ -549,12 +541,11 @@ fn loads_and_completes_a_single_chapter_book() {
 #[test]
 fn load_rejects_a_root_not_in_the_commitment() {
     let f = fixtures();
-    let commitment = hex32(f["rootsCommitment"].as_str().unwrap());
     let (root, proof) = chapter_fixture(&f, 31, 1);
 
     let Some(mut h) = setup() else { return };
     let auth = h.authority.insecure_clone();
-    h.send(ix_initialize_config(&auth.pubkey(), commitment), &[&auth]).unwrap();
+    h.send(ix_initialize_config(&auth.pubkey()), &[&auth]).unwrap();
     h.send(ix_initialize_book_roots(&auth.pubkey(), 31), &[&auth]).unwrap();
 
     let mut tampered = root;
@@ -570,11 +561,10 @@ fn load_rejects_a_root_not_in_the_commitment() {
 #[test]
 fn complete_book_before_load_fails() {
     let f = fixtures();
-    let commitment = hex32(f["rootsCommitment"].as_str().unwrap());
 
     let Some(mut h) = setup() else { return };
     let auth = h.authority.insecure_clone();
-    h.send(ix_initialize_config(&auth.pubkey(), commitment), &[&auth]).unwrap();
+    h.send(ix_initialize_config(&auth.pubkey()), &[&auth]).unwrap();
     h.send(ix_initialize_book_roots(&auth.pubkey(), 31), &[&auth]).unwrap();
 
     let err = h

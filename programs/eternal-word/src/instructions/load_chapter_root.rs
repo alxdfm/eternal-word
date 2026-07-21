@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{chapter_exists, BOOK_ROOTS_SEED, CONFIG_SEED, MAX_COMMITMENT_PROOF};
+use crate::constants::{
+    chapter_exists, BOOK_ROOTS_SEED, CONFIG_SEED, MAX_COMMITMENT_PROOF, ROOTS_COMMITMENT,
+};
 use crate::error::EternalWordError;
 use crate::merkle::{hash_leaf, verify_proof};
 use crate::state::{BookRoots, Config};
@@ -67,7 +69,7 @@ pub fn handle_load_chapter_root(
 
     let leaf = commitment_leaf(book, chapter, &root);
     require!(
-        verify_proof(leaf, &proof, &config.roots_commitment),
+        verify_proof(leaf, &proof, &ROOTS_COMMITMENT),
         EternalWordError::RootNotCommitted
     );
 

@@ -4,19 +4,15 @@ use crate::constants::chapters_in_book;
 
 /// Global configuration. One per program, at a PDA of fixed seeds.
 ///
-/// The fixed seeds are the whole security of the Merkle validation: if
-/// `register_verse` accepted any account passed as config, an attacker would
-/// supply their own with a root of their choosing and every text check would
-/// become decorative (risk R3, task PG-02).
+/// Holds no commitment and no authority: the commitment is the
+/// `ROOTS_COMMITMENT` constant in the bytecode, and every bootstrap
+/// instruction is permissionless. This account only tracks progress —
+/// how many books are loaded and whether the canon is sealed. Its fixed seeds
+/// still matter: `register_verse` reads `sealed` from it, so accepting an
+/// arbitrary account here would let someone fake a sealed canon.
 #[account]
 #[derive(InitSpace)]
 pub struct Config {
-    /// Can create roots accounts and seal. Cannot choose what gets written:
-    /// every root is checked against `roots_commitment` first.
-    pub authority: Pubkey,
-    /// Merkle root over the 1,189 chapter roots, in canonical order. Written
-    /// once at creation and never writable again.
-    pub roots_commitment: [u8; 32],
     /// Translation identifier of the frozen snapshot.
     pub translation: [u8; 8],
     /// Books whose roots are fully loaded. Sealing requires all 66.
