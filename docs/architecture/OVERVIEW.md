@@ -28,8 +28,8 @@ distribuída, imutável e verificável — com progresso público e auditável.
 [apps/api — Lambda + Supabase]
       │  AVAILABLE → usuário assina a transação (client-side, wallet adapter)
       ▼
-[Programa Anchor — register_verse]
-      │  valida o texto contra o texto canônico (Merkle proof — proposta)
+[Programa Anchor — register_verse]  ✅ deployado em devnet (S02)
+      │  prova o texto contra o texto canônico (Merkle proof, verificada on-chain)
       │  cria VerseAccount na PDA ["verse", book, chapter, verse]
       ▼
 [Indexer — webhook/logsSubscribe]
@@ -45,16 +45,17 @@ distribuída, imutável e verificável — com progresso público e auditável.
 
 ## Módulos principais
 
-| Módulo | Responsabilidade | Localização |
-|--------|-----------------|-------------|
-| web | UI: busca, exploração, adoção, perfil, dashboard | `apps/web/` (a criar) |
-| api | Endpoints de consulta e indexer | `apps/api/` (a criar) |
-| domain | Entidades (Verse, Book...) e regras de negócio | `packages/domain/` (a criar) |
-| application | Casos de uso (buscar, registrar, sincronizar) | `packages/application/` (a criar) |
-| infrastructure | Drizzle/Supabase, implementação de ports | `packages/infrastructure/` (a criar) |
-| blockchain | PDAs, transações, cliente do programa | `packages/blockchain/` (a criar) |
-| shared | Tipos e utilitários comuns | `packages/shared/` (a criar) |
-| eternal-word (program) | Programa Anchor: `register_verse`, validação, contas | `programs/eternal-word/` (a criar) |
+| Módulo | Responsabilidade | Localização | Estado |
+|--------|-----------------|-------------|--------|
+| eternal-word (program) | Programa Anchor: `register_verse`, validação Merkle, contas | `programs/eternal-word/` | ✅ deployado em devnet (S02) — ver [`docs/modules/eternal-word-program.md`](../modules/eternal-word-program.md) |
+| catalog | CanonicalText, integridade e Merkle tree | `packages/catalog/` | ✅ S01 |
+| blockchain | PDAs, transações, proof client-side, cliente tipado do programa | `packages/blockchain/` | ✅ S02 |
+| domain | Entidades (Verse, Book...) e regras de negócio | `packages/domain/` | ✅ S01 |
+| shared | Tipos e utilitários comuns | `packages/shared/` | ✅ S01 |
+| application | Casos de uso (buscar, registrar, sincronizar) | `packages/application/` | placeholder — S03/S04 |
+| infrastructure | Drizzle/Supabase, implementação de ports | `packages/infrastructure/` | placeholder — S03 |
+| api | Endpoints de consulta e indexer | `apps/api/` | placeholder — S03 |
+| web | UI: busca, exploração, adoção, perfil, dashboard | `apps/web/` | placeholder — S04 |
 
 ---
 
