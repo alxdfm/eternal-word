@@ -24,13 +24,15 @@ export interface ConfigState {
 
 /**
  * Config layout after the 8-byte discriminator:
- *   authority Pubkey(32) | roots_commitment [32] | translation [8]
- *   | books_complete u8 | sealed bool | bump u8
+ *   translation [8] | books_complete u8 | sealed bool | bump u8
+ *
+ * No authority and no commitment: the commitment is a bytecode constant and
+ * the bootstrap is permissionless (see the program's constants.rs).
  */
 export function decodeConfig(data: Buffer): ConfigState {
   checkDiscriminator(data, CONFIG_DISCRIMINATOR, 'Config')
-  const booksComplete = data.readUInt8(8 + 32 + 32 + 8)
-  const sealed = data.readUInt8(8 + 32 + 32 + 8 + 1) !== 0
+  const booksComplete = data.readUInt8(8 + 8)
+  const sealed = data.readUInt8(8 + 8 + 1) !== 0
   return { sealed, booksComplete }
 }
 

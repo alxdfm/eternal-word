@@ -137,7 +137,7 @@ describe('admin instructions', () => {
 
   it('prefixes each with the discriminator the IDL declares', () => {
     const cases: [Buffer, string][] = [
-      [initializeConfigInstruction(authority, new Uint8Array(32)).data, 'initialize_config'],
+      [initializeConfigInstruction(authority).data, 'initialize_config'],
       [initializeBookRootsInstruction(authority, 1).data, 'initialize_book_roots'],
       [
         loadChapterRootInstruction(authority, 1, 1, new Uint8Array(32), []).data,
@@ -177,8 +177,10 @@ describe('admin instructions', () => {
     expect(data.readUInt32LE(43)).toBe(2) // proof length
   })
 
-  it('rejects a commitment that is not 32 bytes', () => {
-    expect(() => initializeConfigInstruction(authority, new Uint8Array(31))).toThrow(/32 bytes/)
+  it('takes no argument for initialize_config — the commitment is in the bytecode', () => {
+    expect([...initializeConfigInstruction(authority).data]).toEqual([
+      ...instructionDiscriminator('initialize_config'),
+    ])
   })
 })
 
@@ -187,8 +189,6 @@ describe('account decoders', () => {
     const build = (sealed: number) =>
       Buffer.concat([
         accountDiscriminator('Config'),
-        Buffer.alloc(32), // authority
-        Buffer.alloc(32), // roots_commitment
         Buffer.alloc(8), // translation
         Buffer.from([66]), // books_complete
         Buffer.from([sealed]),

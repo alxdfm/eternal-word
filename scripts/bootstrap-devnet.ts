@@ -159,7 +159,7 @@ async function main() {
     // run sends (ComputeBudget + up to LOADS_PER_TX loads). Uses the deepest
     // proofs so a passing dry-run guarantees the tightest real batch fits too.
     const payer = Keypair.generate().publicKey
-    assertFits([initializeConfigInstruction(payer, commitment)], payer, 'initialize_config')
+    assertFits([initializeConfigInstruction(payer)], payer, 'initialize_config')
     const deepest = [...chapters].sort((a, b) => b.proof.length - a.proof.length)
     for (const [, group] of byBook(deepest)) {
       for (const batch of chunk(group.slice(0, LOADS_PER_TX), LOADS_PER_TX)) {
@@ -182,14 +182,14 @@ async function main() {
     Uint8Array.from(JSON.parse(readFileSync(options.keypairPath, 'utf8'))),
   )
   const connection = new Connection(options.url, 'confirmed')
-  const authority = keypair.publicKey
-  process.stdout.write(`authority:    ${authority.toBase58()}\n\n`)
+  const wallet = keypair.publicKey
+  process.stdout.write(`wallet:    ${wallet.toBase58()}\n\n`)
 
   const send = async (instructions: TransactionInstruction[]) => {
     const transaction = new Transaction().add(...computeBudget(), ...instructions)
     const { blockhash } = await connection.getLatestBlockhash()
     transaction.recentBlockhash = blockhash
-    transaction.feePayer = authority
+    transaction.feePayer = wallet
     const signature = await connection.sendTransaction(transaction, [keypair])
     await connection.confirmTransaction(signature, 'confirmed')
   }
@@ -200,7 +200,7 @@ async function main() {
   const [config] = configPda()
   const configInfo = await fetch(config)
   if (configInfo === null) {
-    await send([initializeConfigInstruction(authority, commitment)])
+    await send([initializeConfigInstruction(wallet)])
     process.stdout.write('config created\n')
   } else if (decodeConfig(configInfo.data).sealed) {
     process.stdout.write('canon is already sealed — nothing to do\n')
@@ -214,26 +214,26 @@ async function main() {
     const info = await fetch(bookRoots)
     const state = info === null ? null : decodeBookRoots(info.data)
     if (state === null) {
-      await send([initializeBookRootsInstruction(authority, book)])
+      await send([initializeBookRootsInstruction(wallet, book)])
     }
 
     // Skip chapters already stored — a resume does only what remains.
     const pending = bookChapters.filter((c) => !(state?.isChapterLoaded(c.chapter) ?? false))
     for (const batch of chunk(pending, LOADS_PER_TX)) {
       await send(
-        batch.map((c) => loadChapterRootInstruction(authority, book, c.chapter, c.root, c.proof)),
+        batch.map((c) => loadChapterRootInstruction(wallet, book, c.chapter, c.root, c.proof)),
       )
     }
 
     if (!(state?.completed ?? false)) {
-      await send([completeBookInstruction(authority, book)])
+      await send([completeBookInstruction(wallet, book)])
     }
     process.stdout.write(
       `book ${book}: ${bookChapters.length} chapters — ${pending.length} loaded, completed\n`,
     )
   }
 
-  await send([sealInstruction(authority)])
+  await send([sealInstruction(wallet)])
   process.stdout.write('\ncanon sealed — registration is now open\n')
 }
 
