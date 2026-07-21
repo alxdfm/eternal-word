@@ -185,13 +185,33 @@ async function main() {
   const wallet = keypair.publicKey
   process.stdout.write(`wallet:    ${wallet.toBase58()}\n\n`)
 
+  // Anchor surfaces custom errors in hex. These two mean the effect already
+  // happened, so a confirm that times out after the tx actually landed (common
+  // on a congested public RPC) is success, not a failure to retry.
+  //   BookAlreadyComplete = 6005 = 0x1775 · ConfigSealed = 6000 = 0x1770
+  const ALREADY_DONE = ['0x1775', '0x1770']
+
   const send = async (instructions: TransactionInstruction[]) => {
-    const transaction = new Transaction().add(...computeBudget(), ...instructions)
-    const { blockhash } = await connection.getLatestBlockhash()
-    transaction.recentBlockhash = blockhash
-    transaction.feePayer = wallet
-    const signature = await connection.sendTransaction(transaction, [keypair])
-    await connection.confirmTransaction(signature, 'confirmed')
+    let lastError: unknown
+    for (let attempt = 0; attempt < 6; attempt++) {
+      try {
+        const transaction = new Transaction().add(...computeBudget(), ...instructions)
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash()
+        transaction.recentBlockhash = blockhash
+        transaction.feePayer = wallet
+        const signature = await connection.sendTransaction(transaction, [keypair])
+        await connection.confirmTransaction(
+          { signature, blockhash, lastValidBlockHeight },
+          'confirmed',
+        )
+        return
+      } catch (error) {
+        if (ALREADY_DONE.some((code) => String(error).includes(code))) return
+        lastError = error
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+      }
+    }
+    throw lastError
   }
   const fetch = (pda: PublicKey) => connection.getAccountInfo(pda)
 
