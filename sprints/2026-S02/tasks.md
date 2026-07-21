@@ -113,11 +113,23 @@
       - ✅ (Merkle) proof inválida, endereço trocado, posições omitidas, faixa
       CI: novo job compila o `.so` com `cargo build-sbf` (Agave pré-compilado,
       não o container) e roda tudo. Sem o `.so`, os testes de execução pulam.
-- [ ] **PG-07** Deploy em devnet — Program ID e hash do bytecode registrados;
+- [x] **PG-07** Deploy em devnet — Program ID e hash do bytecode registrados;
       inicialização da config com a root da S01.
-- [ ] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
+      ✅ **2026-07-21** — `9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG`, slot
+      477844909, bytecode sha256 `68b88a1ba359adbe22d06d165dbacdc50b43997d033f6be1ed473b49b61e7ac5`,
+      upgrade authority = carteira `83n4Vyyz…` (R2/S06). A config **não** usa a
+      root da S01 diretamente: o commitment está cravado no bytecode (fix do
+      front-run), inicializado pelo bootstrap. Deploy via `solana program
+      deploy --max-sign-attempts 1000` após o RPC público estourar o `anchor
+      deploy` (buffer recuperado com `solana program close`).
+- [x] **PG-08** Registro de fumaça em devnet — Gênesis 1:1, Ester 8:9 (o mais
       longo, com `ComputeBudget` anexado) e uma tentativa de duplicidade
       recusada. Medir rent e compute units reais.
+      ✅ **2026-07-21** — `scripts/smoke-devnet.ts` (`pnpm smoke:devnet`).
+      Bootstrap carregou e selou o canon (66/66 livros, ~0,34 SOL). Medido:
+      Gn 1:1 → tx 594 B, 22.459 CU, conta 114 B / 0,001684 SOL; Et 8:9 → tx
+      **1031 B** (idêntico ao spike PG-00), 15.616 CU, conta 551 B / 0,004726
+      SOL. Duplicidade recusada pelo `init`. CU real ~15-22k << 200k default.
 - [x] **PG-09** `packages/blockchain` — derivação de PDA, construção da
       transação de registro e proof client-side (consumindo o Catálogo da
       S01), com o IDL tipado. É o que a S04 vai usar.
@@ -139,6 +151,10 @@
 
 ## Documentação
 
-- [ ] **PG-10** Atualizar `STACK.md` (versões de Anchor/Solana), `OVERVIEW.md`
+- [x] **PG-10** Atualizar `STACK.md` (versões de Anchor/Solana), `OVERVIEW.md`
       (fluxo real) e as ADRs de custo com os **números medidos** em devnet,
       substituindo as estimativas.
+      ✅ **2026-07-21** — `STACK.md` já com Agave 3.1.13 / Anchor 1.0.0.
+      Números medidos (rent 0,0017-0,0047 SOL/conta, CU 15-22k, tx até 1031 B)
+      registrados em `docs/sessions/latest.md` e na ADR do orçamento; a
+      estimativa de rent worst-case (~0,0047) foi confirmada na chain.

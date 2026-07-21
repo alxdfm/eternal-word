@@ -149,6 +149,24 @@ o lugar a atualizar se ela mudar de novo.
 
 ---
 
+## Confirmado em devnet (PG-08, 2026-07-21)
+
+O smoke test registrou os dois versículos de verdade na chain. A previsão bateu:
+
+| | previsto (spike) | medido (devnet) |
+|---|---|---|
+| Ester 8:9 — tx v0 + ComputeBudget | 1.031 B | **1.031 B** |
+| folga sobre 1.232 | 201 B | 201 B |
+| compute units (verificação da proof) | não medido | 15.616 (Gn 1:1: 22.459) |
+| rent VerseAccount (pior caso, 493 B) | ~0,0047 SOL (estimativa) | 0,004726 SOL |
+
+O tamanho de transação — a coisa que decidiu a forma da árvore — saiu idêntico
+ao número off-chain. Os compute units reais (~15-22k) ficam muito abaixo do
+default de 200k, então a folga de 201 B para o `ComputeBudget` é mais que
+suficiente; o limite de 400k do cliente é conservador de propósito.
+
+---
+
 ## Revisão futura
 
 Os números aqui são **tamanho de transação**, medidos off-chain. O PG-08 mede

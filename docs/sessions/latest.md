@@ -80,10 +80,51 @@ segura, fluxo de carga completo. Para chegar em `sealed` sem 1.255 transações,
 os testes semeiam config+roots com `set_account`. CI ganhou job que compila o
 `.so` com `cargo build-sbf` e roda tudo; sem `.so`, os de execução pulam limpo.
 
-**Próximo: PG-07** (deploy em devnet) → **PG-08** (smoke test real). Atenção: o
-gate de `sealed` faz o PG-08 exigir o canon inteiro carregado e selado antes do
-primeiro registro — vai precisar de um script de bootstrap (1.189 load + 66
-complete + seal). Depois PG-09 (`packages/blockchain`) e PG-10 (docs).
+**PG-07 concluído (2026-07-21) — programa vivo em devnet:**
+
+```
+Program Id:        9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG
+ProgramData:       FkRZPX48U4pyYKz8zcos4fYHHQPG1rh5rGneTZpKzxrA
+Upgrade authority: 83n4Vyyz3UyzchsSRRQVzhyu2ycDgTtCQZ53AAH7q8Ud (a carteira; R2/S06)
+Deploy slot:       477844909
+Bytecode sha256:   68b88a1ba359adbe22d06d165dbacdc50b43997d033f6be1ed473b49b61e7ac5
+```
+
+Auditoria de segurança fechada antes do deploy (3 lentes: 2 minhas + 1 agente
+independente) — nada de confiança alta. Achado crítico (front-run de
+`initialize_config`) corrigido antes: commitment no bytecode + bootstrap
+permissionless (ADR `2026-07-21_...`).
+
+Nota operacional do deploy: o RPC público de devnet estourou "max retries" no
+1º `anchor deploy` (buffer parcial, 1.58 SOL presos — recuperados com
+`solana program close`). Redeploy com `solana program deploy --max-sign-attempts
+1000 --with-compute-unit-price 20000` funcionou. RPC dedicado fica para a S03.
+
+**PG-08 concluído (2026-07-21) — canon carregado, selado e smoke test verde.**
+
+Bootstrap (`pnpm bootstrap:devnet`): config + 1.189 loads (2/tx) + 66 completes
++ seal, tudo permissionless, ~0,34 SOL (rent dos 66 `book_roots`). O retry loop
+segurou o RPC público congestionado sem intervenção. Smoke test
+(`pnpm smoke:devnet`) — **números medidos em devnet:**
+
+| | Gênesis 1:1 | Ester 8:9 (mais longo) |
+|---|---|---|
+| texto | 56 B | 493 B |
+| transação (v0 + ComputeBudget) | 594 B | **1031 B** de 1232 |
+| compute units | 22.459 | 15.616 |
+| conta / rent | 114 B → 0,001684 SOL | 551 B → 0,004726 SOL |
+
+- Ester 8:9 = **1031 B**, idêntico à previsão do spike PG-00 (201 B de folga) —
+  a análise off-chain confirmada na chain.
+- Duplicidade de Gênesis 1:1 **recusada** pelo `init` (conta já existe).
+- CU real ~15-22k, muito abaixo do default de 200k; o limite de 400k do cliente
+  tem folga enorme.
+
+Assinaturas (devnet): Gn 1:1 `5L97vDDf…AVzMv5x`, Et 8:9 `2GGAjM9Q…DisDbVxJ`.
+
+**PG-10:** estimativas substituídas pelos números acima. Rent worst-case medido
+(0,0047 SOL) bate com a estimativa da ADR. **S02 completa** — resta só o merge
+para `main` (branch nunca pushada).
 
 ---
 
