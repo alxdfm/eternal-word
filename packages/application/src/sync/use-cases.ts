@@ -1,4 +1,9 @@
-import { type VerseAddress, VERSE_STATUS, createVerseAddress, verseAddressKey } from '@eternal-word/domain'
+import {
+  VERSE_STATUS,
+  type VerseAddress,
+  createVerseAddress,
+  verseAddressKey,
+} from '@eternal-word/domain'
 import { unwrap } from '@eternal-word/shared'
 import type { VerseRegistered } from './events.js'
 import type { ChainReader, VerseRepository } from './ports.js'
@@ -40,7 +45,10 @@ export interface ReconcileReport {
  * back — a REGISTERED lost to a reorg, or a spent FAILED attempt. A PENDING not
  * yet on-chain is left alone; expiry ages it out.
  */
-export async function reconcile(repo: VerseRepository, chain: ChainReader): Promise<ReconcileReport> {
+export async function reconcile(
+  repo: VerseRepository,
+  chain: ChainReader,
+): Promise<ReconcileReport> {
   const onChain = await chain.listRegistrations()
   for (const event of onChain) {
     await repo.recordRegistered(event)

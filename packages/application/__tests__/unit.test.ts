@@ -1,4 +1,9 @@
-import { type VerseAddress, VERSE_STATUS, type VerseStatus, verseAddressKey } from '@eternal-word/domain'
+import {
+  VERSE_STATUS,
+  type VerseAddress,
+  type VerseStatus,
+  verseAddressKey,
+} from '@eternal-word/domain'
 import { describe, expect, it } from 'vitest'
 import {
   type ChainReader,
@@ -6,8 +11,8 @@ import {
   type VerseRegistered,
   type VerseRepository,
   markPending,
-  recordRegistered,
   reconcile,
+  recordRegistered,
 } from '../src/index.js'
 
 const address = (book: number, chapter: number, verse: number): VerseAddress => ({
