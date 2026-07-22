@@ -5,6 +5,7 @@
       "dist",
       "data/canonical-text/*.json",
       "packages/blockchain/src/idl/*.json",
+      "packages/*/drizzle/**",
       ".anchor",
       "target"
     ]
