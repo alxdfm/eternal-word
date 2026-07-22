@@ -444,6 +444,21 @@
       ]
     }
   ],
+  "events": [
+    {
+      "name": "VerseRegistered",
+      "discriminator": [
+        215,
+        116,
+        12,
+        31,
+        161,
+        25,
+        119,
+        223
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -675,6 +690,41 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VerseRegistered",
+      "docs": [
+        "Emitted on every successful registration so the indexer can record it in",
+        "real time without re-reading the account. Carries only what the program",
+        "knows at registration; the indexer enriches it with the transaction",
+        "signature and the confirmation slot to build the domain event",
+        "(docs/conventions/UBIQUITOUS_LANGUAGE.md → VerseRegistered)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "book",
+            "type": "u8"
+          },
+          {
+            "name": "chapter",
+            "type": "u16"
+          },
+          {
+            "name": "verse",
+            "type": "u16"
+          },
+          {
+            "name": "adopter",
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
           }
         ]
       }
