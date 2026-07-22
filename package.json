@@ -23,7 +23,11 @@
     "sync-idl": "pnpm --filter @eternal-word/scripts sync-idl",
     "catalog:fixtures": "pnpm --filter @eternal-word/catalog fixtures",
     "bootstrap:devnet": "pnpm --filter @eternal-word/scripts bootstrap",
-    "smoke:devnet": "pnpm --filter @eternal-word/scripts smoke"
+    "smoke:devnet": "pnpm --filter @eternal-word/scripts smoke",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @eternal-word/infrastructure db:generate",
+    "db:migrate": "pnpm --filter @eternal-word/infrastructure db:migrate"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
