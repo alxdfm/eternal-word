@@ -9,7 +9,7 @@
 
 ## Programa — evento on-chain (precursor da camada 1)
 
-- [ ] **PG-11** Emitir o evento `VerseRegistered` on-chain no `register_verse`
+- [x] **PG-11** Emitir o evento `VerseRegistered` on-chain no `register_verse`
       (upgrade do programa) — **precursor da IX-01**, independente do DB. ADR
       `docs/decisions/2026-07-21_evento-onchain-no-register-verse.md`.
       Acrescentar `#[event] VerseRegistered { book, chapter, verse, adopter,
@@ -29,6 +29,13 @@
       versículo novo de amostra em devnet** para confirmar o `Program data:`
       antes de construir o indexer; re-registrar o novo `sha256`/slot em
       `docs/sessions/latest.md`.
+      ✅ **2026-07-22** — evento emitido (`emit!`, log-based); 23 testes verdes
+      (o novo decodifica o `Program data:` no litesvm); IDL sincronizado; upgrade
+      em devnet (slot 478083892, sha256 `8f2c6ecf…485388`) após `solana program
+      extend 10240` — o ProgramData da S02 tinha ~128 B de folga e o `.so` com
+      `emit!` ficou 856 B maior (228.280 B). Verificado on-chain com Gênesis 1:2
+      (`Program data:` de 53 B, discriminador de `VerseRegistered` conferido).
+      Detalhes em `docs/sessions/latest.md`.
 
 ## Dados (DB)
 
