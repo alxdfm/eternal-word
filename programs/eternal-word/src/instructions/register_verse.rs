@@ -64,6 +64,20 @@ fn verse_leaf(book: u8, chapter: u16, verse: u16, text: &str) -> [u8; 32] {
     hash_leaf(&payload)
 }
 
+/// Emitted on every successful registration so the indexer can record it in
+/// real time without re-reading the account. Carries only what the program
+/// knows at registration; the indexer enriches it with the transaction
+/// signature and the confirmation slot to build the domain event
+/// (docs/conventions/UBIQUITOUS_LANGUAGE.md → VerseRegistered).
+#[event]
+pub struct VerseRegistered {
+    pub book: u8,
+    pub chapter: u16,
+    pub verse: u16,
+    pub adopter: Pubkey,
+    pub created_at: i64,
+}
+
 /// Registers a verse: proves the text against the canon, then creates the
 /// account that holds it forever.
 ///
@@ -108,13 +122,27 @@ pub fn handle_register_verse(
         EternalWordError::VerseNotCanonical
     );
 
+    let adopter = ctx.accounts.adopter.key();
+    let created_at = Clock::get()?.unix_timestamp;
+
     let verse_account = &mut ctx.accounts.verse_account;
-    verse_account.adopter = ctx.accounts.adopter.key();
-    verse_account.created_at = Clock::get()?.unix_timestamp;
+    verse_account.adopter = adopter;
+    verse_account.created_at = created_at;
     verse_account.book = book;
     verse_account.chapter = chapter;
     verse_account.verse = verse;
     verse_account.text = text;
     verse_account.bump = ctx.bumps.verse_account;
+
+    // The indexer's real-time layer keys off this — see the ADR
+    // 2026-07-21_evento-onchain-no-register-verse. A log, not part of the
+    // transaction, so it costs nothing against the size budget.
+    emit!(VerseRegistered {
+        book,
+        chapter,
+        verse,
+        adopter,
+        created_at,
+    });
     Ok(())
 }

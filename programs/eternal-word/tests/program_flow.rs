@@ -11,7 +11,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use anchor_lang::{AnchorDeserialize, AnchorSerialize, Discriminator};
+use eternal_word::instructions::register_verse::VerseRegistered;
 use eternal_word::state::{BookRoots, Config, VerseAccount};
+use litesvm::types::TransactionMetadata;
 use litesvm::LiteSVM;
 use solana_account::Account;
 use solana_instruction::{AccountMeta, Instruction};
@@ -40,6 +42,34 @@ fn hex_bytes(value: &str) -> Vec<u8> {
 fn hex32(value: &str) -> [u8; 32] {
     let mut out = [0u8; 32];
     out.copy_from_slice(&hex_bytes(value));
+    out
+}
+
+/// Standard base64 with padding — matches what `sol_log_data` writes on the
+/// `Program data:` line. Hand-rolled to keep the tests dependency-free, like
+/// `hex_bytes` above.
+fn base64(bytes: &[u8]) -> String {
+    const ALPHABET: &[u8; 64] =
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::new();
+    for chunk in bytes.chunks(3) {
+        let b0 = chunk[0] as u32;
+        let b1 = *chunk.get(1).unwrap_or(&0) as u32;
+        let b2 = *chunk.get(2).unwrap_or(&0) as u32;
+        let n = (b0 << 16) | (b1 << 8) | b2;
+        out.push(ALPHABET[((n >> 18) & 63) as usize] as char);
+        out.push(ALPHABET[((n >> 12) & 63) as usize] as char);
+        out.push(if chunk.len() > 1 {
+            ALPHABET[((n >> 6) & 63) as usize] as char
+        } else {
+            '='
+        });
+        out.push(if chunk.len() > 2 {
+            ALPHABET[(n & 63) as usize] as char
+        } else {
+            '='
+        });
+    }
     out
 }
 
@@ -115,11 +145,20 @@ fn setup() -> Option<Harness> {
 
 impl Harness {
     fn send(&mut self, ix: Instruction, signers: &[&Keypair]) -> Result<(), String> {
+        self.send_meta(ix, signers).map(|_| ())
+    }
+
+    /// Like `send`, but keeps the transaction metadata — needed to read the
+    /// program logs where `emit!` writes the `VerseRegistered` event.
+    fn send_meta(
+        &mut self,
+        ix: Instruction,
+        signers: &[&Keypair],
+    ) -> Result<TransactionMetadata, String> {
         let msg = Message::new(&[ix], Some(&signers[0].pubkey()));
         let tx = Transaction::new(signers, msg, self.svm.latest_blockhash());
         self.svm
             .send_transaction(tx)
-            .map(|_| ())
             .map_err(|failed| format!("{:?}", failed.err))
     }
 
@@ -280,25 +319,31 @@ fn completing_a_book_twice_fails() {
 
 // ─── tests: register_verse, running the real bytecode ───────────────────────
 
+/// The shared ground of every `register_verse` test: a canon (sealed or not)
+/// with Genesis 1:1 loaded and a funded adopter. Returns `None` — a skip — when
+/// the compiled program is absent, exactly like `setup`.
+fn register_setup(sealed: bool) -> Option<(Harness, String, Vec<[u8; 32]>, Keypair)> {
+    let f = fixtures();
+    let (text, root, proof) = verse_fixture(&f, 1, 1, 1);
+    let mut h = setup()?;
+    h.seed_config(sealed);
+    h.seed_book_roots(1, 1, root);
+    let adopter = Keypair::new();
+    h.svm.airdrop(&adopter.pubkey(), 10_000_000_000).unwrap();
+    Some((h, text, proof, adopter))
+}
+
 /// The happy path: a sealed canon, a loaded chapter, a valid proof — the verse
 /// account is created and every field is what was sent.
 #[test]
 fn registers_a_verse_and_stores_the_right_fields() {
-    let f = fixtures();
-    let (text, root, proof) = verse_fixture(&f, 1, 1, 1);
-
-    let Some(mut h) = setup() else { return };
-    h.seed_config(true);
-    h.seed_book_roots(1, 1, root);
+    let Some((mut h, text, proof, adopter)) = register_setup(true) else { return };
 
     // litesvm's clock starts at 0; set a known timestamp so the assertion below
     // proves the program actually stores Clock::get().unix_timestamp.
     let mut clock: solana_clock::Clock = h.svm.get_sysvar();
     clock.unix_timestamp = 1_700_000_000;
     h.svm.set_sysvar(&clock);
-
-    let adopter = Keypair::new();
-    h.svm.airdrop(&adopter.pubkey(), 10_000_000_000).unwrap();
 
     h.send(
         ix_register_verse(&adopter.pubkey(), 1, 1, 1, &text, &proof, config_pda()),
@@ -316,19 +361,48 @@ fn registers_a_verse_and_stores_the_right_fields() {
     assert_eq!(stored.created_at, 1_700_000_000);
 }
 
+/// The indexer's real-time layer keys off the on-chain event, not the account.
+/// A successful registration must emit `VerseRegistered` with the exact fields —
+/// discriminator and Borsh body — on the `Program data:` log line.
+#[test]
+fn register_verse_emits_the_verse_registered_event() {
+    let Some((mut h, text, proof, adopter)) = register_setup(true) else { return };
+
+    let mut clock: solana_clock::Clock = h.svm.get_sysvar();
+    clock.unix_timestamp = 1_700_000_000;
+    h.svm.set_sysvar(&clock);
+
+    let meta = h
+        .send_meta(
+            ix_register_verse(&adopter.pubkey(), 1, 1, 1, &text, &proof, config_pda()),
+            &[&adopter],
+        )
+        .expect("register_verse happy path");
+
+    // Rebuild the exact bytes `emit!` logs: discriminator ++ Borsh body, base64.
+    let event = VerseRegistered {
+        book: 1,
+        chapter: 1,
+        verse: 1,
+        adopter: anchor_key(&adopter.pubkey()),
+        created_at: 1_700_000_000,
+    };
+    let mut expected = VerseRegistered::DISCRIMINATOR.to_vec();
+    expected.extend(borsh_bytes(&event));
+    let expected_b64 = base64(&expected);
+
+    assert!(
+        meta.logs.iter().any(|line| line.contains(&expected_b64)),
+        "VerseRegistered event not found in logs: {:?}",
+        meta.logs
+    );
+}
+
 /// The core permanence guarantee: the same verse cannot be registered twice.
 /// This is the whole reason there is no `close` — `init` refuses the address.
 #[test]
 fn registering_the_same_verse_twice_fails() {
-    let f = fixtures();
-    let (text, root, proof) = verse_fixture(&f, 1, 1, 1);
-
-    let Some(mut h) = setup() else { return };
-    h.seed_config(true);
-    h.seed_book_roots(1, 1, root);
-
-    let adopter = Keypair::new();
-    h.svm.airdrop(&adopter.pubkey(), 10_000_000_000).unwrap();
+    let Some((mut h, text, proof, adopter)) = register_setup(true) else { return };
 
     h.send(
         ix_register_verse(&adopter.pubkey(), 1, 1, 1, &text, &proof, config_pda()),
@@ -363,15 +437,7 @@ fn registering_the_same_verse_twice_fails() {
 /// Registration must not open before the canon is sealed.
 #[test]
 fn registration_is_closed_until_the_canon_is_sealed() {
-    let f = fixtures();
-    let (text, root, proof) = verse_fixture(&f, 1, 1, 1);
-
-    let Some(mut h) = setup() else { return };
-    h.seed_config(false); // canon not sealed
-    h.seed_book_roots(1, 1, root);
-
-    let adopter = Keypair::new();
-    h.svm.airdrop(&adopter.pubkey(), 10_000_000_000).unwrap();
+    let Some((mut h, text, proof, adopter)) = register_setup(false) else { return };
 
     let err = h
         .send(
@@ -387,15 +453,7 @@ fn registration_is_closed_until_the_canon_is_sealed() {
 /// now proven against the running program.
 #[test]
 fn registering_tampered_text_fails() {
-    let f = fixtures();
-    let (text, root, proof) = verse_fixture(&f, 1, 1, 1);
-
-    let Some(mut h) = setup() else { return };
-    h.seed_config(true);
-    h.seed_book_roots(1, 1, root);
-
-    let adopter = Keypair::new();
-    h.svm.airdrop(&adopter.pubkey(), 10_000_000_000).unwrap();
+    let Some((mut h, text, proof, adopter)) = register_setup(true) else { return };
 
     let tampered = format!("{text} ");
     let err = h
@@ -412,12 +470,7 @@ fn registering_tampered_text_fails() {
 /// the real one, is rejected because the seeds constraint recomputes the PDA.
 #[test]
 fn a_forged_config_account_is_rejected() {
-    let f = fixtures();
-    let (text, root, proof) = verse_fixture(&f, 1, 1, 1);
-
-    let Some(mut h) = setup() else { return };
-    h.seed_config(true);
-    h.seed_book_roots(1, 1, root);
+    let Some((mut h, text, proof, adopter)) = register_setup(true) else { return };
 
     // A second, attacker-owned "config" at an address that is not the PDA.
     let forged = Pubkey::new_unique();
@@ -430,9 +483,6 @@ fn a_forged_config_account_is_rejected() {
     let mut data = Config::DISCRIMINATOR.to_vec();
     data.extend(borsh_bytes(&config));
     h.write_account(forged, data);
-
-    let adopter = Keypair::new();
-    h.svm.airdrop(&adopter.pubkey(), 10_000_000_000).unwrap();
 
     let err = h
         .send(
@@ -560,8 +610,6 @@ fn load_rejects_a_root_not_in_the_commitment() {
 /// Completing a book before its chapter is loaded must fail.
 #[test]
 fn complete_book_before_load_fails() {
-    let f = fixtures();
-
     let Some(mut h) = setup() else { return };
     let auth = h.authority.insecure_clone();
     h.send(ix_initialize_config(&auth.pubkey()), &[&auth]).unwrap();
