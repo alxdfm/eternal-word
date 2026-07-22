@@ -7,9 +7,11 @@ import {
 import { describe, expect, it } from 'vitest'
 import {
   type ChainReader,
+  type HeartbeatState,
   type MirrorEntry,
   type VerseRegistered,
   type VerseRepository,
+  evaluateHeartbeat,
   markPending,
   reconcile,
   recordRegistered,
@@ -98,5 +100,34 @@ describe('address validation', () => {
 
   it('rejects marking an out-of-range address pending', async () => {
     await expect(markPending(new InMemoryRepo(), address(0, 1, 1), 'Sig')).rejects.toThrow()
+  })
+})
+
+describe('evaluateHeartbeat', () => {
+  const thresholds = { maxLagSlots: 100n, maxSilenceMs: 60_000 }
+  const now = new Date('2026-07-22T12:00:00Z')
+  const beat = (slot: bigint, agoMs: number): HeartbeatState => ({
+    lastProcessedSlot: slot,
+    updatedAt: new Date(now.getTime() - agoMs),
+  })
+
+  it('is unhealthy when the indexer has never beaten', () => {
+    expect(evaluateHeartbeat(null, 1000n, now, thresholds).healthy).toBe(false)
+  })
+
+  it('is unhealthy when it stopped beating (R4)', () => {
+    const health = evaluateHeartbeat(beat(1000n, 120_000), 1000n, now, thresholds)
+    expect(health.healthy).toBe(false)
+    expect(health.reason).toMatch(/no heartbeat/)
+  })
+
+  it('is unhealthy when it fell behind the chain', () => {
+    const health = evaluateHeartbeat(beat(1000n, 1_000), 2000n, now, thresholds)
+    expect(health.healthy).toBe(false)
+    expect(health.lagSlots).toBe(1000n)
+  })
+
+  it('is healthy when recent and caught up', () => {
+    expect(evaluateHeartbeat(beat(1990n, 1_000), 2000n, now, thresholds).healthy).toBe(true)
   })
 })
