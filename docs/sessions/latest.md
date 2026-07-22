@@ -62,10 +62,14 @@ reconciliação espelhou as contas on-chain e o Gn 1:4 recém-registrado aparece
 via `logsSubscribe` em segundos; a reconciliação também recupera o evento se o
 ws público não entregar. **74 testes unit verdes.**
 
-**Falta na S03 — IX-05 (handoff ao Alexandre):** provisionar Supabase + Helius +
-AWS/SST e rodar o mesmo `smoke:indexer` contra a infra. Precisa de
-contas/credenciais — os adapters/ports já isolam a troca (é configuração, não
-reescrita).
+**IX-05 scaffoldado (2026-07-22), falta provisionar + deploy.** `sst.config.ts`
+(webhook Function URL + Cron da reconciliação + Secrets), handlers em
+`apps/api/src/handlers/`, adapter `parseHeliusWebhook` (camada 1 de prod) e ADR
+`2026-07-22_deploy-do-indexer-em-sst`. **Handoff ao Alexandre:** criar
+Supabase (PG 15, pooler 6543) + Helius (webhook no Program ID) + AWS; `sst
+secret set DatabaseUrl/SolanaRpcUrl` + `sst deploy`; rodar `pnpm smoke:indexer`
+com `DATABASE_URL`=Supabase. Ports/adapters já isolam a troca — é configuração,
+não reescrita. Só então a S03 fecha e faz merge pra `main`.
 
 ---
 

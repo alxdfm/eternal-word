@@ -117,6 +117,13 @@
       do evento; (b) evento derrubado de propósito (fonte off) é recuperado
       pela reconciliação; (c) `PENDING` expirado volta a `AVAILABLE`. Medir o
       lag real.
+      🚧 **Código scaffoldado (2026-07-22), falta provisionar + deploy.** ADR
+      `2026-07-22_deploy-do-indexer-em-sst`; `sst.config.ts` (Function URL do
+      webhook + Cron da reconciliação + Secrets); handlers em
+      `apps/api/src/handlers/`; adapter `parseHeliusWebhook` (camada 1 de prod)
+      em `infrastructure`. **Handoff:** criar Supabase/Helius/AWS, `sst secret
+      set` + `sst deploy`, apontar o webhook Helius pro Program ID, e rodar
+      `pnpm smoke:indexer` com `DATABASE_URL`=Supabase.
 
 ## Documentação
 
