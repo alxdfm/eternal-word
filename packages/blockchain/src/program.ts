@@ -33,3 +33,10 @@ export function accountDiscriminator(name: string): Buffer {
   if (account === undefined) throw new Error(`account not in IDL: ${name}`)
   return Buffer.from(account.discriminator)
 }
+
+/** The 8-byte Anchor discriminator of an event, taken from the IDL. */
+export function eventDiscriminator(name: string): Buffer {
+  const event = idl.events.find((candidate) => candidate.name === name)
+  if (event === undefined) throw new Error(`event not in IDL: ${name}`)
+  return Buffer.from(event.discriminator)
+}

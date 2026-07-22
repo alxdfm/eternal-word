@@ -18,7 +18,10 @@ import {
   configPda,
   decodeBookRoots,
   decodeConfig,
+  decodeVerseAccount,
+  decodeVerseRegisteredEvent,
   encodeRegisterVerse,
+  eventDiscriminator,
   initializeBookRootsInstruction,
   initializeConfigInstruction,
   instructionDiscriminator,
@@ -26,6 +29,7 @@ import {
   registerVerseTransaction,
   sealInstruction,
   versePda,
+  verseRegisteredEventsFromLogs,
 } from '../src/index.js'
 
 const address = (book: number, chapter: number, verse: number): VerseAddress => ({
@@ -222,5 +226,76 @@ describe('account decoders', () => {
 
   it('rejects data whose discriminator is not the expected account', () => {
     expect(() => decodeConfig(Buffer.alloc(83))).toThrow(/not a Config/)
+  })
+})
+
+describe('event and account decoding', () => {
+  const adopter = Keypair.generate().publicKey
+
+  function verseRegisteredBytes(
+    book: number,
+    chapter: number,
+    verse: number,
+    createdAt: bigint,
+  ): Buffer {
+    const body = Buffer.alloc(1 + 2 + 2 + 32 + 8)
+    let offset = 0
+    body.writeUInt8(book, offset)
+    offset += 1
+    body.writeUInt16LE(chapter, offset)
+    offset += 2
+    body.writeUInt16LE(verse, offset)
+    offset += 2
+    adopter.toBuffer().copy(body, offset)
+    offset += 32
+    body.writeBigInt64LE(createdAt, offset)
+    return Buffer.concat([eventDiscriminator('VerseRegistered'), body])
+  }
+
+  it('decodes a VerseRegistered event', () => {
+    const event = decodeVerseRegisteredEvent(verseRegisteredBytes(1, 1, 1, 1_700_000_000n))
+    expect(event.book).toBe(1)
+    expect(event.chapter).toBe(1)
+    expect(event.verse).toBe(1)
+    expect(event.adopter.equals(adopter)).toBe(true)
+    expect(event.createdAt).toBe(1_700_000_000n)
+  })
+
+  it('pulls VerseRegistered events off Program data log lines', () => {
+    const line = `Program data: ${verseRegisteredBytes(17, 8, 9, 42n).toString('base64')}`
+    const events = verseRegisteredEventsFromLogs(['Program log: noise', line, 'Program log: end'])
+    expect(events).toHaveLength(1)
+    expect(events[0]?.verse).toBe(9)
+  })
+
+  it('rejects data that is not a VerseRegistered event', () => {
+    expect(() => decodeVerseRegisteredEvent(Buffer.alloc(53))).toThrow(/not a VerseRegistered/)
+  })
+
+  it('decodes a VerseAccount', () => {
+    const text = 'In the beginning God created the heavens and the earth.'
+    const textBytes = Buffer.from(text, 'utf8')
+    const body = Buffer.alloc(32 + 8 + 1 + 2 + 2 + 4 + textBytes.length + 1)
+    let offset = 0
+    adopter.toBuffer().copy(body, offset)
+    offset += 32
+    body.writeBigInt64LE(1_700_000_000n, offset)
+    offset += 8
+    body.writeUInt8(1, offset)
+    offset += 1
+    body.writeUInt16LE(1, offset)
+    offset += 2
+    body.writeUInt16LE(1, offset)
+    offset += 2
+    body.writeUInt32LE(textBytes.length, offset)
+    offset += 4
+    textBytes.copy(body, offset)
+    offset += textBytes.length
+    body.writeUInt8(254, offset)
+    const state = decodeVerseAccount(Buffer.concat([accountDiscriminator('VerseAccount'), body]))
+    expect(state.adopter.equals(adopter)).toBe(true)
+    expect(state.createdAt).toBe(1_700_000_000n)
+    expect(state.book).toBe(1)
+    expect(state.text).toBe(text)
   })
 })

@@ -1,3 +1,4 @@
+import { PublicKey } from '@solana/web3.js'
 import { accountDiscriminator } from './program.js'
 
 /**
@@ -9,6 +10,7 @@ import { accountDiscriminator } from './program.js'
 
 const CONFIG_DISCRIMINATOR = accountDiscriminator('Config')
 const BOOK_ROOTS_DISCRIMINATOR = accountDiscriminator('BookRoots')
+const VERSE_ACCOUNT_DISCRIMINATOR = accountDiscriminator('VerseAccount')
 
 function checkDiscriminator(data: Buffer, expected: Buffer, name: string): void {
   if (data.length < 8 || !data.subarray(0, 8).equals(expected)) {
@@ -66,4 +68,37 @@ export function decodeBookRoots(data: Buffer): BookRootsState {
       return byte !== undefined && (byte & (1 << (index % 8))) !== 0
     },
   }
+}
+
+export interface VerseAccountState {
+  readonly adopter: PublicKey
+  readonly createdAt: bigint
+  readonly book: number
+  readonly chapter: number
+  readonly verse: number
+  readonly text: string
+}
+
+/**
+ * VerseAccount layout after the 8-byte discriminator (state.rs):
+ *   adopter Pubkey[32] | created_at i64 | book u8 | chapter u16le
+ *   | verse u16le | text (u32le len + utf8) | bump u8
+ */
+export function decodeVerseAccount(data: Buffer): VerseAccountState {
+  checkDiscriminator(data, VERSE_ACCOUNT_DISCRIMINATOR, 'VerseAccount')
+  let offset = 8
+  const adopter = new PublicKey(data.subarray(offset, offset + 32))
+  offset += 32
+  const createdAt = data.readBigInt64LE(offset)
+  offset += 8
+  const book = data.readUInt8(offset)
+  offset += 1
+  const chapter = data.readUInt16LE(offset)
+  offset += 2
+  const verse = data.readUInt16LE(offset)
+  offset += 2
+  const textLength = data.readUInt32LE(offset)
+  offset += 4
+  const text = data.subarray(offset, offset + textLength).toString('utf8')
+  return { adopter, createdAt, book, chapter, verse, text }
 }
