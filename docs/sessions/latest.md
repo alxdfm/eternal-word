@@ -6,8 +6,48 @@
 
 ---
 
-**Última atualização:** 2026-07-19 (S02 iniciada — PG-00 e PG-01 entregues)
+**Última atualização:** 2026-07-22 (S03 — PG-11: evento on-chain + upgrade em devnet)
 **Sessão anterior durou:** N/A — sessão inicial
+
+---
+
+## S03 em andamento (branch `s03`)
+
+**Sprint scaffoldada** — `sprints/2026-S03/` (GOALS + tasks), prefixos `DB`/`IX`
+(+ `PG-11`, carryover do programa). ADRs novas aceitas:
+`2026-07-21_fonte-de-eventos-do-indexer.md` (logsSubscribe em dev, Helius em
+prod, ambos atrás da port `EventSource`) e
+`2026-07-21_evento-onchain-no-register-verse.md`. Deploy framework confirmado:
+**SST (v3 / Ion)**.
+
+**PG-11 concluído (2026-07-22) — evento on-chain + upgrade em devnet.**
+`register_verse` agora emite `VerseRegistered { book, chapter, verse, adopter,
+created_at }` via `emit!` (log-based, não `emit_cpi!`). 23 testes do programa
+verdes — o novo decodifica o `Program data:` no litesvm. Upgrade em devnet com
+**estado preservado** (sem re-bootstrap nem re-seal):
+
+```
+Program Id:        9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG (inalterado)
+Upgrade slot:      478083892 (era 477844909 na S02/PG-07)
+Bytecode sha256:   8f2c6ecfd4ff5f96b93eaa0055145f33ec45b468843977063a491a3874485388
+                   (era 68b88a1ba359adbe22d06d165dbacdc50b43997d033f6be1ed473b49b61e7ac5)
+Upgrade authority: 83n4Vyyz3UyzchsSRRQVzhyu2ycDgTtCQZ53AAH7q8Ud (inalterada; R2/S06)
+```
+
+⚠️ **Precisou de `solana program extend 10240`** antes do upgrade: a S02 alocou o
+ProgramData com folga quase nula (~128 B) e o `.so` com `emit!` ficou 856 B maior
+(228.280 B). O 1º `solana program deploy` falhou com "invalid program argument";
+após o extend (capacidade → 237.664 B) passou. **Sem buffer preso** (o deploy
+falho se auto-reembolsou; saldo intacto). Nota para o mainnet (S07): alocar o
+ProgramData com folga desde o deploy inicial.
+
+Verificado on-chain com um versículo de amostra: **Gênesis 1:2** registrado
+(conta `HNsc7pxrBRyNpB4hFuXq81YRrbkqXCyj4PHYeBN8zVSc`, tx `3wMhv74R…834W2npz`) —
+1 linha `Program data:` de 53 B com o discriminador de `VerseRegistered`
+conferido. IDL sincronizado em `packages/blockchain` (ganhou o evento).
+
+**Falta na PG-11:** nada — concluída. Próximo: `DB-00` (Postgres local + Drizzle)
+e a camada de indexer.
 
 ---
 
