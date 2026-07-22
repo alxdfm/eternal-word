@@ -6,6 +6,8 @@
       "data/canonical-text/*.json",
       "packages/blockchain/src/idl/*.json",
       "packages/*/drizzle/**",
+      "sst.config.ts",
+      ".sst",
       ".anchor",
       "target"
     ]
