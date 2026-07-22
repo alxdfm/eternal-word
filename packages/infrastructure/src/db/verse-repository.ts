@@ -15,15 +15,17 @@ const at = (address: VerseAddress) =>
 export function createVerseRepository(db: Database): VerseRepository {
   return {
     async recordRegistered(event: VerseRegistered): Promise<void> {
-      const registered = {
+      const base = {
         status: VERSE_STATUS.REGISTERED,
         adopter: event.adopter,
-        transaction: event.transaction,
         account: event.account,
         slot: event.slot,
         registeredAt: event.registeredAt,
         updatedAt: new Date(),
       }
+      // A reconciliation read carries no signature (null); keep whatever the row
+      // already has rather than nulling a real-time capture.
+      const set = event.transaction === null ? base : { ...base, transaction: event.transaction }
       // Upsert: the seed makes the row exist, but recording stays idempotent
       // even against a fresh mirror. REGISTERED is terminal, so a repeat is
       // effectively a no-op.
@@ -33,12 +35,10 @@ export function createVerseRepository(db: Database): VerseRepository {
           book: event.address.book,
           chapter: event.address.chapter,
           verse: event.address.verse,
-          ...registered,
+          transaction: event.transaction,
+          ...base,
         })
-        .onConflictDoUpdate({
-          target: [verses.book, verses.chapter, verses.verse],
-          set: registered,
-        })
+        .onConflictDoUpdate({ target: [verses.book, verses.chapter, verses.verse], set })
     },
 
     async markPending(address: VerseAddress, transaction: string): Promise<void> {

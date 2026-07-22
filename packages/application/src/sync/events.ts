@@ -11,7 +11,10 @@ export interface VerseRegistered {
   readonly address: VerseAddress
   readonly adopter: string
   readonly account: string
-  readonly transaction: string
+  /** The registering transaction. A real-time event carries it; a
+   * reconciliation read from `getProgramAccounts` cannot, so it is `null`
+   * there — the repository then preserves any signature already stored. */
+  readonly transaction: string | null
   readonly slot: bigint
   readonly registeredAt: Date
 }
