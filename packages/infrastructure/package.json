@@ -11,9 +11,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/cli/seed.ts"
   },
   "dependencies": {
+    "@eternal-word/catalog": "workspace:*",
     "@eternal-word/domain": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.9"
