@@ -34,7 +34,14 @@ importers:
 
   apps/web: {}
 
-  packages/application: {}
+  packages/application:
+    dependencies:
+      '@eternal-word/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@eternal-word/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   packages/blockchain:
     dependencies:
