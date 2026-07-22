@@ -29,7 +29,8 @@
     "db:generate": "pnpm --filter @eternal-word/infrastructure db:generate",
     "db:migrate": "pnpm --filter @eternal-word/infrastructure db:migrate",
     "db:seed": "pnpm --filter @eternal-word/infrastructure db:seed",
-    "indexer:dev": "pnpm --filter @eternal-word/api indexer"
+    "indexer:dev": "pnpm --filter @eternal-word/api indexer",
+    "smoke:indexer": "pnpm --filter @eternal-word/scripts smoke:indexer"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
