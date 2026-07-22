@@ -99,6 +99,8 @@ export const verses = pgTable(
     account: text('account'),
     slot: bigint('slot', { mode: 'bigint' }),
     registeredAt: timestamp('registered_at', { withTimezone: true }),
+    // Touched on every status write, so PENDING age-out (camada 2) has a clock.
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     primaryKey({ columns: [t.book, t.chapter, t.verse] }),

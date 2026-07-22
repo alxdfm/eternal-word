@@ -72,6 +72,9 @@ importers:
 
   packages/infrastructure:
     dependencies:
+      '@eternal-word/application':
+        specifier: workspace:*
+        version: link:../application
       '@eternal-word/catalog':
         specifier: workspace:*
         version: link:../catalog
