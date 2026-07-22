@@ -50,12 +50,23 @@ export async function reconcile(
   chain: ChainReader,
 ): Promise<ReconcileReport> {
   const onChain = await chain.listRegistrations()
-  for (const event of onChain) {
-    await repo.recordRegistered(event)
-  }
-
   const onChainKeys = new Set(onChain.map((event) => verseAddressKey(event.address)))
   const entries = await repo.listNonAvailable()
+  const alreadyRegistered = new Set(
+    entries
+      .filter((entry) => entry.status === VERSE_STATUS.REGISTERED)
+      .map((entry) => verseAddressKey(entry.address)),
+  )
+
+  // Record only what the mirror is missing, so a row already REGISTERED keeps
+  // the transaction signature its real-time event captured.
+  let recorded = 0
+  for (const event of onChain) {
+    if (alreadyRegistered.has(verseAddressKey(event.address))) continue
+    await repo.recordRegistered(event)
+    recorded += 1
+  }
+
   let released = 0
   for (const entry of entries) {
     if (onChainKeys.has(verseAddressKey(entry.address))) continue
@@ -64,5 +75,5 @@ export async function reconcile(
       released += 1
     }
   }
-  return { recorded: onChain.length, released }
+  return { recorded, released }
 }
