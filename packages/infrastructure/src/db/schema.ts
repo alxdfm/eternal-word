@@ -110,3 +110,12 @@ export const verses = pgTable(
     index('verses_adopter_idx').on(t.adopter),
   ],
 )
+
+/** Single-row liveness marker the reconciliation loop stamps each cycle. An
+ * external monitor reads it to tell a stopped indexer from a merely quiet one
+ * (R4) — a plain health check cannot. */
+export const syncHeartbeat = pgTable('sync_heartbeat', {
+  id: smallint('id').primaryKey(),
+  lastProcessedSlot: bigint('last_processed_slot', { mode: 'bigint' }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})

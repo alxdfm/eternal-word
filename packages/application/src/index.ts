@@ -16,3 +16,10 @@ export {
   recordRegistered,
   reconcile,
 } from './sync/use-cases.js'
+export {
+  type HeartbeatState,
+  type HeartbeatStore,
+  type HeartbeatThresholds,
+  type HeartbeatHealth,
+  evaluateHeartbeat,
+} from './sync/heartbeat.js'
