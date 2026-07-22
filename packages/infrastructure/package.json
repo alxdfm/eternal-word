@@ -15,6 +15,7 @@
     "db:seed": "tsx src/cli/seed.ts"
   },
   "dependencies": {
+    "@eternal-word/application": "workspace:*",
     "@eternal-word/catalog": "workspace:*",
     "@eternal-word/domain": "workspace:*",
     "drizzle-orm": "^0.45.2",
