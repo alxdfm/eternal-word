@@ -3,3 +3,5 @@
 export { createDatabase, databaseUrlFromEnv, type Database } from './db/client.js'
 export { createVerseRepository } from './db/verse-repository.js'
 export { seed, type SeedCounts } from './db/seed.js'
+export { createLogsEventSource } from './chain/logs-event-source.js'
+export { createProgramAccountsReader } from './chain/program-accounts-reader.js'
