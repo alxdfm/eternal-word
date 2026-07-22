@@ -28,7 +28,8 @@
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @eternal-word/infrastructure db:generate",
     "db:migrate": "pnpm --filter @eternal-word/infrastructure db:migrate",
-    "db:seed": "pnpm --filter @eternal-word/infrastructure db:seed"
+    "db:seed": "pnpm --filter @eternal-word/infrastructure db:seed",
+    "indexer:dev": "pnpm --filter @eternal-word/api indexer"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
