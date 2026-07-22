@@ -39,7 +39,7 @@
 
 ## Dados (DB)
 
-- [ ] **DB-00** Postgres local + cliente Drizzle atrás de port.
+- [x] **DB-00** Postgres local + cliente Drizzle atrás de port.
       `docker-compose.yml` com Postgres (major alinhada ao Supabase),
       conexão só via env (`DATABASE_URL`) — **nenhuma credencial no repo**.
       Cliente Drizzle em `packages/infrastructure`, implementando a port
@@ -49,7 +49,7 @@
       gerenciado. Empacotamento de deploy é **SST** (ver IX-05); nenhuma
       dependência nova sem ADR.
 
-- [ ] **DB-01** Schema Drizzle das 4 tabelas, **exatamente** como a ADR
+- [x] **DB-01** Schema Drizzle das 4 tabelas, **exatamente** como a ADR
       `2026-07-18_modelo-de-dados-off-chain.md`: `translations`, `verse_texts`
       (Catálogo), `books` (compartilhada), `verses` (Registro). Enum
       `verse_status` = `AVAILABLE | PENDING | REGISTERED | FAILED`. PKs/FKs +
@@ -58,7 +58,7 @@
       **`adopter`**, nunca `owner` (glossário). Migrations versionadas
       (drizzle-kit) — schema reconstruível do zero.
 
-- [ ] **DB-02** Seed idempotente a partir do CanonicalText
+- [x] **DB-02** Seed idempotente a partir do CanonicalText
       (`packages/catalog`): `translations` (WEB `engwebp`, `is_canonical`),
       `books` (1–66 com slug/abreviação/testamento/`chapters_count`),
       `verse_texts` (31.098 + 5 posições `NULL` da WEB) e as **31.098** linhas
@@ -70,7 +70,7 @@
 
 ## Indexer (IX)
 
-- [ ] **IX-00** Núcleo de sincronização em `packages/application`, atrás de
+- [x] **IX-00** Núcleo de sincronização em `packages/application`, atrás de
       ports — **portável, zero dependência de AWS**. Casos de uso:
       `recordRegistered` (evento → `REGISTERED`), `markPending`
       (envio → `PENDING`), `expirePending` (→ `FAILED` → `AVAILABLE`),
@@ -78,7 +78,7 @@
       `VerseRegistered`), `VerseRepository` (Drizzle), `ChainReader`
       (`getProgramAccounts`/`getAccountInfo` via `packages/blockchain`).
 
-- [ ] **IX-01** Camada 1 — evento em tempo real. Adapter `logsSubscribe` no
+- [x] **IX-01** Camada 1 — evento em tempo real. Adapter `logsSubscribe` no
       **devnet público** (ADR `2026-07-21_fonte-de-eventos-do-indexer.md`):
       assina os logs do Program ID, **decodifica o evento `VerseRegistered`
       tipado via IDL** (emitido pela PG-11, na linha `Program data:`) e chama
@@ -87,21 +87,21 @@
       adapter Helius webhook pluga na **mesma** port na IX-05 e decodifica o
       mesmo `Program data:`.
 
-- [ ] **IX-02** Camada 2 — `PENDING` otimista. O caso de uso `markPending`
+- [x] **IX-02** Camada 2 — `PENDING` otimista. O caso de uso `markPending`
       grava `PENDING` ao enviar a transação; a promoção para `REGISTERED` vem
       **somente** do indexer (camada 1/3), **nunca** do cliente. `PENDING`
       além do limite (N slots/segundos) sem confirmação → `FAILED` → volta a
       `AVAILABLE` na reconciliação. A S04 será o consumidor real; aqui o caso
       de uso é exercitado direto, integrado a `packages/blockchain/register`.
 
-- [ ] **IX-03** Camada 3 — reconciliação periódica. Job que varre
+- [x] **IX-03** Camada 3 — reconciliação periódica. Job que varre
       `getProgramAccounts` (**só** na reconciliação — nunca como mecanismo
       primário, guardrail do `STACK.md`) e compara o conjunto on-chain com o
       banco: grava eventos perdidos, corrige efeito de reorg via `slot`,
       destrava `PENDING` órfão, resolve **toda** divergência a favor da chain.
       Idempotente; loga o que corrigiu.
 
-- [ ] **IX-04** Alerta de atraso do indexer (**risco R4**). Heartbeat: última
+- [x] **IX-04** Alerta de atraso do indexer (**risco R4**). Heartbeat: última
       altura processada × slot atual da chain; dispara alerta quando o lag
       passa do limite **ou** o indexer para de bater — não só health check.
       Persistir o cursor (último slot processado) para retomar sem
@@ -120,7 +120,7 @@
 
 ## Documentação
 
-- [ ] **DB-10** ADRs aceitas: fonte de eventos
+- [x] **DB-10** ADRs aceitas: fonte de eventos
       (`2026-07-21_fonte-de-eventos-do-indexer.md`) e evento on-chain
       (`2026-07-21_evento-onchain-no-register-verse.md`). Atualizar `STACK.md`
       (Postgres/Drizzle, **deploy via SST**, comandos `db:*`, novo `sha256` do

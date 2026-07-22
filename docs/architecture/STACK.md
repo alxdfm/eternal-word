@@ -87,14 +87,14 @@ TypeScript:       strict + noUncheckedIndexedAccess + project references
 ```
 apps/
   web/            ← Next.js (placeholder até a S04)
-  api/            ← AWS Lambda: API + indexer (placeholder até a S03)
+  api/            ← indexer nas 3 camadas (runner + CLI) ✅ S03; Lambdas na IX-05
 packages/
   domain/         ← entidades e regras de negócio (sem dependências externas) ✅
   catalog/        ← CanonicalText, integridade e Merkle tree ✅
   shared/         ← tipos e utilitários comuns ✅
-  application/    ← casos de uso (orquestram domain via ports) — S03/S04
-  infrastructure/ ← Drizzle, Supabase, adapters (implementam ports) — S03
-  blockchain/     ← cliente do programa, PDAs, transações — S02
+  application/    ← sync core: ports + casos de uso do indexer ✅ S03
+  infrastructure/ ← Drizzle (schema/seed/repo) + adapters de chain ✅ S03
+  blockchain/     ← cliente do programa, PDAs, transações, decoders ✅ S02/S03
 scripts/          ← pacote do workspace (@eternal-word/scripts): spikes e
                     utilitários. É pacote, e não pasta solta, para entrar no
                     `tsc --build` — script fora das project references não é
@@ -127,6 +127,13 @@ pnpm docker:build       constrói a imagem da toolchain Anchor/Agave
 pnpm program:build      compila o programa dentro do container
 pnpm program:keys       anchor keys sync (dentro do container)
 pnpm program:deploy     anchor deploy em devnet (monta ~/.config/solana)
+pnpm bootstrap:devnet   carga do canon + seal em devnet
+pnpm smoke:devnet       registro de fumaça on-chain (rent/CU medidos)
+pnpm db:up / db:down    Postgres local (docker compose)
+pnpm db:migrate         aplica as migrations Drizzle (db:generate as gera)
+pnpm db:seed            popula o Catálogo + as 31.098 posições AVAILABLE
+pnpm indexer:dev        roda o indexer (devnet + Postgres local)
+pnpm smoke:indexer      smoke do indexer: chain → Postgres nas 2 camadas
 ```
 
 ---

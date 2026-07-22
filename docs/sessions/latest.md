@@ -6,7 +6,7 @@
 
 ---
 
-**Última atualização:** 2026-07-22 (S03 — PG-11: evento on-chain + upgrade em devnet)
+**Última atualização:** 2026-07-22 (S03 — DB + indexer local prontos; falta IX-05 infra)
 **Sessão anterior durou:** N/A — sessão inicial
 
 ---
@@ -46,8 +46,26 @@ Verificado on-chain com um versículo de amostra: **Gênesis 1:2** registrado
 1 linha `Program data:` de 53 B com o discriminador de `VerseRegistered`
 conferido. IDL sincronizado em `packages/blockchain` (ganhou o evento).
 
-**Falta na PG-11:** nada — concluída. Próximo: `DB-00` (Postgres local + Drizzle)
-e a camada de indexer.
+**PG-11 concluída.**
+
+**DB + indexer (DB-00 → IX-04, 2026-07-22) — espelho off-chain funcionando
+local.** Postgres local (docker compose) + Drizzle sobre postgres.js. Schema das
+4 tabelas + `sync_heartbeat`; seed idempotente (66 / 31.103 `verse_texts` /
+31.098 `verses` AVAILABLE) que **nunca reverte** estado do indexer. Núcleo de
+sync em `application` (ports + casos de uso), adapters em `infrastructure`
+(`logsSubscribe` camada 1, `getProgramAccounts` camada 3), runner/CLI em
+`apps/api` (`pnpm indexer:dev`). Heartbeat persistido para o R4. ADR
+`2026-07-22_tooling-de-banco-e-postgres-local`; módulo `docs/modules/indexer.md`.
+
+**Smoke local verde** (`pnpm smoke:indexer`, devnet + Postgres local): a
+reconciliação espelhou as contas on-chain e o Gn 1:4 recém-registrado apareceu
+via `logsSubscribe` em segundos; a reconciliação também recupera o evento se o
+ws público não entregar. **74 testes unit verdes.**
+
+**Falta na S03 — IX-05 (handoff ao Alexandre):** provisionar Supabase + Helius +
+AWS/SST e rodar o mesmo `smoke:indexer` contra a infra. Precisa de
+contas/credenciais — os adapters/ports já isolam a troca (é configuração, não
+reescrita).
 
 ---
 

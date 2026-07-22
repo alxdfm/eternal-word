@@ -52,9 +52,9 @@ distribuída, imutável e verificável — com progresso público e auditável.
 | blockchain | PDAs, transações, proof client-side, cliente tipado do programa | `packages/blockchain/` | ✅ S02 |
 | domain | Entidades (Verse, Book...) e regras de negócio | `packages/domain/` | ✅ S01 |
 | shared | Tipos e utilitários comuns | `packages/shared/` | ✅ S01 |
-| application | Casos de uso (buscar, registrar, sincronizar) | `packages/application/` | placeholder — S03/S04 |
-| infrastructure | Drizzle/Supabase, implementação de ports | `packages/infrastructure/` | placeholder — S03 |
-| api | Endpoints de consulta e indexer | `apps/api/` | placeholder — S03 |
+| application | Sync core: ports (`EventSource`/`ChainReader`/`VerseRepository`) + casos de uso do indexer | `packages/application/` | ✅ S03 |
+| infrastructure | Drizzle (schema/seed/repo) + adapters `logsSubscribe`/`getProgramAccounts` | `packages/infrastructure/` | ✅ S03 |
+| api | Indexer nas 3 camadas (runner + CLI `pnpm indexer:dev`) | `apps/api/` | ✅ S03 (Lambdas na IX-05) |
 | web | UI: busca, exploração, adoção, perfil, dashboard | `apps/web/` | placeholder — S04 |
 
 ---
@@ -63,9 +63,9 @@ distribuída, imutável e verificável — com progresso público e auditável.
 
 | Serviço | Tipo | Para que serve |
 |---------|------|----------------|
-| Supabase | SDK / Postgres | Índice off-chain: cache, busca, estatísticas |
-| RPC Solana (provider a definir, ex. Helius) | RPC / SDK | Envio e confirmação de transações |
-| Helius Webhooks (a confirmar) | Webhook | Notificar o indexer sobre novas VerseAccounts |
+| Supabase | Postgres gerenciado | Espelho off-chain (dev usa Postgres local; provisionar na IX-05) |
+| RPC Solana (devnet público; dedicado a definir) | RPC / WebSocket | Envio/confirmação de transações e `logsSubscribe` da camada 1 |
+| Helius Webhooks | Webhook | Camada 1 em produção — adapter alternativo da port `EventSource` (IX-05) |
 
 ---
 
