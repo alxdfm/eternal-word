@@ -8,12 +8,15 @@
     "spike:pg00": "tsx spike-pg00-transaction-budget.ts",
     "sync-idl": "tsx sync-idl.ts",
     "bootstrap": "tsx bootstrap-devnet.ts",
-    "smoke": "tsx smoke-devnet.ts"
+    "smoke": "tsx smoke-devnet.ts",
+    "smoke:indexer": "tsx smoke-indexer.ts"
   },
   "dependencies": {
+    "@eternal-word/application": "workspace:*",
     "@eternal-word/blockchain": "workspace:*",
     "@eternal-word/catalog": "workspace:*",
     "@eternal-word/domain": "workspace:*",
+    "@eternal-word/infrastructure": "workspace:*",
     "@eternal-word/shared": "workspace:*",
     "@solana/web3.js": "^1.98.4"
   }

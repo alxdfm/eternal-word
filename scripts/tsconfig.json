@@ -8,6 +8,9 @@
   "include": ["**/*.ts"],
   "references": [
     {
+      "path": "../packages/application"
+    },
+    {
       "path": "../packages/blockchain"
     },
     {
@@ -15,6 +18,9 @@
     },
     {
       "path": "../packages/domain"
+    },
+    {
+      "path": "../packages/infrastructure"
     },
     {
       "path": "../packages/shared"
