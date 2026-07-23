@@ -35,6 +35,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^24.10.1",
+    "sst": "^4.17.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^8.1.5",
