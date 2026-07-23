@@ -13,7 +13,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { APOCRYPHA_SOURCE_CODES, BOOKS, BOOKS_BY_SOURCE_CODE } from '../books.js'
-import { CANONICAL_TEXT_DIR } from '../dataset.js'
+import { canonicalTextDir } from '../dataset.js'
 
 const LINE_PATTERN = /^(\S+) (\d+):(\d+) ?(.*)$/
 
@@ -75,7 +75,7 @@ for (const line of lines) {
   currentChapter.push(cleaned === '' ? null : cleaned)
 }
 
-mkdirSync(CANONICAL_TEXT_DIR, { recursive: true })
+mkdirSync(canonicalTextDir(), { recursive: true })
 
 let totalChapters = 0
 let totalVerses = 0
@@ -93,7 +93,7 @@ for (const book of BOOKS) {
   }
 
   const fileName = `${String(book.book).padStart(2, '0')}-${book.slug}.json`
-  writeFileSync(join(CANONICAL_TEXT_DIR, fileName), `${JSON.stringify(payload, null, 1)}\n`)
+  writeFileSync(join(canonicalTextDir(), fileName), `${JSON.stringify(payload, null, 1)}\n`)
 
   totalChapters += chapters.length
   totalVerses += chapters.reduce(
