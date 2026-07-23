@@ -21,6 +21,7 @@ test-ledger/
 
 # SST (gerado por `sst install`/`sst deploy`)
 .sst/
+sst-env.d.ts
 
 # Env
 .env
