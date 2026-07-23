@@ -74,10 +74,16 @@ Webhook URL: `https://bbnymwygn5647rgvononidmb340xkwlc.lambda-url.us-west-1.on.a
 
 **Bug corrigido no deploy:** `catalog` resolvia o repo root no topo do módulo
 (`fromRepoRoot` → `pnpm-workspace.yaml`), quebrando o INIT da Lambda; virou lazy
-(`canonicalTextDir()`). ⚠️ **Pré-mainnet (S06/S07):** o Function URL é público
-sem auth — adicionar `authHeader` (Helius + Lambda); **rotacionar** as
-credenciais AWS/Helius (ficaram expostas no chat). **S03 completa — pronta pra
-merge em `main`** (branch `s03` não pushada).
+(`canonicalTextDir()`).
+
+**Webhook protegido (2026-07-23):** `authHeader` — secret `WebhookAuthToken` +
+checagem na Lambda; o Helius envia o header. Verificado: sem/errado token → 401,
+token certo grava em ~1s. Fecha o Function URL público.
+
+**S03 completa e mergeada em `main`** (merge `--no-ff` `chore(s03): merge S03`,
+não pushada). ⚠️ **Ainda a fazer (Alexandre):** rotacionar as credenciais
+AWS/Helius (expostas no chat) e `git push` da `main`. O cron roda a cada 2 min
+indefinidamente (`sst remove --stage production` para desmontar).
 
 ---
 
