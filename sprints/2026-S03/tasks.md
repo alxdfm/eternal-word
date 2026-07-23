@@ -107,7 +107,7 @@
       Persistir o cursor (último slot processado) para retomar sem
       reprocessar tudo.
 
-- [ ] **IX-05** Provisionamento da infra externa + smoke test S03. Supabase
+- [x] **IX-05** Provisionamento da infra externa + smoke test S03. Supabase
       Postgres (a mesma migração/seed roda contra ele), Helius plugado na port
       `EventSource`, empacotamento das Lambdas em **SST (v3 / Ion)** — webhook
       via Function URL, reconciliação (IX-03) e heartbeat (IX-04) via cron do
@@ -117,13 +117,18 @@
       do evento; (b) evento derrubado de propósito (fonte off) é recuperado
       pela reconciliação; (c) `PENDING` expirado volta a `AVAILABLE`. Medir o
       lag real.
-      🚧 **Código scaffoldado (2026-07-22), falta provisionar + deploy.** ADR
-      `2026-07-22_deploy-do-indexer-em-sst`; `sst.config.ts` (Function URL do
-      webhook + Cron da reconciliação + Secrets); handlers em
-      `apps/api/src/handlers/`; adapter `parseHeliusWebhook` (camada 1 de prod)
-      em `infrastructure`. **Handoff:** criar Supabase/Helius/AWS, `sst secret
-      set` + `sst deploy`, apontar o webhook Helius pro Program ID, e rodar
-      `pnpm smoke:indexer` com `DATABASE_URL`=Supabase.
+      ✅ **2026-07-23 — deployado e verificado em produção.** Supabase (PG 15,
+      pooler 6543) migrado + semeado (66/31.103/31.098); SST v4 deployou o
+      webhook (Function URL) + Cron de reconciliação (2 min) + Secrets em
+      us-west-1; webhook Helius rawDevnet no Program ID. **Smoke real:** um
+      `register_verse` em devnet apareceu no Supabase em **~2s** via a Lambda do
+      webhook; o cron reconcilia com `health ok`. ADR
+      `2026-07-22_deploy-do-indexer-em-sst`. **Bug corrigido no deploy:** o
+      `catalog` resolvia o repo root no topo do módulo (`fromRepoRoot`),
+      quebrando o INIT da Lambda — virou lazy (`canonicalTextDir()`).
+      ⚠️ **Pré-mainnet (S06/S07):** o Function URL é público sem auth —
+      adicionar `authHeader` no webhook Helius + checagem na Lambda; rotacionar
+      as credenciais AWS/Helius expostas.
 
 ## Documentação
 

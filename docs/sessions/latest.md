@@ -62,14 +62,22 @@ reconciliação espelhou as contas on-chain e o Gn 1:4 recém-registrado aparece
 via `logsSubscribe` em segundos; a reconciliação também recupera o evento se o
 ws público não entregar. **74 testes unit verdes.**
 
-**IX-05 scaffoldado (2026-07-22), falta provisionar + deploy.** `sst.config.ts`
-(webhook Function URL + Cron da reconciliação + Secrets), handlers em
-`apps/api/src/handlers/`, adapter `parseHeliusWebhook` (camada 1 de prod) e ADR
-`2026-07-22_deploy-do-indexer-em-sst`. **Handoff ao Alexandre:** criar
-Supabase (PG 15, pooler 6543) + Helius (webhook no Program ID) + AWS; `sst
-secret set DatabaseUrl/SolanaRpcUrl` + `sst deploy`; rodar `pnpm smoke:indexer`
-com `DATABASE_URL`=Supabase. Ports/adapters já isolam a troca — é configuração,
-não reescrita. Só então a S03 fecha e faz merge pra `main`.
+**IX-05 concluído (2026-07-23) — deployado e verificado em produção.** Supabase
+(PG 15, pooler 6543) migrado + semeado (66/31.103/31.098). SST v4 (`sst deploy`,
+stage production, us-west-1) provisionou o webhook (Function URL) + Cron de
+reconciliação (2 min) + Secrets (`DatabaseUrl`/`SolanaRpcUrl`); creds AWS via env
+(SDK), não `aws configure`. Webhook Helius rawDevnet no Program ID. **Smoke
+real:** `register_verse` em devnet → Supabase em **~2s** pela Lambda do webhook;
+o cron reconcilia com `health ok`. ADR `2026-07-22_deploy-do-indexer-em-sst`.
+
+Webhook URL: `https://bbnymwygn5647rgvononidmb340xkwlc.lambda-url.us-west-1.on.aws/`.
+
+**Bug corrigido no deploy:** `catalog` resolvia o repo root no topo do módulo
+(`fromRepoRoot` → `pnpm-workspace.yaml`), quebrando o INIT da Lambda; virou lazy
+(`canonicalTextDir()`). ⚠️ **Pré-mainnet (S06/S07):** o Function URL é público
+sem auth — adicionar `authHeader` (Helius + Lambda); **rotacionar** as
+credenciais AWS/Helius (ficaram expostas no chat). **S03 completa — pronta pra
+merge em `main`** (branch `s03` não pushada).
 
 ---
 
