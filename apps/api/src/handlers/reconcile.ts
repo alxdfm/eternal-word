@@ -1,9 +1,13 @@
 import { evaluateHeartbeat, expirePending, reconcile } from '@eternal-word/application'
 import { context } from '../context.js'
 
+// Sized for the 15-minute cron cadence (sst.config.ts): an external monitor must
+// tolerate a full interval between beats before alarming, plus margin. ~15 min ≈
+// 2,250 devnet slots at ~0.4s/slot, so 4,000 slots / 45 min give ~2–3 intervals
+// of slack. Ver ADR docs/decisions/2026-07-23_tuning-de-custo-do-indexer.md.
 const PENDING_TTL_MS = Number(process.env.INDEXER_PENDING_TTL_MS ?? 120_000)
-const MAX_LAG_SLOTS = BigInt(process.env.INDEXER_MAX_LAG_SLOTS ?? 300)
-const MAX_SILENCE_MS = Number(process.env.INDEXER_MAX_SILENCE_MS ?? 900_000)
+const MAX_LAG_SLOTS = BigInt(process.env.INDEXER_MAX_LAG_SLOTS ?? 4_000)
+const MAX_SILENCE_MS = Number(process.env.INDEXER_MAX_SILENCE_MS ?? 2_700_000)
 
 /**
  * Camadas 2/3 + R4 on a schedule (EventBridge cron): age out stale PENDING,

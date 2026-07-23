@@ -65,3 +65,38 @@ apps/api/src/cli/indexer.ts   entrypoint (pnpm indexer:dev)
   contas on-chain e um versículo recém-registrado aparece via `logsSubscribe`;
   contra Postgres local + devnet. A mesma execução roda na IX-05 contra a infra
   provisionada.
+
+## Operação e custo (produção)
+
+Deploy via SST (`sst.config.ts`). Ver ADRs
+`2026-07-22_deploy-do-indexer-em-sst` e `2026-07-23_tuning-de-custo-do-indexer`.
+
+- **Webhook** (camada 1): `sst.aws.Function` com Function URL, protegida por
+  `authHeader` (secret `WebhookAuthToken`). Event-driven — custo ≈ nº de
+  registros. **Não faz RPC.**
+- **Cron** (camadas 2/3 + R4): `sst.aws.Cron` a **cada 15 min**. Lê a chain
+  (`getProgramAccounts`) pelo **devnet público** — Helius fica só no webhook.
+- Ambas: **256 MB**, retenção de logs **2 semanas**.
+
+Botões (tudo por env / `sst.config.ts`, sem tocar no núcleo):
+
+| O quê | Onde | Default |
+|-------|------|---------|
+| Intervalo do cron | `schedule` no `sst.config.ts` | `rate(15 minutes)` |
+| RPC do reconcile | `reconcileRpcUrl` no `sst.config.ts` | devnet público |
+| TTL do PENDING | `INDEXER_PENDING_TTL_MS` | 120.000 (2 min) |
+| Lag máximo (R4) | `INDEXER_MAX_LAG_SLOTS` | 4.000 (~27 min de slots) |
+| Silêncio máximo (R4) | `INDEXER_MAX_SILENCE_MS` | 2.700.000 (45 min) |
+| Memória / retenção | `shared` no `sst.config.ts` | 256 MB / 2 semanas |
+
+**Segredos:** `sst secret set DatabaseUrl <pooler 6543>` e
+`sst secret set WebhookAuthToken <token>` (o mesmo do `authHeader` no Helius).
+**Desmontar:** `sst remove --stage production`.
+
+**Custo:** AWS em centavos/mês (o cron consome ~730 GB-s); o teto real é o **free
+tier da Helius** (só o webhook o toca agora). Confirmar no dashboard da Helius
+após ~24h.
+
+⚠️ **Pré-mainnet (S06):** rate limiting na borda do Function URL (o `authHeader`
+bloqueia injeção, mas cada request ainda invoca a Lambda — custo/DoS), RPC
+dedicado para o reconcile, e alarme real do heartbeat (CloudWatch → SNS).

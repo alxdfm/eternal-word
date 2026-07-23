@@ -82,8 +82,14 @@ token certo grava em ~1s. Fecha o Function URL público.
 
 **S03 completa e mergeada em `main`** (merge `--no-ff` `chore(s03): merge S03`,
 não pushada). ⚠️ **Ainda a fazer (Alexandre):** rotacionar as credenciais
-AWS/Helius (expostas no chat) e `git push` da `main`. O cron roda a cada 2 min
-indefinidamente (`sst remove --stage production` para desmontar).
+AWS/Helius (expostas no chat) e `git push` da `main`.
+
+**Tuning de custo (2026-07-23, branch `chore/indexer-cost-tuning`):** cron 2→15
+min, reconcile no **devnet público** (Helius só no webhook), Lambdas 1024→256 MB,
+retenção de logs 2 semanas, thresholds do heartbeat recalibrados. Custo AWS em
+centavos/mês; Helius aliviada (o `getProgramAccounts` saiu da conta dela). ADR
+`2026-07-23_tuning-de-custo-do-indexer`; botões em `docs/modules/indexer.md`.
+Desmontar tudo: `sst remove --stage production`.
 
 ---
 
