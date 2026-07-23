@@ -18,6 +18,8 @@ export default $config({
   async run() {
     const databaseUrl = new sst.Secret('DatabaseUrl')
     const solanaRpcUrl = new sst.Secret('SolanaRpcUrl')
+    // Shared secret the webhook checks against Helius's Authorization header.
+    const webhookAuthToken = new sst.Secret('WebhookAuthToken')
 
     const environment = {
       DATABASE_URL: databaseUrl.value,
@@ -25,11 +27,11 @@ export default $config({
     }
 
     // Camada 1 (prod): Helius posts confirmed registrations to this URL. Point a
-    // Helius raw-transaction webhook for the Program ID at it.
+    // Helius raw-transaction webhook (with the matching authHeader) at it.
     const webhook = new sst.aws.Function('IndexerWebhook', {
       handler: 'apps/api/src/handlers/webhook.handler',
       url: true,
-      environment,
+      environment: { ...environment, WEBHOOK_AUTH_TOKEN: webhookAuthToken.value },
     })
 
     // Camadas 2/3 + heartbeat: reconciliation on a schedule (R4 backstop).
