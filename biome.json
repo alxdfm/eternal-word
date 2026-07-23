@@ -5,6 +5,10 @@
       "dist",
       "data/canonical-text/*.json",
       "packages/blockchain/src/idl/*.json",
+      "packages/*/drizzle/**",
+      "sst.config.ts",
+      "**/sst-env.d.ts",
+      ".sst",
       ".anchor",
       "target"
     ]

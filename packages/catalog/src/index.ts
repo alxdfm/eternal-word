@@ -7,7 +7,7 @@ export {
 export {
   type CanonicalBook,
   type CanonicalVerse,
-  CANONICAL_TEXT_DIR,
+  canonicalTextDir,
   loadCanonicalBooks,
   listRegistrableVerses,
   listOmittedPositions,

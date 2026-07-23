@@ -10,5 +10,9 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eternal-word/domain": "workspace:*",
+    "@eternal-word/shared": "workspace:*"
   }
 }
