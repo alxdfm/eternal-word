@@ -20,7 +20,12 @@ export interface CanonicalVerse {
   readonly text: string
 }
 
-export const CANONICAL_TEXT_DIR = fromRepoRoot(import.meta.url, 'data/canonical-text')
+/** Directory of the committed CanonicalText. A function, not a top-level const,
+ * so importing this module never resolves a repo root — the indexer Lambda
+ * bundles the catalog transitively and must load without a filesystem walk. */
+export function canonicalTextDir(): string {
+  return fromRepoRoot(import.meta.url, 'data/canonical-text')
+}
 
 const TESTAMENTS: ReadonlySet<string> = new Set([TESTAMENT.OLD, TESTAMENT.NEW])
 
@@ -72,7 +77,7 @@ function parseBook(file: string, contents: string): CanonicalBook {
   }
 }
 
-export function loadCanonicalBooks(directory: string = CANONICAL_TEXT_DIR): CanonicalBook[] {
+export function loadCanonicalBooks(directory: string = canonicalTextDir()): CanonicalBook[] {
   const files = readdirSync(directory)
     .filter((file) => file.endsWith('.json'))
     .sort()
