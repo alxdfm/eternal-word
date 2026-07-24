@@ -23,3 +23,6 @@ export {
   type HeartbeatHealth,
   evaluateHeartbeat,
 } from './sync/heartbeat.js'
+export type { VerseView } from './read/verse-view.js'
+export type { VerseReadRepository } from './read/ports.js'
+export { type VerseLookup, lookupVerse } from './read/use-cases.js'
