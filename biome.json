@@ -10,7 +10,10 @@
       "**/sst-env.d.ts",
       ".sst",
       ".anchor",
-      "target"
+      "target",
+      ".next",
+      "apps/web/next-env.d.ts",
+      "apps/web/tsconfig.json"
     ]
   },
   "organizeImports": { "enabled": true },
