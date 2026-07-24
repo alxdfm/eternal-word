@@ -1,5 +1,7 @@
 'use client'
 
+// Buffer polyfill first — @solana/web3.js needs it before it loads.
+import '@/lib/polyfill'
 import { SOLANA_RPC_URL } from '@/lib/env'
 import type { Adapter } from '@solana/wallet-adapter-base'
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'

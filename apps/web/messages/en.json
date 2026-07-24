@@ -10,5 +10,11 @@
       "connected": "Connected: {address}",
       "disconnected": "Wallet not connected"
     }
+  },
+  "register": {
+    "register": "Register this verse",
+    "submitting": "Registering…",
+    "sent": "Submitted: {signature}",
+    "error": "Registration failed: {message}"
   }
 }

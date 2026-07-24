@@ -1,5 +1,6 @@
 'use client'
 
+import { RegisterButton } from '@/components/register-button'
 import { WalletButton } from '@/components/wallet-button'
 import { shortenAddress } from '@/lib/format'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -46,6 +47,8 @@ export default function HomePage() {
           ? t('wallet.connected', { address: shortenAddress(publicKey.toBase58()) })
           : t('wallet.disconnected')}
       </Status>
+      {/* Fixed reference until WB-07 wires the search. */}
+      <RegisterButton book={1} chapter={1} verse={1} />
     </Main>
   )
 }
