@@ -54,3 +54,20 @@ export async function fetchProof(
   }
   return res.json() as Promise<RegistrationProof>
 }
+
+/** Camada 2: tell the API to mark the verse PENDING right after submitting. */
+export async function markPending(
+  book: number,
+  chapter: number,
+  verse: number,
+  transaction: string,
+): Promise<void> {
+  const res = await fetch(apiUrl('/pending'), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ book, chapter, verse, transaction }),
+  })
+  if (!res.ok) {
+    throw new Error(`mark pending failed (${res.status})`)
+  }
+}

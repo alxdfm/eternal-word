@@ -1,5 +1,6 @@
-import type { VerseReadRepository, VerseView } from '@eternal-word/application'
+import type { VerseReadRepository, VerseRepository, VerseView } from '@eternal-word/application'
 import { describe, expect, it } from 'vitest'
+import { handleMarkPending } from '../src/web/pending-route.js'
 import { handleReadVerse } from '../src/web/read-verse.js'
 import type { VerseDto } from '../src/web/verse-dto.js'
 
@@ -84,6 +85,57 @@ describe('handleReadVerse', () => {
       chapter: '1',
       verse: '1',
     })
+    expect(res.statusCode).toBe(400)
+  })
+})
+
+type PendingCall = { book: number; chapter: number; verse: number; transaction: string }
+
+function fakeWriteRepo(calls: PendingCall[]): VerseRepository {
+  return {
+    recordRegistered: async () => undefined,
+    markPending: async (address, transaction) => {
+      calls.push({
+        book: address.book,
+        chapter: address.chapter,
+        verse: address.verse,
+        transaction,
+      })
+    },
+    failStalePending: async () => [],
+    listNonAvailable: async () => [],
+    releaseToAvailable: async () => undefined,
+  }
+}
+
+describe('handleMarkPending', () => {
+  it('marks a valid verse pending and calls the repo (200)', async () => {
+    const calls: PendingCall[] = []
+    const res = await handleMarkPending(
+      fakeWriteRepo(calls),
+      JSON.stringify({ book: 1, chapter: 1, verse: 1, transaction: 'Sig1' }),
+    )
+    expect(res.statusCode).toBe(200)
+    expect(calls).toEqual([{ book: 1, chapter: 1, verse: 1, transaction: 'Sig1' }])
+  })
+
+  it('rejects a missing transaction with 400', async () => {
+    const res = await handleMarkPending(
+      fakeWriteRepo([]),
+      JSON.stringify({ book: 1, chapter: 1, verse: 1 }),
+    )
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('rejects invalid JSON with 400', async () => {
+    expect((await handleMarkPending(fakeWriteRepo([]), '{ not json')).statusCode).toBe(400)
+  })
+
+  it('rejects an out-of-range reference with 400', async () => {
+    const res = await handleMarkPending(
+      fakeWriteRepo([]),
+      JSON.stringify({ book: 0, chapter: 1, verse: 1, transaction: 'S' }),
+    )
     expect(res.statusCode).toBe(400)
   })
 })

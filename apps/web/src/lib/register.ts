@@ -1,6 +1,6 @@
 import { registerVerseTransaction } from '@eternal-word/blockchain/register'
 import type { Connection, PublicKey, SendOptions, VersionedTransaction } from '@solana/web3.js'
-import { fetchProof } from './api'
+import { fetchProof, markPending } from './api'
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2)
@@ -45,5 +45,9 @@ export async function registerVerse(args: RegisterVerseArgs): Promise<string> {
     priorityFeeMicroLamports: 20_000,
   })
   // Public devnet RPC can drop the first send (D5) — let web3.js retry.
-  return sendTransaction(transaction, connection, { maxRetries: 5 })
+  const signature = await sendTransaction(transaction, connection, { maxRetries: 5 })
+  // Camada 2: optimistic PENDING. Best-effort — if it misses, the indexer still
+  // promotes to REGISTERED (camada 1/3). Never blocks the returned signature.
+  await markPending(book, chapter, verse, signature).catch(() => undefined)
+  return signature
 }

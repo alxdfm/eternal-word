@@ -70,7 +70,9 @@ export default $config({
     const webApi = new sst.aws.Function('WebApi', {
       ...shared,
       handler: 'apps/api/src/handlers/web-api.handler',
-      url: { cors: { allowOrigins: ['*'], allowMethods: ['GET', 'POST'] } },
+      url: {
+        cors: { allowOrigins: ['*'], allowMethods: ['GET', 'POST'], allowHeaders: ['content-type'] },
+      },
       environment: {
         DATABASE_URL: databaseUrl.value,
       },

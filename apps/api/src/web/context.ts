@@ -2,6 +2,7 @@ import {
   createChapterTextReader,
   createDatabase,
   createVerseReadRepository,
+  createVerseRepository,
   databaseUrlFromEnv,
 } from '@eternal-word/infrastructure'
 
@@ -10,6 +11,7 @@ function build() {
   return {
     readRepo: createVerseReadRepository(db),
     chapterReader: createChapterTextReader(db),
+    writeRepo: createVerseRepository(db),
   }
 }
 

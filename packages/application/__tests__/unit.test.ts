@@ -22,6 +22,7 @@ import {
   buildRegistrationProof,
   evaluateHeartbeat,
   markPending,
+  markPendingRequest,
   reconcile,
   recordRegistered,
 } from '../src/index.js'
@@ -169,5 +170,19 @@ describe('buildRegistrationProof', () => {
 
   it('rejects an out-of-range reference', async () => {
     expect((await buildRegistrationProof(reader, 0, 1, 1)).kind).toBe('invalid')
+  })
+})
+
+describe('markPendingRequest', () => {
+  it('marks an available verse pending', async () => {
+    const repo = new InMemoryRepo()
+    expect(await markPendingRequest(repo, 1, 1, 1, 'Sig')).toEqual({ kind: 'ok' })
+    expect(repo.rows.get('1:1:1')?.status).toBe(VERSE_STATUS.PENDING)
+  })
+
+  it('rejects an out-of-range reference without touching the repo', async () => {
+    const repo = new InMemoryRepo()
+    expect((await markPendingRequest(repo, 0, 1, 1, 'Sig')).kind).toBe('invalid')
+    expect(repo.rows.size).toBe(0)
   })
 })
