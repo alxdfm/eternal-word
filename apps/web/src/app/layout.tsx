@@ -1,3 +1,6 @@
+import '@solana/wallet-adapter-react-ui/styles.css'
+
+import { Providers } from '@/app/providers'
 import { StyledComponentsRegistry } from '@/lib/registry'
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
@@ -19,7 +22,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang={locale}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+          <StyledComponentsRegistry>
+            <Providers>{children}</Providers>
+          </StyledComponentsRegistry>
         </NextIntlClientProvider>
       </body>
     </html>

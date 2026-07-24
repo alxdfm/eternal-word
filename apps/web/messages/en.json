@@ -5,6 +5,10 @@
   },
   "home": {
     "title": "Eternal Word",
-    "subtitle": "Web scaffold — S04"
+    "subtitle": "Register a verse of the Bible permanently on Solana.",
+    "wallet": {
+      "connected": "Connected: {address}",
+      "disconnected": "Wallet not connected"
+    }
   }
 }
