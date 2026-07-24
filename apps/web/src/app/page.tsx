@@ -1,9 +1,8 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import styled from 'styled-components'
 
-// Página de prova do scaffold (WB-00): renderiza com styled-components via SSR.
-// As strings viram chaves i18n na WB-01 — aqui elas só provam o pipeline.
 const Main = styled.main`
   min-height: 100dvh;
   display: grid;
@@ -25,10 +24,11 @@ const Subtitle = styled.p`
 `
 
 export default function HomePage() {
+  const t = useTranslations('home')
   return (
     <Main>
-      <Title>Eternal Word</Title>
-      <Subtitle>Web scaffold — S04 (WB-00)</Subtitle>
+      <Title>{t('title')}</Title>
+      <Subtitle>{t('subtitle')}</Subtitle>
     </Main>
   )
 }
