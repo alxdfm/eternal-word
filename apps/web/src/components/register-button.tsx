@@ -2,6 +2,7 @@
 
 import { verseQueryKey } from '@/hooks/use-verse-status'
 import { registerVerse } from '@/lib/register'
+import { registerErrorKey } from '@/lib/register-error'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
@@ -27,7 +28,7 @@ const Message = styled.p`
   margin: 0;
   max-width: 32rem;
   font-size: 0.875rem;
-  word-break: break-all;
+  word-break: break-word;
   color: #b91c1c;
 `
 
@@ -42,8 +43,9 @@ type Phase = 'idle' | 'submitting' | 'error'
 /**
  * Builds, signs and sends the register_verse transaction for one verse. On
  * success the verse is PENDING (camada 2), so it invalidates the status query —
- * VerseStatus then polls the PENDING → REGISTERED transition (WB-06). The
- * reference is a prop so WB-07's search can supply it.
+ * VerseStatus then polls the PENDING → REGISTERED transition (WB-06). Submit-
+ * time failures (declined signature, insufficient funds, expired, duplicate)
+ * map to friendly messages (WB-07).
  */
 export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
   const t = useTranslations('register')
@@ -64,7 +66,26 @@ export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
       setPhase('idle')
       await queryClient.invalidateQueries({ queryKey: verseQueryKey(book, chapter, verse) })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught))
+      switch (registerErrorKey(caught)) {
+        case 'rejected':
+          setError(t('errors.rejected'))
+          break
+        case 'insufficient':
+          setError(t('errors.insufficient'))
+          break
+        case 'expired':
+          setError(t('errors.expired'))
+          break
+        case 'duplicate':
+          setError(t('errors.duplicate'))
+          break
+        default:
+          setError(
+            t('errors.generic', {
+              message: caught instanceof Error ? caught.message : String(caught),
+            }),
+          )
+      }
       setPhase('error')
     }
   }
@@ -74,7 +95,7 @@ export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
       <Button type="button" onClick={onRegister} disabled={!connected || phase === 'submitting'}>
         {phase === 'submitting' ? t('submitting') : t('register')}
       </Button>
-      {phase === 'error' && error !== null && <Message>{t('error', { message: error })}</Message>}
+      {phase === 'error' && error !== null && <Message>{error}</Message>}
     </>
   )
 }

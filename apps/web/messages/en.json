@@ -5,11 +5,17 @@
   },
   "home": {
     "title": "Eternal Word",
-    "subtitle": "Register a verse of the Bible permanently on Solana.",
-    "wallet": {
-      "connected": "Connected: {address}",
-      "disconnected": "Wallet not connected"
-    }
+    "subtitle": "Register a verse of the Bible permanently on Solana."
+  },
+  "search": {
+    "book": "Book (1–66)",
+    "chapter": "Chapter",
+    "verse": "Verse",
+    "submit": "Find verse"
+  },
+  "panel": {
+    "omitted": "This position has no text in the World English Bible, so it cannot be registered. The numbering skips it on purpose.",
+    "error": "Could not load this verse."
   },
   "status": {
     "loading": "Loading…",
@@ -24,6 +30,12 @@
   "register": {
     "register": "Register this verse",
     "submitting": "Registering…",
-    "error": "Registration failed: {message}"
+    "errors": {
+      "rejected": "You declined the signature.",
+      "insufficient": "Not enough SOL to cover rent and network fees.",
+      "expired": "The transaction expired. Please try again.",
+      "duplicate": "This verse is already registered.",
+      "generic": "Registration failed: {message}"
+    }
   }
 }

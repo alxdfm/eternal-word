@@ -1,12 +1,11 @@
 'use client'
 
-import { RegisterButton } from '@/components/register-button'
-import { VerseStatus } from '@/components/verse-status'
+import { RegisterPanel } from '@/components/register-panel'
+import { SearchForm } from '@/components/search-form'
 import { WalletButton } from '@/components/wallet-button'
 import type { VerseReference } from '@/lib/api'
-import { shortenAddress } from '@/lib/format'
-import { useWallet } from '@solana/wallet-adapter-react'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import styled from 'styled-components'
 
 const Main = styled.main`
@@ -14,7 +13,7 @@ const Main = styled.main`
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
   padding: 2rem;
   text-align: center;
   font-family: system-ui, -apple-system, sans-serif;
@@ -30,30 +29,16 @@ const Subtitle = styled.p`
   color: #6b7280;
 `
 
-const WalletLine = styled.p`
-  margin: 0;
-  font-size: 0.875rem;
-  color: #6b7280;
-`
-
-// Fixed reference until WB-07 wires the search.
-const reference: VerseReference = { book: 1, chapter: 1, verse: 1 }
-
 export default function HomePage() {
   const t = useTranslations('home')
-  const { connected, publicKey } = useWallet()
+  const [reference, setReference] = useState<VerseReference | null>(null)
   return (
     <Main>
       <Title>{t('title')}</Title>
       <Subtitle>{t('subtitle')}</Subtitle>
       <WalletButton />
-      <WalletLine>
-        {connected && publicKey
-          ? t('wallet.connected', { address: shortenAddress(publicKey.toBase58()) })
-          : t('wallet.disconnected')}
-      </WalletLine>
-      <VerseStatus reference={reference} />
-      <RegisterButton book={reference.book} chapter={reference.chapter} verse={reference.verse} />
+      <SearchForm onSearch={setReference} />
+      {reference !== null && <RegisterPanel reference={reference} />}
     </Main>
   )
 }
