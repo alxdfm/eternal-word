@@ -26,3 +26,5 @@ export {
 export type { VerseView } from './read/verse-view.js'
 export type { VerseReadRepository } from './read/ports.js'
 export { type VerseLookup, lookupVerse } from './read/use-cases.js'
+export type { ChapterTextReader, ChapterVerseText } from './read/chapter-reader.js'
+export { type RegistrationProofResult, buildRegistrationProof } from './read/proof.js'

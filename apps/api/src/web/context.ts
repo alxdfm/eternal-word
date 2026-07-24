@@ -1,4 +1,5 @@
 import {
+  createChapterTextReader,
   createDatabase,
   createVerseReadRepository,
   databaseUrlFromEnv,
@@ -6,7 +7,10 @@ import {
 
 function build() {
   const db = createDatabase(databaseUrlFromEnv())
-  return { readRepo: createVerseReadRepository(db) }
+  return {
+    readRepo: createVerseReadRepository(db),
+    chapterReader: createChapterTextReader(db),
+  }
 }
 
 export type WebContext = ReturnType<typeof build>

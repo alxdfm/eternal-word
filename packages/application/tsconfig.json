@@ -5,5 +5,5 @@
     "outDir": "dist"
   },
   "include": ["src/**/*.ts", "__tests__/**/*.ts"],
-  "references": [{ "path": "../domain" }, { "path": "../shared" }]
+  "references": [{ "path": "../catalog" }, { "path": "../domain" }, { "path": "../shared" }]
 }

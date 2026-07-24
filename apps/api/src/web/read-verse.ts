@@ -1,19 +1,11 @@
 import { type VerseReadRepository, lookupVerse } from '@eternal-word/application'
-import { type HttpResponse, json } from './http.js'
+import { type HttpResponse, json, parseIntParam } from './http.js'
 import { toVerseDto } from './verse-dto.js'
 
 interface RawParams {
   readonly book?: string | undefined
   readonly chapter?: string | undefined
   readonly verse?: string | undefined
-}
-
-function parseInt10(value: string | undefined): number | null {
-  if (value === undefined || value.trim() === '') {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isInteger(parsed) ? parsed : null
 }
 
 /**
@@ -26,9 +18,9 @@ export async function handleReadVerse(
   repo: VerseReadRepository,
   params: RawParams,
 ): Promise<HttpResponse> {
-  const book = parseInt10(params.book)
-  const chapter = parseInt10(params.chapter)
-  const verse = parseInt10(params.verse)
+  const book = parseIntParam(params.book)
+  const chapter = parseIntParam(params.chapter)
+  const verse = parseIntParam(params.verse)
   if (book === null || chapter === null || verse === null) {
     return json(400, { error: 'book, chapter and verse must be integers' })
   }

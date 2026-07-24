@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@eternal-word/catalog": "workspace:*",
     "@eternal-word/domain": "workspace:*",
     "@eternal-word/shared": "workspace:*"
   }
