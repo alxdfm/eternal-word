@@ -11,10 +11,19 @@
       "disconnected": "Wallet not connected"
     }
   },
+  "status": {
+    "loading": "Loading…",
+    "unavailable": "Status unavailable",
+    "available": "Available",
+    "pending": "Pending confirmation…",
+    "registered": "Registered",
+    "failed": "Failed",
+    "notRegistrable": "Not registrable",
+    "adopter": "Adopter: {address}"
+  },
   "register": {
     "register": "Register this verse",
     "submitting": "Registering…",
-    "sent": "Submitted: {signature}",
     "error": "Registration failed: {message}"
   }
 }

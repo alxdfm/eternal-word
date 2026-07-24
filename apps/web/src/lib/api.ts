@@ -1,5 +1,12 @@
 import { WEB_API_URL } from './env'
 
+/** A verse reference — the (book, chapter, verse) triple the app works with. */
+export interface VerseReference {
+  readonly book: number
+  readonly chapter: number
+  readonly verse: number
+}
+
 /** Verse status as the read API returns it (JSON-safe: slot is a string). */
 export interface VerseStatus {
   readonly book: number

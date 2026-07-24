@@ -1,7 +1,9 @@
 'use client'
 
+import { verseQueryKey } from '@/hooks/use-verse-status'
 import { registerVerse } from '@/lib/register'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import styled from 'styled-components'
@@ -26,7 +28,7 @@ const Message = styled.p`
   max-width: 32rem;
   font-size: 0.875rem;
   word-break: break-all;
-  color: #6b7280;
+  color: #b91c1c;
 `
 
 interface RegisterButtonProps {
@@ -35,20 +37,20 @@ interface RegisterButtonProps {
   readonly verse: number
 }
 
-type Phase = 'idle' | 'submitting' | 'sent' | 'error'
+type Phase = 'idle' | 'submitting' | 'error'
 
 /**
- * Builds, signs and sends the register_verse transaction for one verse. The
- * live PENDING → REGISTERED transition is wired in WB-06; here the button just
- * proves the client can register. The reference is a prop so WB-07's search can
- * supply it.
+ * Builds, signs and sends the register_verse transaction for one verse. On
+ * success the verse is PENDING (camada 2), so it invalidates the status query —
+ * VerseStatus then polls the PENDING → REGISTERED transition (WB-06). The
+ * reference is a prop so WB-07's search can supply it.
  */
 export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
   const t = useTranslations('register')
+  const queryClient = useQueryClient()
   const { connection } = useConnection()
   const { publicKey, sendTransaction, connected } = useWallet()
   const [phase, setPhase] = useState<Phase>('idle')
-  const [signature, setSignature] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function onRegister(): Promise<void> {
@@ -58,16 +60,9 @@ export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
     setPhase('submitting')
     setError(null)
     try {
-      const sig = await registerVerse({
-        connection,
-        adopter: publicKey,
-        book,
-        chapter,
-        verse,
-        sendTransaction,
-      })
-      setSignature(sig)
-      setPhase('sent')
+      await registerVerse({ connection, adopter: publicKey, book, chapter, verse, sendTransaction })
+      setPhase('idle')
+      await queryClient.invalidateQueries({ queryKey: verseQueryKey(book, chapter, verse) })
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
       setPhase('error')
@@ -79,7 +74,6 @@ export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
       <Button type="button" onClick={onRegister} disabled={!connected || phase === 'submitting'}>
         {phase === 'submitting' ? t('submitting') : t('register')}
       </Button>
-      {phase === 'sent' && signature !== null && <Message>{t('sent', { signature })}</Message>}
       {phase === 'error' && error !== null && <Message>{t('error', { message: error })}</Message>}
     </>
   )

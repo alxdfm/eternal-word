@@ -1,7 +1,9 @@
 'use client'
 
 import { RegisterButton } from '@/components/register-button'
+import { VerseStatus } from '@/components/verse-status'
 import { WalletButton } from '@/components/wallet-button'
+import type { VerseReference } from '@/lib/api'
 import { shortenAddress } from '@/lib/format'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useTranslations } from 'next-intl'
@@ -28,11 +30,14 @@ const Subtitle = styled.p`
   color: #6b7280;
 `
 
-const Status = styled.p`
+const WalletLine = styled.p`
   margin: 0;
   font-size: 0.875rem;
   color: #6b7280;
 `
+
+// Fixed reference until WB-07 wires the search.
+const reference: VerseReference = { book: 1, chapter: 1, verse: 1 }
 
 export default function HomePage() {
   const t = useTranslations('home')
@@ -42,13 +47,13 @@ export default function HomePage() {
       <Title>{t('title')}</Title>
       <Subtitle>{t('subtitle')}</Subtitle>
       <WalletButton />
-      <Status>
+      <WalletLine>
         {connected && publicKey
           ? t('wallet.connected', { address: shortenAddress(publicKey.toBase58()) })
           : t('wallet.disconnected')}
-      </Status>
-      {/* Fixed reference until WB-07 wires the search. */}
-      <RegisterButton book={1} chapter={1} verse={1} />
+      </WalletLine>
+      <VerseStatus reference={reference} />
+      <RegisterButton book={reference.book} chapter={reference.chapter} verse={reference.verse} />
     </Main>
   )
 }
