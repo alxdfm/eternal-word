@@ -78,6 +78,18 @@ export default $config({
       },
     })
 
-    return { webhookUrl: webhook.url, webApiUrl: webApi.url }
+    // The site (S04, D4): Next.js on AWS via OpenNext, in the same SST app so
+    // devnet → mainnet is one stage switch (S07). NEXT_PUBLIC_WEB_API_URL is
+    // inlined at build from the WebApi Function URL; the Solana RPC defaults to
+    // public devnet in the app. No custom domain yet — the default URL is enough
+    // for the devnet journey.
+    const web = new sst.aws.Nextjs('Web', {
+      path: 'apps/web',
+      environment: {
+        NEXT_PUBLIC_WEB_API_URL: webApi.url,
+      },
+    })
+
+    return { webhookUrl: webhook.url, webApiUrl: webApi.url, webUrl: web.url }
   },
 })
