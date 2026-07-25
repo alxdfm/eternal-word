@@ -24,7 +24,7 @@ concurrency:
   group: release
   cancel-in-progress: false
 
-# Default restritivo; o job de deploy amplia só o que precisa (OIDC).
+# Default restritivo do GITHUB_TOKEN — nenhum job precisa de mais que leitura.
 permissions:
   contents: read
 
