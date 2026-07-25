@@ -1,4 +1,11 @@
 import {
+  buildCanonicalTree,
+  listRegistrableVerses,
+  loadCanonicalBooks,
+  proofForAddress,
+  toHex,
+} from '@eternal-word/catalog'
+import {
   VERSE_STATUS,
   type VerseAddress,
   type VerseStatus,
@@ -7,12 +14,15 @@ import {
 import { describe, expect, it } from 'vitest'
 import {
   type ChainReader,
+  type ChapterTextReader,
   type HeartbeatState,
   type MirrorEntry,
   type VerseRegistered,
   type VerseRepository,
+  buildRegistrationProof,
   evaluateHeartbeat,
   markPending,
+  markPendingRequest,
   reconcile,
   recordRegistered,
 } from '../src/index.js'
@@ -129,5 +139,70 @@ describe('evaluateHeartbeat', () => {
 
   it('is healthy when recent and caught up', () => {
     expect(evaluateHeartbeat(beat(1990n, 1_000), 2000n, now, thresholds).healthy).toBe(true)
+  })
+})
+
+describe('buildRegistrationProof', () => {
+  const genesis1 = listRegistrableVerses(loadCanonicalBooks()).filter(
+    (v) => v.address.book === 1 && v.address.chapter === 1,
+  )
+
+  const reader: ChapterTextReader = {
+    listChapter: async (book, chapter) =>
+      book === 1 && chapter === 1
+        ? genesis1.map((v) => ({ verse: v.address.verse, text: v.text }))
+        : [],
+  }
+
+  it('reproduces the chapter proof the catalog builds for Genesis 1:1', async () => {
+    const reference = proofForAddress(buildCanonicalTree(genesis1), {
+      book: 1,
+      chapter: 1,
+      verse: 1,
+    }).map(toHex)
+    const result = await buildRegistrationProof(reader, 1, 1, 1)
+    expect(result).toEqual({ kind: 'ok', text: genesis1[0]?.text, proof: reference })
+  })
+
+  it('marks an absent verse in the chapter as not registrable', async () => {
+    expect(await buildRegistrationProof(reader, 1, 1, 99)).toEqual({ kind: 'not-registrable' })
+  })
+
+  it('rejects an out-of-range reference', async () => {
+    expect((await buildRegistrationProof(reader, 0, 1, 1)).kind).toBe('invalid')
+  })
+
+  it('reproduces the proof through a numbering gap (Acts 8:38, verse 37 omitted)', async () => {
+    const acts8 = listRegistrableVerses(loadCanonicalBooks()).filter(
+      (v) => v.address.book === 44 && v.address.chapter === 8,
+    )
+    const actsReader: ChapterTextReader = {
+      listChapter: async () => acts8.map((v) => ({ verse: v.address.verse, text: v.text })),
+    }
+    const expected = proofForAddress(buildCanonicalTree(acts8), {
+      book: 44,
+      chapter: 8,
+      verse: 38,
+    }).map(toHex)
+    const target = acts8.find((v) => v.address.verse === 38)
+    expect(await buildRegistrationProof(actsReader, 44, 8, 38)).toEqual({
+      kind: 'ok',
+      text: target?.text,
+      proof: expected,
+    })
+  })
+})
+
+describe('markPendingRequest', () => {
+  it('marks an available verse pending', async () => {
+    const repo = new InMemoryRepo()
+    expect(await markPendingRequest(repo, 1, 1, 1, 'Sig')).toEqual({ kind: 'ok' })
+    expect(repo.rows.get('1:1:1')?.status).toBe(VERSE_STATUS.PENDING)
+  })
+
+  it('rejects an out-of-range reference without touching the repo', async () => {
+    const repo = new InMemoryRepo()
+    expect((await markPendingRequest(repo, 0, 1, 1, 'Sig')).kind).toBe('invalid')
+    expect(repo.rows.size).toBe(0)
   })
 })

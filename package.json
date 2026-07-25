@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "typecheck": "tsc --build",
+    "typecheck": "tsc --build && pnpm --filter @eternal-word/web typecheck",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "test": "vitest run",
@@ -30,7 +30,9 @@
     "db:migrate": "pnpm --filter @eternal-word/infrastructure db:migrate",
     "db:seed": "pnpm --filter @eternal-word/infrastructure db:seed",
     "indexer:dev": "pnpm --filter @eternal-word/api indexer",
-    "smoke:indexer": "pnpm --filter @eternal-word/scripts smoke:indexer"
+    "smoke:indexer": "pnpm --filter @eternal-word/scripts smoke:indexer",
+    "web:dev": "pnpm --filter @eternal-word/web dev",
+    "web:build": "pnpm --filter @eternal-word/web build"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

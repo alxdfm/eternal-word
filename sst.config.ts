@@ -64,6 +64,32 @@ export default $config({
       },
     })
 
-    return { webhookUrl: webhook.url }
+    // Web-facing API (S04, D3): the browser reads verse status here and posts
+    // the optimistic PENDING (camada 2, WB-05). The web is a pure client — the
+    // DB stays server-side. No RPC needed; CORS is handled by the Function URL.
+    const webApi = new sst.aws.Function('WebApi', {
+      ...shared,
+      handler: 'apps/api/src/handlers/web-api.handler',
+      url: {
+        cors: { allowOrigins: ['*'], allowMethods: ['GET', 'POST'], allowHeaders: ['content-type'] },
+      },
+      environment: {
+        DATABASE_URL: databaseUrl.value,
+      },
+    })
+
+    // The site (S04, D4): Next.js on AWS via OpenNext, in the same SST app so
+    // devnet → mainnet is one stage switch (S07). NEXT_PUBLIC_WEB_API_URL is
+    // inlined at build from the WebApi Function URL; the Solana RPC defaults to
+    // public devnet in the app. No custom domain yet — the default URL is enough
+    // for the devnet journey.
+    const web = new sst.aws.Nextjs('Web', {
+      path: 'apps/web',
+      environment: {
+        NEXT_PUBLIC_WEB_API_URL: webApi.url,
+      },
+    })
+
+    return { webhookUrl: webhook.url, webApiUrl: webApi.url, webUrl: web.url }
   },
 })

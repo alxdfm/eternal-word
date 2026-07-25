@@ -3,9 +3,19 @@ name: Release
 # Deploy dispara ao publicar uma release no GitHub. A tag da release é o
 # que vai para produção — nunca o topo da branch.
 #
-# O programa Anchor NÃO é deployado aqui, por decisão registrada em
-# docs/decisions/2026-07-19_pipeline-de-deploy.md: deploy de programa é
-# irreversível e permanece manual, com runbook próprio.
+# Web + API/indexer sobem juntos numa única app SST (site via OpenNext), então
+# há um só job de deploy (`sst deploy`). O programa Anchor NÃO é deployado aqui,
+# por decisão registrada em docs/decisions/2026-07-19_pipeline-de-deploy.md:
+# deploy de programa é irreversível e permanece manual, com runbook próprio.
+#
+# Segredos/variáveis que este workflow espera (Settings → Secrets and variables):
+#   secret AWS_ACCESS_KEY_ID      chave de um IAM user de deploy, com o mínimo
+#   secret AWS_SECRET_ACCESS_KEY  necessário para o deploy SST — policy em
+#                                 docs/deploy/aws-deploy-policy.json.
+#   var    AWS_REGION             região do stage (default us-west-1, onde o
+#                                 prod atual vive).
+#   Os segredos da app (DatabaseUrl, WebhookAuthToken, SolanaRpcUrl) já estão
+#   no SSM do stage — o `sst deploy` os lê de lá, não deste workflow.
 on:
   release:
     types: [published]
@@ -14,7 +24,7 @@ concurrency:
   group: release
   cancel-in-progress: false
 
-# Default restritivo; cada job amplia só o que precisa (deploy-api usa OIDC).
+# Default restritivo do GITHUB_TOKEN — nenhum job precisa de mais que leitura.
 permissions:
   contents: read
 
@@ -51,8 +61,8 @@ jobs:
           pnpm catalog:verify
           pnpm catalog:merkle --check
 
-  deploy-web:
-    name: Deploy web (Vercel)
+  deploy:
+    name: Deploy web + API/indexer (SST/AWS)
     needs: verify
     runs-on: ubuntu-latest
     environment: production
@@ -61,124 +71,50 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      # apps/web já existe como placeholder do workspace; o que marca que ele
-      # é deployável é ter um script de build (chega na S04).
-      - name: Detect app
-        id: app
-        run: |
-          if grep -q '"build"' apps/web/package.json 2>/dev/null; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::apps/web ainda não é deployável (S04) — deploy pulado."
-          fi
-
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
-        if: steps.app.outputs.ready == 'true'
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        if: steps.app.outputs.ready == 'true'
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
-      # O build da web depende dos pacotes do workspace (`workspace:*`),
-      # então precisa das dependências instaladas antes do Vercel CLI.
-      - name: Install
-        if: steps.app.outputs.ready == 'true'
-        run: pnpm install --frozen-lockfile
-
-      # A CLI do Vercel lê VERCEL_TOKEN do ambiente — passar `--token` na linha
-      # de comando exporia o segredo no argv do processo no runner.
-      #
-      # Versão fixada de propósito: `vercel@latest` daria a este step, que
-      # carrega o token de deploy, qualquer release publicada da CLI.
-      - name: Deploy
-        if: steps.app.outputs.ready == 'true'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          pnpm dlx vercel@56.3.2 pull --yes --environment=production
-          pnpm dlx vercel@56.3.2 build --prod
-          pnpm dlx vercel@56.3.2 deploy --prebuilt --prod
-
-  deploy-api:
-    name: Deploy API e indexer (AWS)
-    needs: verify
-    runs-on: ubuntu-latest
-    environment: production
-    permissions:
-      id-token: write # OIDC — sem chave de acesso de longa duração no repo
-      contents: read
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
-
-      # Idem: o sinal de que a API é deployável é existir o script de deploy
-      # (chega na S03, junto da ferramenta escolhida).
-      - name: Detect app
-        id: app
-        run: |
-          if grep -q '"deploy:production"' apps/api/package.json 2>/dev/null; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::apps/api ainda não é deployável (S03) — deploy pulado."
-          fi
-
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
-        if: steps.app.outputs.ready == 'true'
-
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        if: steps.app.outputs.ready == 'true'
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Credenciais AWS (OIDC)
-        if: steps.app.outputs.ready == 'true'
+      # Chaves estáticas de um IAM user de deploy (GitHub secrets), não OIDC.
+      - name: Credenciais AWS
         uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-1' }}
 
       - name: Install
-        if: steps.app.outputs.ready == 'true'
         run: pnpm install --frozen-lockfile
 
-      # Ferramenta de deploy definida na S03 (provável SST). O comando
-      # abaixo é o placeholder documentado — ajustar ao fechar a escolha.
-      - name: Deploy
-        if: steps.app.outputs.ready == 'true'
-        run: pnpm --filter @eternal-word/api deploy:production
+      # Um só comando sobe o indexer, a WebApi e o site (OpenNext) na mesma app
+      # SST. NEXT_PUBLIC_WEB_API_URL é injetado no build a partir da URL da
+      # WebApi (ver sst.config.ts). O programa Anchor não entra aqui.
+      - name: Deploy (sst)
+        run: pnpm exec sst deploy --stage production
 
   summary:
     name: Resumo
-    needs: [deploy-web, deploy-api]
+    needs: deploy
     if: always()
     runs-on: ubuntu-latest
     steps:
       # O nome da tag chega por `env`, nunca interpolado direto no shell:
       # `${{ }}` dentro de `run:` é substituído como texto antes da execução,
       # então uma tag contendo `$(...)` ou crase viraria comando no runner.
-      # Hoje só quem tem write access publica release, mas basta um bot de
-      # release entrar no fluxo para isso deixar de ser verdade.
       - name: Registrar resultado
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
-          WEB_RESULT: ${{ needs.deploy-web.result }}
-          API_RESULT: ${{ needs.deploy-api.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
           {
             echo "### Release \`${TAG_NAME}\`"
             echo ""
             echo "| Alvo | Resultado |"
             echo "|------|-----------|"
-            echo "| Web (Vercel) | ${WEB_RESULT} |"
-            echo "| API + indexer (AWS) | ${API_RESULT} |"
+            echo "| Web + API + indexer (SST/AWS) | ${DEPLOY_RESULT} |"
             echo ""
             echo "O programa Solana **não** é deployado por esta pipeline."
             echo "Ver \`docs/decisions/2026-07-19_pipeline-de-deploy.md\`."
