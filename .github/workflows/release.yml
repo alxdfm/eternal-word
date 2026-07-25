@@ -9,11 +9,11 @@ name: Release
 # deploy de programa é irreversível e permanece manual, com runbook próprio.
 #
 # Segredos/variáveis que este workflow espera (Settings → Secrets and variables):
-#   secret AWS_DEPLOY_ROLE_ARN  role assumida via OIDC, com permissão para o
-#                               deploy SST (Lambda, CloudFront, S3, IAM, SSM,
-#                               DynamoDB) e para o state bootstrap do SST.
-#   var    AWS_REGION           região do stage (default us-west-1, onde o
-#                               prod atual vive).
+#   secret AWS_ACCESS_KEY_ID      chave de um IAM user de deploy, com o mínimo
+#   secret AWS_SECRET_ACCESS_KEY  necessário para o deploy SST — policy em
+#                                 docs/deploy/aws-deploy-policy.json.
+#   var    AWS_REGION             região do stage (default us-west-1, onde o
+#                                 prod atual vive).
 #   Os segredos da app (DatabaseUrl, WebhookAuthToken, SolanaRpcUrl) já estão
 #   no SSM do stage — o `sst deploy` os lê de lá, não deste workflow.
 on:
@@ -66,9 +66,6 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     environment: production
-    permissions:
-      id-token: write # OIDC — sem chave de acesso de longa duração no repo
-      contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -81,10 +78,12 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - name: Credenciais AWS (OIDC)
+      # Chaves estáticas de um IAM user de deploy (GitHub secrets), não OIDC.
+      - name: Credenciais AWS
         uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-west-1' }}
 
       - name: Install
