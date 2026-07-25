@@ -1,7 +1,6 @@
 'use client'
 
-import { useVerseStatus } from '@/hooks/use-verse-status'
-import type { VerseReference } from '@/lib/api'
+import type { VerseStatus as VerseStatusData } from '@/lib/api'
 import { shortenAddress } from '@/lib/format'
 import { useTranslations } from 'next-intl'
 import styled from 'styled-components'
@@ -23,14 +22,19 @@ const Detail = styled.span`
   word-break: break-all;
 `
 
+interface VerseStatusViewProps {
+  readonly data: VerseStatusData | undefined
+  readonly isPending: boolean
+  readonly isError: boolean
+}
+
 /**
- * Live status of one verse. Shows AVAILABLE / PENDING / REGISTERED / FAILED and,
- * once registered, the adopter — polling underneath (see useVerseStatus) so the
- * PENDING → REGISTERED transition appears on its own.
+ * Presentational live status of one verse: AVAILABLE / PENDING / REGISTERED /
+ * FAILED and, once registered, the adopter. The query (and its polling) lives in
+ * RegisterPanel, which passes the result down — one subscription per reference.
  */
-export function VerseStatus({ reference }: { reference: VerseReference }) {
+export function VerseStatus({ data, isPending, isError }: VerseStatusViewProps) {
   const t = useTranslations('status')
-  const { data, isPending, isError } = useVerseStatus(reference)
 
   if (isPending) {
     return <Box>{t('loading')}</Box>

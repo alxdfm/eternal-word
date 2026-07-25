@@ -5,6 +5,7 @@ import { VerseStatus } from '@/components/verse-status'
 import { useVerseStatus } from '@/hooks/use-verse-status'
 import type { VerseReference } from '@/lib/api'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import styled from 'styled-components'
 
 const Panel = styled.section`
@@ -30,20 +31,26 @@ const Note = styled.p`
  * The registration panel for one reference: the verse text, its live status,
  * and the right action. An omitted position (no text in the WEB) shows an
  * explanatory note instead of a register button; only an AVAILABLE verse can be
- * registered. PENDING/REGISTERED are surfaced by VerseStatus.
+ * registered. After a submit, `watching` keeps the status polling through to
+ * REGISTERED. Remount per reference (key in page) resets that.
  */
 export function RegisterPanel({ reference }: { reference: VerseReference }) {
   const t = useTranslations('panel')
-  const { data, isError } = useVerseStatus(reference)
+  const [watching, setWatching] = useState(false)
+  const { data, isPending, isError } = useVerseStatus(reference, watching)
 
   return (
     <Panel>
       {data?.text != null && <Text>“{data.text}”</Text>}
-      <VerseStatus reference={reference} />
-      {isError && <Note>{t('error')}</Note>}
+      <VerseStatus data={data} isPending={isPending} isError={isError} />
       {data !== undefined && !data.registrable && <Note>{t('omitted')}</Note>}
       {data?.registrable === true && data.status === 'AVAILABLE' && (
-        <RegisterButton book={reference.book} chapter={reference.chapter} verse={reference.verse} />
+        <RegisterButton
+          book={reference.book}
+          chapter={reference.chapter}
+          verse={reference.verse}
+          onSubmitted={() => setWatching(true)}
+        />
       )}
     </Panel>
   )

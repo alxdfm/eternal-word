@@ -8,11 +8,16 @@ export function verseQueryKey(book: number, chapter: number, verse: number) {
 }
 
 /**
- * Reads a verse's status and keeps it live: while PENDING it polls the read API
- * so the indexer's promotion to REGISTERED (camada 1) shows up without a
- * reload, then stops polling once the status is terminal.
+ * Reads a verse's status and keeps it live. It polls while PENDING and, when
+ * `watch` is set (right after this client submits a registration), keeps polling
+ * through a transient AVAILABLE until the indexer confirms — so the live
+ * PENDING → REGISTERED transition survives even if the optimistic camada-2 write
+ * missed. Stops once the status is terminal.
  */
-export function useVerseStatus(reference: VerseReference | null): UseQueryResult<VerseStatus> {
+export function useVerseStatus(
+  reference: VerseReference | null,
+  watch = false,
+): UseQueryResult<VerseStatus> {
   return useQuery({
     queryKey:
       reference !== null
@@ -25,7 +30,13 @@ export function useVerseStatus(reference: VerseReference | null): UseQueryResult
       return fetchVerse(reference.book, reference.chapter, reference.verse)
     },
     enabled: reference !== null,
-    // ~1s webhook freshness, so 2.5s is plenty; stop once no longer PENDING.
-    refetchInterval: (query) => (query.state.data?.status === 'PENDING' ? 2500 : false),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      if (status === 'REGISTERED' || status === 'FAILED') {
+        return false
+      }
+      // ~1s webhook freshness, so 2.5s is plenty.
+      return watch || status === 'PENDING' ? 2500 : false
+    },
   })
 }

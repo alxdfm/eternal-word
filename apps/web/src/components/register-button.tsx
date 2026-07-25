@@ -1,6 +1,7 @@
 'use client'
 
 import { verseQueryKey } from '@/hooks/use-verse-status'
+import type { VerseStatus } from '@/lib/api'
 import { registerVerse } from '@/lib/register'
 import { registerErrorKey } from '@/lib/register-error'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
@@ -36,18 +37,19 @@ interface RegisterButtonProps {
   readonly book: number
   readonly chapter: number
   readonly verse: number
+  readonly onSubmitted?: () => void
 }
 
 type Phase = 'idle' | 'submitting' | 'error'
 
 /**
  * Builds, signs and sends the register_verse transaction for one verse. On
- * success the verse is PENDING (camada 2), so it invalidates the status query —
- * VerseStatus then polls the PENDING → REGISTERED transition (WB-06). Submit-
- * time failures (declined signature, insufficient funds, expired, duplicate)
- * map to friendly messages (WB-07).
+ * success it writes an optimistic PENDING into the query cache and calls
+ * `onSubmitted`, so the status polls PENDING → REGISTERED (WB-06) even if the
+ * best-effort camada-2 write missed. Submit-time failures (declined signature,
+ * insufficient funds, expired, duplicate) map to friendly messages (WB-07).
  */
-export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
+export function RegisterButton({ book, chapter, verse, onSubmitted }: RegisterButtonProps) {
   const t = useTranslations('register')
   const queryClient = useQueryClient()
   const { connection } = useConnection()
@@ -64,7 +66,10 @@ export function RegisterButton({ book, chapter, verse }: RegisterButtonProps) {
     try {
       await registerVerse({ connection, adopter: publicKey, book, chapter, verse, sendTransaction })
       setPhase('idle')
-      await queryClient.invalidateQueries({ queryKey: verseQueryKey(book, chapter, verse) })
+      queryClient.setQueryData<VerseStatus>(verseQueryKey(book, chapter, verse), (old) =>
+        old ? { ...old, status: 'PENDING' } : old,
+      )
+      onSubmitted?.()
     } catch (caught) {
       switch (registerErrorKey(caught)) {
         case 'rejected':

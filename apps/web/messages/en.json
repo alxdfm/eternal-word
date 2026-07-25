@@ -14,8 +14,7 @@
     "submit": "Find verse"
   },
   "panel": {
-    "omitted": "This position has no text in the World English Bible, so it cannot be registered. The numbering skips it on purpose.",
-    "error": "Could not load this verse."
+    "omitted": "This position has no text in the World English Bible, so it cannot be registered. The numbering skips it on purpose."
   },
   "status": {
     "loading": "Loading…",

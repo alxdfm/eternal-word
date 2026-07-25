@@ -38,7 +38,12 @@ export default function HomePage() {
       <Subtitle>{t('subtitle')}</Subtitle>
       <WalletButton />
       <SearchForm onSearch={setReference} />
-      {reference !== null && <RegisterPanel reference={reference} />}
+      {reference !== null && (
+        <RegisterPanel
+          key={`${reference.book}:${reference.chapter}:${reference.verse}`}
+          reference={reference}
+        />
+      )}
     </Main>
   )
 }
