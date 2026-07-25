@@ -1,23 +1,12 @@
 import type { VerseView } from '@eternal-word/application'
+import type { VerseStatusDto } from '@eternal-word/shared/contracts'
 
 /**
- * JSON-safe projection of {@link VerseView} for the HTTP boundary: the bigint
- * `slot` becomes a string and `registeredAt` an ISO timestamp. The web consumes
- * this shape (WB-06 polls it for the PENDING → REGISTERED transition).
+ * Server projection of a {@link VerseView} onto the shared HTTP contract
+ * ({@link VerseStatusDto}): the bigint `slot` becomes a string and
+ * `registeredAt` an ISO timestamp. The web consumes the same type.
  */
-export interface VerseDto {
-  readonly book: number
-  readonly chapter: number
-  readonly verse: number
-  readonly text: string | null
-  readonly registrable: boolean
-  readonly status: string | null
-  readonly adopter: string | null
-  readonly transaction: string | null
-  readonly account: string | null
-  readonly slot: string | null
-  readonly registeredAt: string | null
-}
+export type VerseDto = VerseStatusDto
 
 export function toVerseDto(view: VerseView): VerseDto {
   return {

@@ -1,5 +1,6 @@
 import { type ChapterTextReader, buildRegistrationProof } from '@eternal-word/application'
-import { type HttpResponse, json, parseIntParam } from './http.js'
+import type { RegistrationProofDto } from '@eternal-word/shared/contracts'
+import { type HttpResponse, json, toInt } from './http.js'
 
 interface RawParams {
   readonly book?: string | undefined
@@ -18,9 +19,9 @@ export async function handleProof(
   reader: ChapterTextReader,
   params: RawParams,
 ): Promise<HttpResponse> {
-  const book = parseIntParam(params.book)
-  const chapter = parseIntParam(params.chapter)
-  const verse = parseIntParam(params.verse)
+  const book = toInt(params.book)
+  const chapter = toInt(params.chapter)
+  const verse = toInt(params.verse)
   if (book === null || chapter === null || verse === null) {
     return json(400, { error: 'book, chapter and verse must be integers' })
   }
@@ -31,7 +32,15 @@ export async function handleProof(
       return json(400, { error: result.reason })
     case 'not-registrable':
       return json(404, { error: 'verse is not registrable' })
-    case 'ok':
-      return json(200, { book, chapter, verse, text: result.text, proof: result.proof })
+    case 'ok': {
+      const dto: RegistrationProofDto = {
+        book,
+        chapter,
+        verse,
+        text: result.text,
+        proof: result.proof,
+      }
+      return json(200, dto)
+    }
   }
 }

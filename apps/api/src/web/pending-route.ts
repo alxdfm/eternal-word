@@ -1,22 +1,11 @@
 import { type VerseRepository, markPendingRequest } from '@eternal-word/application'
-import { type HttpResponse, json } from './http.js'
+import { type HttpResponse, json, toInt } from './http.js'
 
 interface PendingBody {
   readonly book?: unknown
   readonly chapter?: unknown
   readonly verse?: unknown
   readonly transaction?: unknown
-}
-
-function toInt(value: unknown): number | null {
-  if (typeof value === 'number') {
-    return Number.isInteger(value) ? value : null
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value)
-    return Number.isInteger(parsed) ? parsed : null
-  }
-  return null
 }
 
 /**
