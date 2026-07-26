@@ -22,6 +22,13 @@
       "when": 1784726154737,
       "tag": "0002_curvy_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785098904877,
+      "tag": "0003_magical_stryfe",
+      "breakpoints": true
     }
   ]
 }

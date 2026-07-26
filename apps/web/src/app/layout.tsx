@@ -2,6 +2,7 @@ import '@solana/wallet-adapter-react-ui/styles.css'
 
 import { Providers } from '@/app/providers'
 import { StyledComponentsRegistry } from '@/lib/registry'
+import { AppThemeProvider, NO_FLASH_SCRIPT } from '@/theme'
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages, getTranslations } from 'next-intl/server'
@@ -21,9 +22,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale}>
       <body>
+        {/* Applies the saved theme before the content paints — no flash of the
+            wrong theme. Runs synchronously as the first node in <body>. */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static string, no user input */}
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <StyledComponentsRegistry>
-            <Providers>{children}</Providers>
+            <AppThemeProvider>
+              <Providers>{children}</Providers>
+            </AppThemeProvider>
           </StyledComponentsRegistry>
         </NextIntlClientProvider>
       </body>

@@ -1,6 +1,8 @@
 'use client'
 
+import { useBookLabels } from '@/hooks/use-books'
 import type { VerseReference } from '@/lib/api'
+import { BOOK_NUMBERS } from '@/lib/books'
 import { useTranslations } from 'next-intl'
 import { type FormEvent, useState } from 'react'
 import styled from 'styled-components'
@@ -17,30 +19,49 @@ const Field = styled.label`
   display: grid;
   gap: 0.25rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.color.muted};
+  text-align: left;
+`
+
+const controlStyles = `
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.5rem;
+`
+
+const Select = styled.select`
+  ${controlStyles}
+  min-width: 11rem;
+  border: 1px solid ${({ theme }) => theme.color.rule};
+  background: ${({ theme }) => theme.color.panel};
+  color: ${({ theme }) => theme.color.text};
+  font: inherit;
 `
 
 const Input = styled.input`
+  ${controlStyles}
   width: 5.5rem;
-  padding: 0.4rem;
   text-align: center;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  border: 1px solid ${({ theme }) => theme.color.rule};
+  background: ${({ theme }) => theme.color.panel};
+  color: ${({ theme }) => theme.color.text};
 `
 
 const Submit = styled.button`
+  ${controlStyles}
   padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.375rem;
-  background: #111827;
-  color: #fff;
+  border: 1px solid ${({ theme }) => theme.color.gold};
+  background: ${({ theme }) => theme.color.gold};
+  color: ${({ theme }) => theme.color.goldOn};
+  box-shadow: ${({ theme }) => theme.shadow.glow};
+  font-weight: 600;
   cursor: pointer;
 `
 
-/** Search a verse by numeric reference. Book names arrive with the exploration
- * screens (S05); here the reference is the (book, chapter, verse) triple. */
+/** Search a verse by reference. Book is chosen by **name** (never a bare 1-66),
+ * paying down the S04 "book by number" debt; chapter and verse stay numeric. */
 export function SearchForm({ onSearch }: { onSearch: (reference: VerseReference) => void }) {
   const t = useTranslations('search')
+  const labels = useBookLabels()
   const [book, setBook] = useState('1')
   const [chapter, setChapter] = useState('1')
   const [verse, setVerse] = useState('1')
@@ -61,13 +82,13 @@ export function SearchForm({ onSearch }: { onSearch: (reference: VerseReference)
     <Form onSubmit={onSubmit}>
       <Field>
         {t('book')}
-        <Input
-          type="number"
-          min={1}
-          max={66}
-          value={book}
-          onChange={(event) => setBook(event.target.value)}
-        />
+        <Select value={book} onChange={(event) => setBook(event.target.value)}>
+          {BOOK_NUMBERS.map((n) => (
+            <option key={n} value={n}>
+              {labels.name(n)}
+            </option>
+          ))}
+        </Select>
       </Field>
       <Field>
         {t('chapter')}

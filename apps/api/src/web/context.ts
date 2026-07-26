@@ -1,6 +1,8 @@
 import {
+  createAggregateReadRepository,
   createChapterTextReader,
   createDatabase,
+  createSearchRepository,
   createVerseReadRepository,
   createVerseRepository,
   databaseUrlFromEnv,
@@ -12,6 +14,8 @@ function build() {
     readRepo: createVerseReadRepository(db),
     chapterReader: createChapterTextReader(db),
     writeRepo: createVerseRepository(db),
+    aggregateRepo: createAggregateReadRepository(db),
+    searchRepo: createSearchRepository(db),
   }
 }
 
