@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createAggregateReadRepository } from '../src/db/aggregate-read-repository.js'
 import { createDatabase } from '../src/db/client.js'
 import { verses } from '../src/db/schema.js'
+import { createSearchRepository } from '../src/db/search-repository.js'
 import { createVerseReadRepository } from '../src/db/verse-read-repository.js'
 import { createVerseRepository } from '../src/db/verse-repository.js'
 
@@ -139,5 +140,27 @@ describe.skipIf(!DATABASE_URL)('createAggregateReadRepository (Postgres)', () =>
     const days = await repo.registrationsByDay()
     const total = days.reduce((sum, d) => sum + d.count, 0)
     expect(total - baseline.registered).toBe(2)
+  })
+})
+
+describe.skipIf(!DATABASE_URL)('createSearchRepository (Postgres FTS)', () => {
+  const repo = createSearchRepository(createDatabase(DATABASE_URL as string))
+
+  it('finds "light" and includes Genesis 1:3', async () => {
+    const hits = await repo.searchByText('light', 50)
+    expect(hits.length).toBeGreaterThan(0)
+    const gen13 = hits.find((h) => h.book === 1 && h.chapter === 1 && h.verse === 3)
+    expect(gen13).toBeDefined()
+    expect(gen13?.text.toLowerCase()).toContain('light')
+  })
+
+  it('honors the limit', async () => {
+    const hits = await repo.searchByText('God', 5)
+    expect(hits.length).toBeGreaterThan(0)
+    expect(hits.length).toBeLessThanOrEqual(5)
+  })
+
+  it('returns nothing for a nonsense term', async () => {
+    expect(await repo.searchByText('zzzznotaword', 20)).toHaveLength(0)
   })
 })

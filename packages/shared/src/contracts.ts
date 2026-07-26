@@ -86,3 +86,17 @@ export interface ChapterProgressResponseDto {
   readonly book: number
   readonly chapters: readonly ChapterProgressDto[]
 }
+
+/** One full-text search hit — reference, status and text (the UI highlights). */
+export interface SearchHitDto {
+  readonly book: number
+  readonly chapter: number
+  readonly verse: number
+  readonly status: string
+  readonly text: string
+}
+
+export interface SearchResponseDto {
+  readonly query: string
+  readonly hits: readonly SearchHitDto[]
+}

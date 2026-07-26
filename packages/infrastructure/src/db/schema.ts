@@ -8,6 +8,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  customType,
   index,
   pgEnum,
   pgTable,
@@ -18,6 +19,14 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
+
+/** Postgres `tsvector` — drizzle has no native type; used only for the
+ * full-text search column and its GIN index (never selected directly). */
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector'
+  },
+})
 
 export const testament = pgEnum('testament', [TESTAMENT.OLD, TESTAMENT.NEW])
 export const verseStatus = pgEnum('verse_status', [
@@ -78,8 +87,17 @@ export const verseTexts = pgTable(
     chapter: smallint('chapter').notNull(),
     verse: smallint('verse').notNull(),
     text: text('text'),
+    // Full-text search (EX-03, D1). Stored generated column + GIN index, so a
+    // text search is an index lookup — never an ILIKE scan of 31k rows. NULL
+    // (omitted) positions produce an empty vector and match nothing.
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      sql`to_tsvector('english', coalesce(text, ''))`,
+    ),
   },
-  (t) => [primaryKey({ columns: [t.translationId, t.book, t.chapter, t.verse] })],
+  (t) => [
+    primaryKey({ columns: [t.translationId, t.book, t.chapter, t.verse] }),
+    index('verse_texts_search_idx').using('gin', t.searchVector),
+  ],
 )
 
 /** Registro: a 1:1 mirror of the on-chain VerseAccount. One row per registrable

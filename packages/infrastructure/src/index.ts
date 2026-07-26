@@ -4,6 +4,7 @@ export { createDatabase, databaseUrlFromEnv, type Database } from './db/client.j
 export { createVerseRepository } from './db/verse-repository.js'
 export { createVerseReadRepository } from './db/verse-read-repository.js'
 export { createAggregateReadRepository } from './db/aggregate-read-repository.js'
+export { createSearchRepository } from './db/search-repository.js'
 export { createChapterTextReader } from './db/chapter-text-reader.js'
 export { createHeartbeatStore } from './db/heartbeat-store.js'
 export { seed, type SeedCounts } from './db/seed.js'

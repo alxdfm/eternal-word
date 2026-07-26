@@ -24,6 +24,8 @@ import {
   type ListFilter,
   type MirrorEntry,
   type Paginated,
+  type SearchHit,
+  type SearchRepository,
   type VerseListItem,
   type VerseRegistered,
   type VerseRepository,
@@ -36,6 +38,7 @@ import {
   markPendingRequest,
   reconcile,
   recordRegistered,
+  searchVerses,
   toCumulativeTrend,
 } from '../src/index.js'
 
@@ -311,5 +314,27 @@ describe('getChapterProgress', () => {
   it('returns the chapters for a valid book', async () => {
     const result = await getChapterProgress(new StubAggregateRepo(), 43)
     expect(result.kind).toBe('ok')
+  })
+})
+
+describe('searchVerses', () => {
+  class StubSearchRepo implements SearchRepository {
+    calls: Array<{ query: string; limit: number }> = []
+    async searchByText(query: string, limit: number): Promise<readonly SearchHit[]> {
+      this.calls.push({ query, limit })
+      return []
+    }
+  }
+
+  it('skips the DB for an empty or whitespace query', async () => {
+    const repo = new StubSearchRepo()
+    expect(await searchVerses(repo, '   ')).toEqual([])
+    expect(repo.calls).toHaveLength(0)
+  })
+
+  it('trims the query and clamps the limit', async () => {
+    const repo = new StubSearchRepo()
+    await searchVerses(repo, '  light  ', 999)
+    expect(repo.calls[0]).toEqual({ query: 'light', limit: 50 })
   })
 })
