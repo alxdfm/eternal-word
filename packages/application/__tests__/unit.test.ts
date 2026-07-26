@@ -13,7 +13,9 @@ import {
 } from '@eternal-word/domain'
 import { describe, expect, it } from 'vitest'
 import {
+  type AdopterSummary,
   type AggregateReadRepository,
+  type BookCoverage,
   type BookProgress,
   type ChainReader,
   type ChapterProgress,
@@ -32,6 +34,7 @@ import {
   buildRegistrationProof,
   estimateSol,
   evaluateHeartbeat,
+  getAdopterProfile,
   getChapterProgress,
   listVerses,
   markPending,
@@ -257,6 +260,21 @@ class StubAggregateRepo implements AggregateReadRepository {
   async chapterProgress(): Promise<readonly ChapterProgress[]> {
     return [{ chapter: 1, registered: 1, registrable: 31 }]
   }
+  async adopterSummary(): Promise<AdopterSummary> {
+    return { verses: 0, books: 0, registeredTextBytes: 0 }
+  }
+  async adopterVerses(
+    _adopter: string,
+    offset: number,
+    limit: number,
+  ): Promise<Paginated<VerseListItem>> {
+    this.offset = offset
+    this.limit = limit
+    return { items: [], page: 1, pageSize: limit, total: 0 }
+  }
+  async adopterCoverage(): Promise<readonly BookCoverage[]> {
+    return []
+  }
 }
 
 describe('estimateSol', () => {
@@ -336,5 +354,23 @@ describe('searchVerses', () => {
     const repo = new StubSearchRepo()
     await searchVerses(repo, '  light  ', 999)
     expect(repo.calls[0]).toEqual({ query: 'light', limit: 50 })
+  })
+})
+
+describe('getAdopterProfile', () => {
+  it('returns an empty profile for an unknown wallet (no error)', async () => {
+    const repo = new StubAggregateRepo()
+    const profile = await getAdopterProfile(repo, 'Nobody11111', 1, 20)
+    expect(profile.verses).toBe(0)
+    expect(profile.estimatedSol).toBe(0)
+    expect(profile.coverage).toEqual([])
+    expect(profile.page.items).toEqual([])
+  })
+
+  it('clamps the verse-page size', async () => {
+    const repo = new StubAggregateRepo()
+    await getAdopterProfile(repo, 'Wallet1', 2, 999)
+    expect(repo.limit).toBe(50)
+    expect(repo.offset).toBe(50)
   })
 })

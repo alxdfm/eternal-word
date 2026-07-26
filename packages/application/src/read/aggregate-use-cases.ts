@@ -1,6 +1,7 @@
 import { BOOK_COUNT, FIRST_BOOK } from '@eternal-word/domain'
 import type { AggregateReadRepository } from './aggregate-ports.js'
 import type {
+  AdopterProfile,
   BookProgress,
   ChapterProgress,
   DashboardStats,
@@ -44,17 +45,47 @@ export async function getDashboard(repo: AggregateReadRepository): Promise<Dashb
   }
 }
 
-/** Clamps `pageSize` to [1, {@link MAX_PAGE_SIZE}] and `page` to >= 1 before the
- * query, so a hand-typed query string can never ask for an unbounded page. */
+/** Clamps `pageSize` to [1, {@link MAX_PAGE_SIZE}] and `page` to >= 1, so a
+ * hand-typed query string can never ask for an unbounded page. */
+export function clampPage(page: number, pageSize: number): { offset: number; limit: number } {
+  const limit = Math.min(Math.max(1, Math.trunc(pageSize)), MAX_PAGE_SIZE)
+  const safePage = Math.max(1, Math.trunc(page))
+  return { offset: (safePage - 1) * limit, limit }
+}
+
 export async function listVerses(
   repo: AggregateReadRepository,
   filter: ListFilter,
   page: number,
   pageSize: number,
 ): Promise<Paginated<VerseListItem>> {
-  const safeSize = Math.min(Math.max(1, Math.trunc(pageSize)), MAX_PAGE_SIZE)
-  const safePage = Math.max(1, Math.trunc(page))
-  return repo.listVerses(filter, (safePage - 1) * safeSize, safeSize)
+  const { offset, limit } = clampPage(page, pageSize)
+  return repo.listVerses(filter, offset, limit)
+}
+
+/** The full adopter profile in one payload (metrics + coverage + a page of the
+ * wallet's verses). An unknown wallet yields zeros and an empty page — never an
+ * error, so a mistyped address just shows an empty profile. */
+export async function getAdopterProfile(
+  repo: AggregateReadRepository,
+  adopter: string,
+  page: number,
+  pageSize: number,
+): Promise<AdopterProfile> {
+  const { offset, limit } = clampPage(page, pageSize)
+  const [summary, coverage, versesPage] = await Promise.all([
+    repo.adopterSummary(adopter),
+    repo.adopterCoverage(adopter),
+    repo.adopterVerses(adopter, offset, limit),
+  ])
+  return {
+    adopter,
+    verses: summary.verses,
+    books: summary.books,
+    estimatedSol: estimateSol(summary.verses, summary.registeredTextBytes),
+    coverage,
+    page: versesPage,
+  }
 }
 
 export function getBookProgress(repo: AggregateReadRepository): Promise<readonly BookProgress[]> {

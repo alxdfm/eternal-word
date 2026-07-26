@@ -1,4 +1,6 @@
 import type {
+  AdopterSummary,
+  BookCoverage,
   BookProgress,
   ChapterProgress,
   DashboardAggregates,
@@ -24,4 +26,11 @@ export interface AggregateReadRepository {
   bookProgress(): Promise<readonly BookProgress[]>
   /** Every chapter of one book, in ascending order. */
   chapterProgress(book: number): Promise<readonly ChapterProgress[]>
+  /** Registered-verse count, distinct books and text bytes for one wallet. An
+   * unknown wallet returns zeros — never an error. */
+  adopterSummary(adopter: string): Promise<AdopterSummary>
+  /** That wallet's registered verses, newest-first, paginated. */
+  adopterVerses(adopter: string, offset: number, limit: number): Promise<Paginated<VerseListItem>>
+  /** All 66 books with this wallet's registered count per book (the coverage grid). */
+  adopterCoverage(adopter: string): Promise<readonly BookCoverage[]>
 }

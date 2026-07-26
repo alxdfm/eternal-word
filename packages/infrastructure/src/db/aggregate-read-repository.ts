@@ -1,5 +1,7 @@
 import type {
+  AdopterSummary,
   AggregateReadRepository,
+  BookCoverage,
   BookProgress,
   ChapterProgress,
   DashboardAggregates,
@@ -35,6 +37,13 @@ function filterQuery(filter: ListFilter): { where: SQL; order: SQL[] } {
 const canonicalText = and(
   eq(translations.id, verseTexts.translationId),
   eq(translations.isCanonical, true),
+)
+
+/** Join key from a `verses` row to its canonical text row. */
+const versesToTexts = and(
+  eq(verseTexts.book, verses.book),
+  eq(verseTexts.chapter, verses.chapter),
+  eq(verseTexts.verse, verses.verse),
 )
 
 /**
@@ -196,6 +205,76 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
           registrable: r.n,
         }))
         .sort((a, b) => a.chapter - b.chapter)
+    },
+
+    async adopterSummary(adopter): Promise<AdopterSummary> {
+      const [row] = await db
+        .select({
+          verses: count(),
+          books: sql<number>`count(distinct ${verses.book})`.mapWith(Number),
+          registeredTextBytes:
+            sql<number>`coalesce(sum(octet_length(${verseTexts.text})), 0)`.mapWith(Number),
+        })
+        .from(verses)
+        .innerJoin(verseTexts, versesToTexts)
+        .innerJoin(translations, canonicalText)
+        .where(and(eq(verses.adopter, adopter), eq(verses.status, VERSE_STATUS.REGISTERED)))
+      return {
+        verses: row?.verses ?? 0,
+        books: row?.books ?? 0,
+        registeredTextBytes: row?.registeredTextBytes ?? 0,
+      }
+    },
+
+    async adopterVerses(adopter, offset, limit): Promise<Paginated<VerseListItem>> {
+      const where = and(eq(verses.adopter, adopter), eq(verses.status, VERSE_STATUS.REGISTERED))
+      const [{ total }] = (await db.select({ total: count() }).from(verses).where(where)) as [
+        { total: number },
+      ]
+
+      const rows = await db
+        .select({
+          book: verses.book,
+          chapter: verses.chapter,
+          verse: verses.verse,
+          status: verses.status,
+          text: verseTexts.text,
+          adopter: verses.adopter,
+          transaction: verses.transaction,
+          registeredAt: verses.registeredAt,
+        })
+        .from(verses)
+        .innerJoin(verseTexts, versesToTexts)
+        .innerJoin(translations, canonicalText)
+        .where(where)
+        .orderBy(desc(verses.registeredAt))
+        .limit(limit)
+        .offset(offset)
+
+      const items: VerseListItem[] = rows.map((r) => ({
+        book: r.book,
+        chapter: r.chapter,
+        verse: r.verse,
+        status: r.status as VerseStatus,
+        text: r.text ?? '',
+        adopter: r.adopter,
+        transaction: r.transaction,
+        registeredAt: r.registeredAt,
+      }))
+      return { items, page: Math.floor(offset / limit) + 1, pageSize: limit, total }
+    },
+
+    async adopterCoverage(adopter): Promise<readonly BookCoverage[]> {
+      const registrable = await registrablePerBook()
+      const rows = await db
+        .select({ book: verses.book, n: count() })
+        .from(verses)
+        .where(and(eq(verses.adopter, adopter), eq(verses.status, VERSE_STATUS.REGISTERED)))
+        .groupBy(verses.book)
+      const byAdopter = new Map(rows.map((r) => [r.book, r.n]))
+      return [...registrable.entries()]
+        .map(([book, n]) => ({ book, registered: byAdopter.get(book) ?? 0, registrable: n }))
+        .sort((a, b) => a.book - b.book)
     },
   }
 }

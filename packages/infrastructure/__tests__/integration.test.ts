@@ -141,6 +141,37 @@ describe.skipIf(!DATABASE_URL)('createAggregateReadRepository (Postgres)', () =>
     const total = days.reduce((sum, d) => sum + d.count, 0)
     expect(total - baseline.registered).toBe(2)
   })
+
+  it('summarizes the adopter fixture', async () => {
+    const summary = await repo.adopterSummary(ADOPTER)
+    expect(summary.verses).toBe(2)
+    expect(summary.books).toBe(2)
+    expect(summary.registeredTextBytes).toBeGreaterThan(0)
+  })
+
+  it('paginates the adopter verses newest-first', async () => {
+    const page = await repo.adopterVerses(ADOPTER, 0, 20)
+    expect(page.total).toBe(2)
+    // John registered later than Psalm → first.
+    expect(`${page.items[0]?.book}:${page.items[0]?.chapter}:${page.items[0]?.verse}`).toBe(
+      '43:3:16',
+    )
+  })
+
+  it('reports coverage across all 66 books for the adopter', async () => {
+    const coverage = await repo.adopterCoverage(ADOPTER)
+    expect(coverage).toHaveLength(66)
+    expect(coverage.find((c) => c.book === 43)?.registered).toBe(1)
+    expect(coverage.find((c) => c.book === 19)?.registered).toBe(1)
+    expect(coverage.find((c) => c.book === 1)?.registered).toBe(0)
+  })
+
+  it('returns an empty profile for an unknown wallet', async () => {
+    const summary = await repo.adopterSummary('Nobody1111111111111111111111111111111111111')
+    expect(summary.verses).toBe(0)
+    const page = await repo.adopterVerses('Nobody1111111111111111111111111111111111111', 0, 20)
+    expect(page.total).toBe(0)
+  })
 })
 
 describe.skipIf(!DATABASE_URL)('createSearchRepository (Postgres FTS)', () => {

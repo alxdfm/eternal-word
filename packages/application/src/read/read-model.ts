@@ -91,3 +91,29 @@ export interface ChapterProgress {
   readonly registered: number
   readonly registrable: number
 }
+
+/** One book's cell in an adopter's coverage grid: how many of the book's
+ * registrable verses this wallet has registered. */
+export interface BookCoverage {
+  readonly book: number
+  readonly registered: number
+  readonly registrable: number
+}
+
+/** Raw per-adopter aggregate the repository returns; the use case adds the SOL
+ * estimate. */
+export interface AdopterSummary {
+  readonly verses: number
+  readonly books: number
+  readonly registeredTextBytes: number
+}
+
+/** The full adopter profile: metrics + coverage + one page of their verses. */
+export interface AdopterProfile {
+  readonly adopter: string
+  readonly verses: number
+  readonly books: number
+  readonly estimatedSol: number
+  readonly coverage: readonly BookCoverage[]
+  readonly page: Paginated<VerseListItem>
+}

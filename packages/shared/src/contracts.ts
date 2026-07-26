@@ -100,3 +100,20 @@ export interface SearchResponseDto {
   readonly query: string
   readonly hits: readonly SearchHitDto[]
 }
+
+/** One book cell of an adopter's coverage grid. */
+export interface BookCoverageDto {
+  readonly book: number
+  readonly registered: number
+  readonly registrable: number
+}
+
+/** An adopter profile: metrics + coverage + one page of the wallet's verses. */
+export interface AdopterProfileDto {
+  readonly adopter: string
+  readonly verses: number
+  readonly books: number
+  readonly estimatedSol: number
+  readonly coverage: readonly BookCoverageDto[]
+  readonly page: PaginatedDto<VerseListItemDto>
+}

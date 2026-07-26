@@ -30,6 +30,9 @@ export type { ChapterTextReader, ChapterVerseText } from './read/chapter-reader.
 export { type RegistrationProofResult, buildRegistrationProof } from './read/proof.js'
 export { type MarkPendingResult, markPendingRequest } from './write/pending.js'
 export type {
+  AdopterProfile,
+  AdopterSummary,
+  BookCoverage,
   BookProgress,
   ChapterProgress,
   DashboardAggregates,
@@ -46,6 +49,8 @@ export {
   type ChapterProgressResult,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
+  clampPage,
+  getAdopterProfile,
   getBookProgress,
   getChapterProgress,
   getDashboard,

@@ -1,3 +1,4 @@
+import { handleAdopterProfile } from '../web/adopter-route.js'
 import { webContext } from '../web/context.js'
 import { handleDashboard } from '../web/dashboard-route.js'
 import { json } from '../web/http.js'
@@ -29,6 +30,7 @@ interface HttpResult {
  *   GET  /progress  → per-book progress; ?book=N drills into that book's chapters (S05)
  *   GET  /verses    → paginated explore listing (?filter, ?page, ?pageSize) (S05)
  *   GET  /search    → full-text search over the canonical text (?q, ?limit) (S05)
+ *   GET  /adopter   → one wallet's profile (?pubkey, ?page, ?pageSize) (S05)
  *   POST /pending   → optimistic PENDING at submit time (camada 2)
  * CORS is set on the Function URL in sst.config.ts.
  */
@@ -54,6 +56,13 @@ export async function handler(event: HttpEvent): Promise<HttpResult> {
     }
     if (path.endsWith('/search')) {
       return handleSearch(ctx.searchRepo, { q: query.q, limit: query.limit })
+    }
+    if (path.endsWith('/adopter')) {
+      return handleAdopterProfile(ctx.aggregateRepo, {
+        pubkey: query.pubkey,
+        page: query.page,
+        pageSize: query.pageSize,
+      })
     }
     const params = { book: query.book, chapter: query.chapter, verse: query.verse }
     return path.endsWith('/proof')
