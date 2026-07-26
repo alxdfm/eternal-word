@@ -13,18 +13,30 @@ import {
 } from '@eternal-word/domain'
 import { describe, expect, it } from 'vitest'
 import {
+  type AggregateReadRepository,
+  type BookProgress,
   type ChainReader,
+  type ChapterProgress,
   type ChapterTextReader,
+  type DashboardAggregates,
+  type DayCount,
   type HeartbeatState,
+  type ListFilter,
   type MirrorEntry,
+  type Paginated,
+  type VerseListItem,
   type VerseRegistered,
   type VerseRepository,
   buildRegistrationProof,
+  estimateSol,
   evaluateHeartbeat,
+  getChapterProgress,
+  listVerses,
   markPending,
   markPendingRequest,
   reconcile,
   recordRegistered,
+  toCumulativeTrend,
 } from '../src/index.js'
 
 const address = (book: number, chapter: number, verse: number): VerseAddress => ({
@@ -204,5 +216,100 @@ describe('markPendingRequest', () => {
     const repo = new InMemoryRepo()
     expect((await markPendingRequest(repo, 0, 1, 1, 'Sig')).kind).toBe('invalid')
     expect(repo.rows.size).toBe(0)
+  })
+})
+
+/** Records the offset/limit the use case passes down, and returns canned data. */
+class StubAggregateRepo implements AggregateReadRepository {
+  offset = -1
+  limit = -1
+  async dashboardAggregates(): Promise<DashboardAggregates> {
+    return {
+      registered: 0,
+      pending: 0,
+      available: 0,
+      failed: 0,
+      total: 0,
+      uniqueAdopters: 0,
+      booksBegun: 0,
+      chaptersBegun: 0,
+      registeredTextBytes: 0,
+    }
+  }
+  async registrationsByDay(): Promise<readonly DayCount[]> {
+    return []
+  }
+  async listVerses(
+    _f: ListFilter,
+    offset: number,
+    limit: number,
+  ): Promise<Paginated<VerseListItem>> {
+    this.offset = offset
+    this.limit = limit
+    return { items: [], page: 1, pageSize: limit, total: 0 }
+  }
+  async bookProgress(): Promise<readonly BookProgress[]> {
+    return []
+  }
+  async chapterProgress(): Promise<readonly ChapterProgress[]> {
+    return [{ chapter: 1, registered: 1, registrable: 31 }]
+  }
+}
+
+describe('estimateSol', () => {
+  it('reproduces the measured devnet rent for Genesis 1:1 (56 B text)', () => {
+    // 6960 × (56 + 58 + 128) + 5000 fee = 1,689,320 lamports
+    expect(estimateSol(1, 56)).toBeCloseTo(0.00168932, 8)
+  })
+
+  it('reproduces the measured devnet rent for Esther 8:9 (493 B text)', () => {
+    expect(estimateSol(1, 493)).toBeCloseTo(0.00473084, 8)
+  })
+
+  it('is zero for no registrations', () => {
+    expect(estimateSol(0, 0)).toBe(0)
+  })
+})
+
+describe('toCumulativeTrend', () => {
+  it('accumulates a per-day series into a running total', () => {
+    expect(
+      toCumulativeTrend([
+        { day: '2026-07-24', count: 2 },
+        { day: '2026-07-25', count: 3 },
+        { day: '2026-07-26', count: 1 },
+      ]),
+    ).toEqual([
+      { day: '2026-07-24', cumulative: 2 },
+      { day: '2026-07-25', cumulative: 5 },
+      { day: '2026-07-26', cumulative: 6 },
+    ])
+  })
+})
+
+describe('listVerses pagination', () => {
+  it('clamps pageSize above the max and page below 1', async () => {
+    const repo = new StubAggregateRepo()
+    await listVerses(repo, 'recent', 0, 999)
+    expect(repo.limit).toBe(50)
+    expect(repo.offset).toBe(0)
+  })
+
+  it('computes the offset from a valid page', async () => {
+    const repo = new StubAggregateRepo()
+    await listVerses(repo, 'registered', 3, 20)
+    expect(repo.offset).toBe(40)
+    expect(repo.limit).toBe(20)
+  })
+})
+
+describe('getChapterProgress', () => {
+  it('rejects a book index out of range', async () => {
+    expect((await getChapterProgress(new StubAggregateRepo(), 67)).kind).toBe('invalid')
+  })
+
+  it('returns the chapters for a valid book', async () => {
+    const result = await getChapterProgress(new StubAggregateRepo(), 43)
+    expect(result.kind).toBe('ok')
   })
 })

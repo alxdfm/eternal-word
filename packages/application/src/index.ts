@@ -29,3 +29,27 @@ export { type VerseLookup, lookupVerse } from './read/use-cases.js'
 export type { ChapterTextReader, ChapterVerseText } from './read/chapter-reader.js'
 export { type RegistrationProofResult, buildRegistrationProof } from './read/proof.js'
 export { type MarkPendingResult, markPendingRequest } from './write/pending.js'
+export type {
+  BookProgress,
+  ChapterProgress,
+  DashboardAggregates,
+  DashboardStats,
+  DayCount,
+  ListFilter,
+  Paginated,
+  TrendPoint,
+  VerseListItem,
+} from './read/read-model.js'
+export { LIST_FILTERS, isListFilter } from './read/read-model.js'
+export type { AggregateReadRepository } from './read/aggregate-ports.js'
+export {
+  type ChapterProgressResult,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  getBookProgress,
+  getChapterProgress,
+  getDashboard,
+  listVerses,
+  toCumulativeTrend,
+} from './read/aggregate-use-cases.js'
+export { estimateSol } from './read/sol-estimate.js'

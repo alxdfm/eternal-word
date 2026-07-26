@@ -1,4 +1,5 @@
 import {
+  createAggregateReadRepository,
   createChapterTextReader,
   createDatabase,
   createVerseReadRepository,
@@ -12,6 +13,7 @@ function build() {
     readRepo: createVerseReadRepository(db),
     chapterReader: createChapterTextReader(db),
     writeRepo: createVerseRepository(db),
+    aggregateRepo: createAggregateReadRepository(db),
   }
 }
 

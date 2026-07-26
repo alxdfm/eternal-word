@@ -1,5 +1,5 @@
-import type { VerseView } from '@eternal-word/application'
-import type { VerseStatusDto } from '@eternal-word/shared/contracts'
+import type { VerseListItem, VerseView } from '@eternal-word/application'
+import type { VerseListItemDto, VerseStatusDto } from '@eternal-word/shared/contracts'
 
 /**
  * Server projection of a {@link VerseView} onto the shared HTTP contract
@@ -21,5 +21,20 @@ export function toVerseDto(view: VerseView): VerseDto {
     account: view.account,
     slot: view.slot === null ? null : view.slot.toString(),
     registeredAt: view.registeredAt === null ? null : view.registeredAt.toISOString(),
+  }
+}
+
+/** Projects a listing row onto the shared contract (registeredAt → ISO). Shared
+ * by the explore listings and the adopter profile. */
+export function toVerseListItemDto(item: VerseListItem): VerseListItemDto {
+  return {
+    book: item.book,
+    chapter: item.chapter,
+    verse: item.verse,
+    status: item.status,
+    text: item.text,
+    adopter: item.adopter,
+    transaction: item.transaction,
+    registeredAt: item.registeredAt === null ? null : item.registeredAt.toISOString(),
   }
 }
