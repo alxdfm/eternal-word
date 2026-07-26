@@ -1,4 +1,14 @@
-import type { RegistrationProofDto, VerseStatusDto } from '@eternal-word/shared/contracts'
+import type {
+  AdopterProfileDto,
+  BookProgressDto,
+  ChapterProgressResponseDto,
+  DashboardStatsDto,
+  PaginatedDto,
+  RegistrationProofDto,
+  SearchResponseDto,
+  VerseListItemDto,
+  VerseStatusDto,
+} from '@eternal-word/shared/contracts'
 import { WEB_API_URL } from './env'
 
 /** A verse reference — the (book, chapter, verse) triple the app works with. */
@@ -14,11 +24,31 @@ export type VerseStatus = VerseStatusDto
 /** Proof endpoint response — shared HTTP contract with apps/api. */
 export type RegistrationProof = RegistrationProofDto
 
+/** S05 read models — shared HTTP contracts with apps/api. */
+export type Dashboard = DashboardStatsDto
+export type VerseListItem = VerseListItemDto
+export type VerseListPage = PaginatedDto<VerseListItemDto>
+export type BookProgress = BookProgressDto
+export type ChapterProgressResponse = ChapterProgressResponseDto
+export type SearchResponse = SearchResponseDto
+export type AdopterProfile = AdopterProfileDto
+
+/** Explore filters (matches the API's ListFilter). */
+export type ListFilter = 'recent' | 'registered' | 'pending' | 'available'
+
 function apiUrl(path: string): string {
   if (WEB_API_URL === '') {
     throw new Error('NEXT_PUBLIC_WEB_API_URL is not set')
   }
   return `${WEB_API_URL.replace(/\/$/, '')}${path}`
+}
+
+async function getJson<T>(path: string): Promise<T> {
+  const res = await fetch(apiUrl(path))
+  if (!res.ok) {
+    throw new Error(`request failed (${res.status})`)
+  }
+  return res.json() as Promise<T>
 }
 
 export async function fetchVerse(
@@ -44,6 +74,24 @@ export async function fetchProof(
   }
   return res.json() as Promise<RegistrationProof>
 }
+
+export const fetchDashboard = () => getJson<Dashboard>('/dashboard')
+
+export const fetchVerses = (filter: ListFilter, page: number, pageSize = 20) =>
+  getJson<VerseListPage>(`/verses?filter=${filter}&page=${page}&pageSize=${pageSize}`)
+
+export const fetchBookProgress = () => getJson<readonly BookProgress[]>('/progress')
+
+export const fetchChapterProgress = (book: number) =>
+  getJson<ChapterProgressResponse>(`/progress?book=${book}`)
+
+export const fetchSearch = (query: string, limit = 20) =>
+  getJson<SearchResponse>(`/search?q=${encodeURIComponent(query)}&limit=${limit}`)
+
+export const fetchAdopter = (pubkey: string, page = 1, pageSize = 20) =>
+  getJson<AdopterProfile>(
+    `/adopter?pubkey=${encodeURIComponent(pubkey)}&page=${page}&pageSize=${pageSize}`,
+  )
 
 /** Camada 2: tell the API to mark the verse PENDING right after submitting. */
 export async function markPending(
