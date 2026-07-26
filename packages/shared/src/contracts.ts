@@ -68,9 +68,10 @@ export interface PaginatedDto<T> {
 }
 
 /** Registered vs. registrable for one book (the mosaic denominator excludes the
- * omitted positions). */
+ * omitted positions). `testament` is "OLD" | "NEW" — groups the mosaic. */
 export interface BookProgressDto {
   readonly book: number
+  readonly testament: string
   readonly registered: number
   readonly registrable: number
 }

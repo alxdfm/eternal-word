@@ -1,4 +1,4 @@
-import type { VerseStatus } from '@eternal-word/domain'
+import type { Testament, VerseStatus } from '@eternal-word/domain'
 
 /**
  * Read models for the S05 exploration screens. All assembled by the read side
@@ -79,9 +79,11 @@ export interface Paginated<T> {
 }
 
 /** Registered vs. registrable for one book — the mosaic denominator excludes
- * the omitted positions (they are not in `registrable`). */
+ * the omitted positions (they are not in `registrable`). `testament` groups the
+ * mosaic into OT/NT without the client hardcoding the split. */
 export interface BookProgress {
   readonly book: number
+  readonly testament: Testament
   readonly registered: number
   readonly registrable: number
 }

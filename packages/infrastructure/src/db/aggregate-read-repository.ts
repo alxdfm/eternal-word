@@ -10,10 +10,10 @@ import type {
   Paginated,
   VerseListItem,
 } from '@eternal-word/application'
-import { VERSE_STATUS, type VerseStatus } from '@eternal-word/domain'
+import { type Testament, VERSE_STATUS, type VerseStatus } from '@eternal-word/domain'
 import { type SQL, and, asc, count, desc, eq, isNotNull, sql } from 'drizzle-orm'
 import type { Database } from './client.js'
-import { translations, verseTexts, verses } from './schema.js'
+import { books, translations, verseTexts, verses } from './schema.js'
 
 /** WHERE + ORDER BY for each explore tab. `recent` surfaces the latest
  * registrations; the status tabs browse in canonical order. */
@@ -66,6 +66,17 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
       .groupBy(verseTexts.book)
       .then((rows) => new Map(rows.map((r) => [r.book, r.n])))
     return denominators
+  }
+
+  // Testament per book — a canon constant (the OT/NT split), memoized so the
+  // mosaic can group without the client hardcoding book 40.
+  let testaments: Promise<Map<number, Testament>> | undefined
+  function testamentByBook(): Promise<Map<number, Testament>> {
+    testaments ??= db
+      .select({ id: books.id, testament: books.testament })
+      .from(books)
+      .then((rows) => new Map(rows.map((r) => [r.id, r.testament as Testament])))
+    return testaments
   }
 
   return {
@@ -173,7 +184,7 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
     },
 
     async bookProgress(): Promise<readonly BookProgress[]> {
-      const registrable = await registrablePerBook()
+      const [registrable, testament] = await Promise.all([registrablePerBook(), testamentByBook()])
       const registeredRows = await db
         .select({ book: verses.book, n: count() })
         .from(verses)
@@ -181,7 +192,12 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
         .groupBy(verses.book)
       const registered = new Map(registeredRows.map((r) => [r.book, r.n]))
       return [...registrable.entries()]
-        .map(([book, n]) => ({ book, registered: registered.get(book) ?? 0, registrable: n }))
+        .map(([book, n]) => ({
+          book,
+          testament: testament.get(book) ?? 'OLD',
+          registered: registered.get(book) ?? 0,
+          registrable: n,
+        }))
         .sort((a, b) => a.book - b.book)
     },
 
