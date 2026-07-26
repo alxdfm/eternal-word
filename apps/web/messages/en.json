@@ -7,6 +7,11 @@
     "title": "Eternal Word",
     "subtitle": "Register a verse of the Bible permanently on Solana."
   },
+  "theme": {
+    "toggle": "Toggle light and dark theme",
+    "dark": "Dark theme",
+    "light": "Light theme"
+  },
   "search": {
     "book": "Book (1–66)",
     "chapter": "Chapter",
@@ -26,6 +31,12 @@
     "notRegistrable": "Not registrable",
     "adopter": "Adopter: {address}"
   },
+  "verseState": {
+    "available": "Available",
+    "pending": "Pending",
+    "registered": "Registered",
+    "failed": "Failed"
+  },
   "register": {
     "register": "Register this verse",
     "submitting": "Registering…",
@@ -35,6 +46,55 @@
       "expired": "The transaction expired. Please try again.",
       "duplicate": "This verse is already registered.",
       "generic": "Registration failed: {message}"
+    }
+  },
+  "design": {
+    "eyebrow": "Visual language",
+    "title": "A mini design system: ink, vellum, gold and lapis",
+    "lead": "The vocabulary of the illuminated manuscript meets the precision of the on-chain ledger. Gold is spent in one place only — the act of registering.",
+    "index": "§ 01 — System",
+    "palette": {
+      "title": "Palette",
+      "ground": "Ink / Vellum",
+      "groundDesc": "the ground — the codex by night or by day",
+      "gold": "Gold leaf",
+      "goldDesc": "illumination — reserved for the Registered state",
+      "lapis": "Lapis lazuli",
+      "lapisDesc": "the structural sacred — links and action",
+      "candle": "Candle",
+      "candleDesc": "semantic — Pending, still being inscribed"
+    },
+    "type": {
+      "title": "Typography",
+      "serif": "Old-style serif · scripture & numerals",
+      "serifSample": "Let there be light",
+      "sans": "Humanist sans · interface",
+      "sansSample": "Search by reference or by text",
+      "mono": "Mono · on-chain data",
+      "monoSample": "slot 478,890,561 · ◎6.27"
+    },
+    "states": {
+      "title": "Verse states",
+      "available": "an empty vellum slot — still registrable",
+      "pending": "being inscribed — dashed ring, layer 2",
+      "registered": "written on-chain — gilded, permanent",
+      "note": "State reads by form as well as color — legible without hue."
+    },
+    "primitives": {
+      "title": "Primitives",
+      "chips": "State chips",
+      "buttons": "Buttons",
+      "adopt": "Adopt",
+      "secondary": "Secondary",
+      "segmented": "Segmented control",
+      "segByText": "By text",
+      "segByRef": "By reference",
+      "tooltip": "Tooltip",
+      "tooltipTrigger": "Hover a cell",
+      "tooltipBody": "Anchored to its trigger — reads on keyboard focus too.",
+      "heatmap": "Heatmap ramp",
+      "heatmapScaleLow": "0%",
+      "heatmapScaleHigh": "40%+"
     }
   }
 }
