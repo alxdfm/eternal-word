@@ -3,9 +3,10 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-const Anchor = styled.span`
+const Anchor = styled.span<{ $stretch: boolean }>`
   position: relative;
-  display: inline-flex;
+  display: ${({ $stretch }) => ($stretch ? 'block' : 'inline-flex')};
+  ${({ $stretch }) => $stretch && 'width: 100%; height: 100%;'}
 `
 
 const Bubble = styled.span`
@@ -38,17 +39,21 @@ const Bubble = styled.span`
 /**
  * Lightweight hover/focus tooltip — CSS-only reveal (no state), so a whole
  * mosaic of cells can each carry one without a render cost until hovered. The
- * bubble sits above the trigger and reads on keyboard focus too.
+ * bubble sits above the trigger and reads on keyboard focus too. Pass `stretch`
+ * when the trigger must fill its parent (e.g. a grid cell), so the anchor does
+ * not collapse to content width.
  */
 export function Tooltip({
   content,
   children,
+  stretch = false,
 }: {
   content: ReactNode
   children: ReactNode
+  stretch?: boolean
 }) {
   return (
-    <Anchor>
+    <Anchor $stretch={stretch}>
       {children}
       <Bubble role="tooltip">{content}</Bubble>
     </Anchor>

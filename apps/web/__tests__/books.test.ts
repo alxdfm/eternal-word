@@ -1,7 +1,20 @@
-import { BOOKS, EXPECTED_OMITTED } from '@eternal-word/catalog'
+import {
+  BOOKS,
+  EXPECTED_BOOKS,
+  EXPECTED_CHAPTERS,
+  EXPECTED_OMITTED,
+  EXPECTED_REGISTRABLE_VERSES,
+} from '@eternal-word/catalog'
 import { describe, expect, it } from 'vitest'
 import en from '../messages/en.json'
-import { BOOK_NUMBERS, OMITTED_POSITIONS, omittedAt } from '../src/lib/books'
+import {
+  BOOK_COUNT,
+  BOOK_NUMBERS,
+  CHAPTER_COUNT,
+  OMITTED_POSITIONS,
+  REGISTRABLE_VERSE_COUNT,
+  omittedAt,
+} from '../src/lib/books'
 
 const books = en.books as Record<string, { name: string; abbr: string }>
 
@@ -12,6 +25,12 @@ describe('book labels mirror the catalog', () => {
   it('has exactly the 66 canonical books', () => {
     expect(Object.keys(books)).toHaveLength(BOOKS.length)
     expect(BOOK_NUMBERS).toHaveLength(66)
+  })
+
+  it('mirrors the canon totals (no stale magic numbers in the UI)', () => {
+    expect(BOOK_COUNT).toBe(EXPECTED_BOOKS)
+    expect(CHAPTER_COUNT).toBe(EXPECTED_CHAPTERS)
+    expect(REGISTRABLE_VERSE_COUNT).toBe(EXPECTED_REGISTRABLE_VERSES)
   })
 
   it('matches every name and abbreviation to the catalog', () => {

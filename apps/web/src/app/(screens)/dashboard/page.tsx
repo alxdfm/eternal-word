@@ -3,6 +3,7 @@
 import { Sparkline } from '@/components/sparkline'
 import { Section, SectionHead, StateChip, Wrap } from '@/components/ui'
 import { useDashboard } from '@/hooks/queries'
+import { BOOK_COUNT, CHAPTER_COUNT } from '@/lib/books'
 import { useFormatter, useTranslations } from 'next-intl'
 import styled from 'styled-components'
 
@@ -112,7 +113,7 @@ export default function DashboardPage() {
               {f.number(data.registered)} <em>/ {f.number(data.total)}</em>
             </div>
             <div className="sub">
-              {t('chaptersBegun')}: {f.number(data.chaptersBegun)} / 1,189
+              {t('chaptersBegun')}: {f.number(data.chaptersBegun)} / {f.number(CHAPTER_COUNT)}
             </div>
             <div className="spark">
               <Sparkline values={trend} label={t('trendCaption')} />
@@ -144,16 +145,16 @@ export default function DashboardPage() {
             <div className="k">{t('booksBegun')}</div>
             <div className="val">
               {f.number(data.booksBegun)}
-              <em>/66</em>
+              <em>/{f.number(BOOK_COUNT)}</em>
             </div>
-            <div className="sub">{t('booksSub', { count: 66 - data.booksBegun })}</div>
+            <div className="sub">{t('booksSub', { count: BOOK_COUNT - data.booksBegun })}</div>
           </Stat>
 
           <Stat>
             <div className="k">{t('chaptersBegun')}</div>
             <div className="val">
               {f.number(data.chaptersBegun)}
-              <em>/1,189</em>
+              <em>/{f.number(CHAPTER_COUNT)}</em>
             </div>
             <div className="sub">{t('chaptersSub')}</div>
           </Stat>

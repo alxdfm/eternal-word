@@ -244,7 +244,7 @@ function ByReference() {
     <>
       <RefForm>
         <Field>
-          {t('byReference')}
+          {t('refBook')}
           <select value={book} onChange={(e) => setBook(Number(e.target.value))}>
             {BOOK_NUMBERS.map((n) => (
               <option key={n} value={n}>
@@ -254,7 +254,7 @@ function ByReference() {
           </select>
         </Field>
         <Field>
-          &nbsp;
+          {t('refChapter')}
           <input
             type="number"
             min={1}
@@ -263,7 +263,7 @@ function ByReference() {
           />
         </Field>
         <Field>
-          &nbsp;
+          {t('refVerse')}
           <input type="number" min={1} value={verse} onChange={(e) => setVerse(e.target.value)} />
         </Field>
         <Button type="button" $variant="gold" onClick={resolve}>

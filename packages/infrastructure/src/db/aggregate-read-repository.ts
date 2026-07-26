@@ -46,6 +46,42 @@ const versesToTexts = and(
   eq(verseTexts.verse, verses.verse),
 )
 
+/** The columns a listing row selects (shared by the explore and profile pages). */
+const listItemColumns = {
+  book: verses.book,
+  chapter: verses.chapter,
+  verse: verses.verse,
+  status: verses.status,
+  text: verseTexts.text,
+  adopter: verses.adopter,
+  transaction: verses.transaction,
+  registeredAt: verses.registeredAt,
+}
+
+interface ListItemRow {
+  readonly book: number
+  readonly chapter: number
+  readonly verse: number
+  readonly status: string
+  readonly text: string | null
+  readonly adopter: string | null
+  readonly transaction: string | null
+  readonly registeredAt: Date | null
+}
+
+function toListItem(row: ListItemRow): VerseListItem {
+  return {
+    book: row.book,
+    chapter: row.chapter,
+    verse: row.verse,
+    status: row.status as VerseStatus,
+    text: row.text ?? '',
+    adopter: row.adopter,
+    transaction: row.transaction,
+    registeredAt: row.registeredAt,
+  }
+}
+
 /**
  * Drizzle-backed {@link AggregateReadRepository}. Aggregates run as GROUP BY over
  * the mirror (31k rows, cheap with the status index); the per-book registrable
@@ -77,6 +113,34 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
       .from(books)
       .then((rows) => new Map(rows.map((r) => [r.id, r.testament as Testament])))
     return testaments
+  }
+
+  // One paginated listing for both explore (by status/order) and profile (by
+  // adopter) — same projection, join and row shape; only WHERE/ORDER differ.
+  async function pageVerses(
+    where: SQL | undefined,
+    order: SQL[],
+    offset: number,
+    limit: number,
+  ): Promise<Paginated<VerseListItem>> {
+    const [{ total }] = (await db.select({ total: count() }).from(verses).where(where)) as [
+      { total: number },
+    ]
+    const rows = await db
+      .select(listItemColumns)
+      .from(verses)
+      .innerJoin(verseTexts, versesToTexts)
+      .innerJoin(translations, canonicalText)
+      .where(where)
+      .orderBy(...order)
+      .limit(limit)
+      .offset(offset)
+    return {
+      items: rows.map(toListItem),
+      page: Math.floor(offset / limit) + 1,
+      pageSize: limit,
+      total,
+    }
   }
 
   return {
@@ -140,47 +204,7 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
 
     async listVerses(filter, offset, limit): Promise<Paginated<VerseListItem>> {
       const { where, order } = filterQuery(filter)
-      const [{ total }] = (await db.select({ total: count() }).from(verses).where(where)) as [
-        { total: number },
-      ]
-
-      const rows = await db
-        .select({
-          book: verses.book,
-          chapter: verses.chapter,
-          verse: verses.verse,
-          status: verses.status,
-          text: verseTexts.text,
-          adopter: verses.adopter,
-          transaction: verses.transaction,
-          registeredAt: verses.registeredAt,
-        })
-        .from(verses)
-        .innerJoin(
-          verseTexts,
-          and(
-            eq(verseTexts.book, verses.book),
-            eq(verseTexts.chapter, verses.chapter),
-            eq(verseTexts.verse, verses.verse),
-          ),
-        )
-        .innerJoin(translations, canonicalText)
-        .where(where)
-        .orderBy(...order)
-        .limit(limit)
-        .offset(offset)
-
-      const items: VerseListItem[] = rows.map((r) => ({
-        book: r.book,
-        chapter: r.chapter,
-        verse: r.verse,
-        status: r.status as VerseStatus,
-        text: r.text ?? '',
-        adopter: r.adopter,
-        transaction: r.transaction,
-        registeredAt: r.registeredAt,
-      }))
-      return { items, page: Math.floor(offset / limit) + 1, pageSize: limit, total }
+      return pageVerses(where, order, offset, limit)
     },
 
     async bookProgress(): Promise<readonly BookProgress[]> {
@@ -244,40 +268,7 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
 
     async adopterVerses(adopter, offset, limit): Promise<Paginated<VerseListItem>> {
       const where = and(eq(verses.adopter, adopter), eq(verses.status, VERSE_STATUS.REGISTERED))
-      const [{ total }] = (await db.select({ total: count() }).from(verses).where(where)) as [
-        { total: number },
-      ]
-
-      const rows = await db
-        .select({
-          book: verses.book,
-          chapter: verses.chapter,
-          verse: verses.verse,
-          status: verses.status,
-          text: verseTexts.text,
-          adopter: verses.adopter,
-          transaction: verses.transaction,
-          registeredAt: verses.registeredAt,
-        })
-        .from(verses)
-        .innerJoin(verseTexts, versesToTexts)
-        .innerJoin(translations, canonicalText)
-        .where(where)
-        .orderBy(desc(verses.registeredAt))
-        .limit(limit)
-        .offset(offset)
-
-      const items: VerseListItem[] = rows.map((r) => ({
-        book: r.book,
-        chapter: r.chapter,
-        verse: r.verse,
-        status: r.status as VerseStatus,
-        text: r.text ?? '',
-        adopter: r.adopter,
-        transaction: r.transaction,
-        registeredAt: r.registeredAt,
-      }))
-      return { items, page: Math.floor(offset / limit) + 1, pageSize: limit, total }
+      return pageVerses(where, [desc(verses.registeredAt)], offset, limit)
     },
 
     async adopterCoverage(adopter): Promise<readonly BookCoverage[]> {

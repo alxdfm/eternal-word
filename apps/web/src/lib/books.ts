@@ -9,6 +9,13 @@
 export const FIRST_BOOK = 1
 export const LAST_BOOK = 66
 
+/** Canon totals — projections of the catalog/domain constants (EXPECTED_BOOKS /
+ * EXPECTED_CHAPTERS / EXPECTED_REGISTRABLE_VERSES), guarded by a test so the UI
+ * never carries a stale magic number. */
+export const BOOK_COUNT = 66
+export const CHAPTER_COUNT = 1189
+export const REGISTRABLE_VERSE_COUNT = 31098
+
 /** [1, 2, …, 66] — book indexes in canonical order. */
 export const BOOK_NUMBERS: readonly number[] = Array.from(
   { length: LAST_BOOK - FIRST_BOOK + 1 },

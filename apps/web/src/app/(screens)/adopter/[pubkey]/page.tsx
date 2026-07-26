@@ -4,6 +4,7 @@ import { Pager, Section, Serif, Wrap, heatBackground } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useAdopter } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
+import { REGISTRABLE_VERSE_COUNT } from '@/lib/books'
 import { shortenAddress } from '@/lib/format'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useParams } from 'next/navigation'
@@ -198,7 +199,7 @@ export default function AdopterPage() {
 
             <Panel>
               <CoverageTitle>
-                {t('coverageTitle', { registered: data.verses, total: 31098 })}
+                {t('coverageTitle', { registered: data.verses, total: REGISTRABLE_VERSE_COUNT })}
               </CoverageTitle>
               <Coverage>
                 {data.coverage.map((c) => (

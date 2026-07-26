@@ -77,9 +77,6 @@ const Tile = styled.button<{ $selected: boolean }>`
     opacity: 0.85;
   }
 `
-const TileWrap = styled.div`
-  display: block;
-`
 const Detail = styled.div`
   margin-top: 22px;
   background: ${({ theme }) => theme.color.panel};
@@ -146,33 +143,33 @@ function BookMosaic({
         const ratio = ratioOf(b.registered, b.registrable)
         const lit = isLit(ratio)
         return (
-          <TileWrap key={b.book}>
-            <Tooltip
-              content={
-                <>
-                  <Serif style={{ fontWeight: 600 }}>{labels.name(b.book)}</Serif>
-                  <div style={{ marginTop: 4 }}>
-                    {t('chapterTooltip', { registered: b.registered, registrable: b.registrable })}
-                  </div>
-                </>
-              }
+          <Tooltip
+            key={b.book}
+            stretch
+            content={
+              <>
+                <Serif style={{ fontWeight: 600 }}>{labels.name(b.book)}</Serif>
+                <div style={{ marginTop: 4 }}>
+                  {t('chapterTooltip', { registered: b.registered, registrable: b.registrable })}
+                </div>
+              </>
+            }
+          >
+            <Tile
+              type="button"
+              $selected={selected === b.book}
+              onClick={() => onSelect(b.book)}
+              style={{
+                background: heatBackground(ratio),
+                color: lit ? 'var(--gold-on)' : undefined,
+              }}
             >
-              <Tile
-                type="button"
-                $selected={selected === b.book}
-                onClick={() => onSelect(b.book)}
-                style={{
-                  background: heatBackground(ratio),
-                  color: lit ? 'var(--gold-on)' : undefined,
-                }}
-              >
-                <span className="ab">{labels.abbr(b.book)}</span>
-                <span className="pc">
-                  {f.number(ratio, { style: 'percent', maximumFractionDigits: 0 })}
-                </span>
-              </Tile>
-            </Tooltip>
-          </TileWrap>
+              <span className="ab">{labels.abbr(b.book)}</span>
+              <span className="pc">
+                {f.number(ratio, { style: 'percent', maximumFractionDigits: 0 })}
+              </span>
+            </Tile>
+          </Tooltip>
         )
       })}
     </Mosaic>
@@ -199,6 +196,7 @@ function BookDetail({ book }: { book: number }) {
           return (
             <Tooltip
               key={c.chapter}
+              stretch
               content={`${t('chapterLabel', { chapter: c.chapter })} · ${t('chapterTooltip', { registered: c.registered, registrable: c.registrable })}`}
             >
               <Chapter
