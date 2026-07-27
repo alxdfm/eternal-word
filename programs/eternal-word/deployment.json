@@ -1,0 +1,28 @@
+{
+  "$comment": "Fonte de verdade legível por máquina do bytecode publicado por cluster. Usado por scripts/verify-bytecode.sh (pnpm program:verify) e conferível à mão: reconstrua no container (pnpm program:build) e compare sha256sum target/deploy/eternal_word.so com o valor abaixo. Mainnet ganha sua entrada na S07, após o build definitivo.",
+  "toolchain": {
+    "agave": "3.1.13",
+    "anchorCli": "1.0.0",
+    "anchorLang": "1.1.2",
+    "dockerfile": "Dockerfile.build"
+  },
+  "artifact": "target/deploy/eternal_word.so",
+  "clusters": {
+    "devnet": {
+      "programId": "9up3jAXPTgkJz9UvMLwEiUUSVdPd6E1KshwfxT3dZCdG",
+      "programData": "FkRZPX48U4pyYKz8zcos4fYHHQPG1rh5rGneTZpKzxrA",
+      "bytecodeSha256": "8f2c6ecfd4ff5f96b93eaa0055145f33ec45b468843977063a491a3874485388",
+      "deploySlot": 478083892,
+      "upgradeAuthority": "83n4Vyyz3UyzchsSRRQVzhyu2ycDgTtCQZ53AAH7q8Ud",
+      "note": "Upgrade do evento VerseRegistered via emit! (PG-11/S03). Authority ativa de propósito em devnet."
+    },
+    "mainnet-beta": {
+      "programId": null,
+      "programData": null,
+      "bytecodeSha256": null,
+      "deploySlot": null,
+      "upgradeAuthority": "revogar (--final) no cutover — ver ADR 2026-07-27_upgrade-authority",
+      "note": "Preenchido na S07 após o build definitivo (novo hash: commitment de mainnet cravado no bytecode)."
+    }
+  }
+}
