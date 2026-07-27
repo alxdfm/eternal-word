@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -103,3 +104,36 @@ jobs:
       # forjada rejeitada, gate de selo. É a rede antes do deploy (PG-07/08).
       - name: cargo test
         run: cargo test --manifest-path programs/eternal-word/Cargo.toml
+
+  bytecode:
+    name: Verificação de bytecode (reproduzível)
+    # Só sob demanda (workflow_dispatch) e em push para main: reconstruir o
+    # bytecode na imagem fixada compila o avm do zero (lento). PRs seguem rápidos;
+    # o gate de reprodutibilidade roda antes de release e quando pedido. Terceiros
+    # reproduzem localmente com `pnpm program:verify` (HD-03).
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Constrói a toolchain fixada (Agave 3.1.13 / Anchor 1.0.0) e recompila o
+      # programa dentro dela — a MESMA imagem que gera o bytecode de release.
+      - name: Build da imagem da toolchain
+        run: pnpm docker:build
+
+      - name: Rebuild do programa no container
+        run: pnpm program:build
+
+      # Confere sha256(.so recompilado) == hash no manifesto deployment.json.
+      # Falha se o build não reproduzir o hash publicado.
+      - name: Verificar hash reproduzível
+        run: pnpm program:verify -- --skip-build

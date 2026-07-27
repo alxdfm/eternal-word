@@ -32,6 +32,11 @@
     "dark": "Dark theme",
     "light": "Light theme"
   },
+  "locale": {
+    "toggle": "Change language",
+    "en": "EN",
+    "pt": "PT"
+  },
   "nav": {
     "brand": "Eternal Word",
     "dashboard": "Dashboard",
