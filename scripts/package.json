@@ -9,7 +9,8 @@
     "sync-idl": "tsx sync-idl.ts",
     "bootstrap": "tsx bootstrap-devnet.ts",
     "smoke": "tsx smoke-devnet.ts",
-    "smoke:indexer": "tsx smoke-indexer.ts"
+    "smoke:indexer": "tsx smoke-indexer.ts",
+    "load:indexer": "tsx load-indexer.ts"
   },
   "dependencies": {
     "@eternal-word/application": "workspace:*",

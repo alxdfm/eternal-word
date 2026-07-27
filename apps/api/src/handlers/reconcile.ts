@@ -30,4 +30,35 @@ export async function handler(): Promise<void> {
     `[indexer] reconcile recorded ${report.recorded}, released ${report.released}; ` +
       `slot ${chainSlot}, health ${health.healthy ? 'ok' : `ALERT ${health.reason}`}\n`,
   )
+  emitHealthMetric(health.healthy, health.lagSlots)
+}
+
+/**
+ * Emit the indexer health as a CloudWatch metric via Embedded Metric Format
+ * (HD-04). CloudWatch auto-extracts EMF from the log stream — no metric filter,
+ * no AWS SDK dependency. The alarm in sst.config.ts watches `IndexerHealthy`
+ * with `treatMissingData: breaching`, so it fires on BOTH R4 failure modes:
+ * running-but-behind (this emits 0) and stopped (no data point at all).
+ */
+function emitHealthMetric(healthy: boolean, lagSlots: bigint | null): void {
+  const stage = process.env.STAGE ?? 'unknown'
+  const emf = {
+    _aws: {
+      Timestamp: Date.now(),
+      CloudWatchMetrics: [
+        {
+          Namespace: 'EternalWord/Indexer',
+          Dimensions: [['Stage']],
+          Metrics: [
+            { Name: 'IndexerHealthy', Unit: 'Count' },
+            { Name: 'IndexerLagSlots', Unit: 'Count' },
+          ],
+        },
+      ],
+    },
+    Stage: stage,
+    IndexerHealthy: healthy ? 1 : 0,
+    IndexerLagSlots: lagSlots === null ? 0 : Number(lagSlots),
+  }
+  process.stdout.write(`${JSON.stringify(emf)}\n`)
 }

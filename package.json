@@ -32,6 +32,7 @@
     "db:seed": "pnpm --filter @eternal-word/infrastructure db:seed",
     "indexer:dev": "pnpm --filter @eternal-word/api indexer",
     "smoke:indexer": "pnpm --filter @eternal-word/scripts smoke:indexer",
+    "load:indexer": "pnpm --filter @eternal-word/scripts load:indexer",
     "web:dev": "pnpm --filter @eternal-word/web dev",
     "web:build": "pnpm --filter @eternal-word/web build"
   },

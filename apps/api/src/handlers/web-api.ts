@@ -1,16 +1,19 @@
 import { handleAdopterProfile } from '../web/adopter-route.js'
 import { webContext } from '../web/context.js'
 import { handleDashboard } from '../web/dashboard-route.js'
-import { json } from '../web/http.js'
+import { json, tooManyRequests } from '../web/http.js'
 import { handleListVerses } from '../web/listings-route.js'
 import { handleMarkPending } from '../web/pending-route.js'
 import { handleProgress } from '../web/progress-route.js'
 import { handleProof } from '../web/proof-route.js'
+import { RateLimiter } from '../web/rate-limit.js'
 import { handleReadVerse } from '../web/read-verse.js'
 import { handleSearch } from '../web/search-route.js'
 
 interface HttpEvent {
-  readonly requestContext?: { readonly http?: { readonly method?: string } }
+  readonly requestContext?: {
+    readonly http?: { readonly method?: string; readonly sourceIp?: string }
+  }
   readonly rawPath?: string
   readonly queryStringParameters?: Record<string, string | undefined> | null
   readonly body?: string | null
@@ -19,7 +22,22 @@ interface HttpEvent {
 interface HttpResult {
   readonly statusCode: number
   readonly body: string
+  readonly headers?: Record<string, string>
 }
+
+// Baldes por-instância (HD-05, D3). Leitura é generosa — paginação e busca são
+// legítimas; escrita (POST /pending) é estrita, é o caminho que grava. `reserved
+// concurrency` no sst.config.ts é o teto de custo real; isto é defesa em
+// profundidade barata. Configurável por env sem redeploy do código.
+const READ_LIMITER = new RateLimiter({
+  capacity: Number(process.env.WEB_API_READ_BURST ?? 60),
+  refillPerSec: Number(process.env.WEB_API_READ_RPS ?? 10),
+})
+const WRITE_LIMITER = new RateLimiter({
+  capacity: Number(process.env.WEB_API_WRITE_BURST ?? 10),
+  refillPerSec: Number(process.env.WEB_API_WRITE_RPS ?? 0.5),
+})
+const PRUNE_IDLE_MS = 10 * 60_000
 
 /**
  * The web-facing API on a Lambda Function URL (D3 — the web is a pure client, so
@@ -38,6 +56,20 @@ export async function handler(event: HttpEvent): Promise<HttpResult> {
   const method = event.requestContext?.http?.method ?? 'GET'
   const path = event.rawPath ?? '/'
   const ctx = webContext()
+
+  // Rate limit por IP: escrita estrita, leitura generosa. A escrita cobra do
+  // balde estrito; o resto, do generoso.
+  const ip = event.requestContext?.http?.sourceIp ?? 'unknown'
+  const isWrite = method === 'POST' && path.endsWith('/pending')
+  const limiter = isWrite ? WRITE_LIMITER : READ_LIMITER
+  const verdict = limiter.take(ip)
+  if (!verdict.allowed) {
+    return tooManyRequests(verdict.retryAfterMs)
+  }
+  if (Math.random() < 0.01) {
+    READ_LIMITER.prune(PRUNE_IDLE_MS)
+    WRITE_LIMITER.prune(PRUNE_IDLE_MS)
+  }
 
   if (method === 'GET') {
     const query = event.queryStringParameters ?? {}

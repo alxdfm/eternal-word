@@ -1,6 +1,7 @@
 import type { VerseReadRepository, VerseRepository, VerseView } from '@eternal-word/application'
 import { describe, expect, it } from 'vitest'
 import { handleMarkPending } from '../src/web/pending-route.js'
+import { RateLimiter } from '../src/web/rate-limit.js'
 import { handleReadVerse } from '../src/web/read-verse.js'
 import type { VerseDto } from '../src/web/verse-dto.js'
 
@@ -137,5 +138,49 @@ describe('handleMarkPending', () => {
       JSON.stringify({ book: 0, chapter: 1, verse: 1, transaction: 'S' }),
     )
     expect(res.statusCode).toBe(400)
+  })
+})
+
+describe('RateLimiter (HD-05)', () => {
+  it('allows up to capacity, then denies with a retry-after', () => {
+    const now = 1_000
+    const limiter = new RateLimiter({ capacity: 3, refillPerSec: 1, now: () => now })
+    expect(limiter.take('ip').allowed).toBe(true)
+    expect(limiter.take('ip').allowed).toBe(true)
+    expect(limiter.take('ip').allowed).toBe(true)
+    const denied = limiter.take('ip')
+    expect(denied.allowed).toBe(false)
+    expect(denied.retryAfterMs).toBeGreaterThan(0)
+  })
+
+  it('refills over time', () => {
+    let now = 0
+    const limiter = new RateLimiter({ capacity: 2, refillPerSec: 1, now: () => now })
+    expect(limiter.take('ip').allowed).toBe(true)
+    expect(limiter.take('ip').allowed).toBe(true)
+    expect(limiter.take('ip').allowed).toBe(false)
+    now += 1_000 // one token refilled
+    expect(limiter.take('ip').allowed).toBe(true)
+    expect(limiter.take('ip').allowed).toBe(false)
+  })
+
+  it('keeps separate buckets per key', () => {
+    const now = 0
+    const limiter = new RateLimiter({ capacity: 1, refillPerSec: 1, now: () => now })
+    expect(limiter.take('a').allowed).toBe(true)
+    expect(limiter.take('a').allowed).toBe(false)
+    // b is untouched.
+    expect(limiter.take('b').allowed).toBe(true)
+  })
+
+  it('prunes idle buckets', () => {
+    let now = 0
+    const limiter = new RateLimiter({ capacity: 1, refillPerSec: 1, now: () => now })
+    limiter.take('a')
+    limiter.take('b')
+    expect(limiter.size()).toBe(2)
+    now += 60_000
+    limiter.prune(30_000)
+    expect(limiter.size()).toBe(0)
   })
 })

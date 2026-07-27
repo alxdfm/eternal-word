@@ -19,6 +19,10 @@ export default $config({
     const databaseUrl = new sst.Secret('DatabaseUrl')
     // Shared secret the webhook checks against Helius's Authorization header.
     const webhookAuthToken = new sst.Secret('WebhookAuthToken')
+    // Where the indexer-down alarm sends (HD-04/R4). Set before deploy:
+    //   sst secret set AlertEmail you@example.com
+    // The email subscription needs a one-time confirmation click from AWS SNS.
+    const alertEmail = new sst.Secret('AlertEmail')
 
     // getProgramAccounts (the reconcile) is a heavy call and the biggest RPC
     // consumer. It runs on the FREE public devnet RPC, so Helius credits are
@@ -41,6 +45,10 @@ export default $config({
       ...shared,
       handler: 'apps/api/src/handlers/webhook.handler',
       url: true,
+      // Cap the blast radius / cost of a flood of webhook posts (HD-05). The
+      // authHeader already blocks unauthenticated writes, but each request still
+      // invokes the Lambda. Reserved concurrency is the hard cost ceiling.
+      transform: { function: { reservedConcurrentExecutions: 10 } },
       environment: {
         DATABASE_URL: databaseUrl.value,
         WEBHOOK_AUTH_TOKEN: webhookAuthToken.value,
@@ -60,8 +68,39 @@ export default $config({
         environment: {
           DATABASE_URL: databaseUrl.value,
           SOLANA_RPC_URL: reconcileRpcUrl,
+          // Dimension for the EMF health metric (HD-04).
+          STAGE: $app.stage,
         },
       },
+    })
+
+    // R4 — alerta real de indexer parado/atrasado (HD-04). O reconcile emite a
+    // métrica `IndexerHealthy` (1/0) via EMF a cada ciclo; este alarme dispara
+    // quando ela cai abaixo de 1 (rodando mas atrasado) OU some (parado —
+    // `treatMissingData: breaching`). Um alarme cobre os dois modos de falha do
+    // R4. Notifica por e-mail via SNS.
+    const alertsTopic = new aws.sns.Topic('IndexerAlerts')
+    new aws.sns.TopicSubscription('IndexerAlertsEmail', {
+      topic: alertsTopic.arn,
+      protocol: 'email',
+      endpoint: alertEmail.value,
+    })
+    new aws.cloudwatch.MetricAlarm('IndexerDown', {
+      alarmDescription: 'Eternal Word indexer is behind the chain or stopped (R4).',
+      namespace: 'EternalWord/Indexer',
+      metricName: 'IndexerHealthy',
+      dimensions: { Stage: $app.stage },
+      statistic: 'Minimum',
+      comparisonOperator: 'LessThanThreshold',
+      threshold: 1,
+      // Cron roda a cada 15 min → 1 datapoint/900s. 2 períodos ≈ 30 min tolera um
+      // ciclo ruim/perdido antes de alarmar; missing = breaching pega o indexer morto.
+      period: 900,
+      evaluationPeriods: 2,
+      datapointsToAlarm: 2,
+      treatMissingData: 'breaching',
+      alarmActions: [alertsTopic.arn],
+      okActions: [alertsTopic.arn],
     })
 
     // Web-facing API (S04, D3): the browser reads verse status here and posts
@@ -73,6 +112,10 @@ export default $config({
       url: {
         cors: { allowOrigins: ['*'], allowMethods: ['GET', 'POST'], allowHeaders: ['content-type'] },
       },
+      // Cost ceiling for the public read/PENDING path (HD-05). The per-IP token
+      // bucket in the handler cuts naive abuse; this caps total concurrency so a
+      // burst cannot run up an unbounded bill. Tune per real traffic.
+      transform: { function: { reservedConcurrentExecutions: 30 } },
       environment: {
         DATABASE_URL: databaseUrl.value,
       },
