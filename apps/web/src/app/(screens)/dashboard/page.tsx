@@ -97,12 +97,7 @@ export default function DashboardPage() {
   return (
     <Section>
       <Wrap>
-        <SectionHead
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          lead={t('lead')}
-          index={t('index')}
-        />
+        <SectionHead eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')} />
         <Stats>
           <Stat $feature>
             <div className="k">

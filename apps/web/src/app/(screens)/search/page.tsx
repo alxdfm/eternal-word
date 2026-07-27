@@ -255,12 +255,7 @@ export default function SearchPage() {
   return (
     <Section>
       <Wrap>
-        <SectionHead
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          lead={t('lead')}
-          index={t('index')}
-        />
+        <SectionHead eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')} />
         <SegmentedControl
           ariaLabel={t('eyebrow')}
           value={mode}

@@ -42,11 +42,6 @@ const Mark = styled(Link)`
     font-weight: 600;
     font-size: 1.06rem;
   }
-  @media (max-width: 560px) {
-    b {
-      display: none;
-    }
-  }
 `
 const Nav = styled.nav`
   display: flex;

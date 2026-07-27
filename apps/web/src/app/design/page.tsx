@@ -130,12 +130,7 @@ export default function DesignPage() {
   return (
     <Section>
       <Wrap>
-        <SectionHead
-          eyebrow={t('eyebrow')}
-          title={<Serif>{t('title')}</Serif>}
-          lead={t('lead')}
-          index={t('index')}
-        />
+        <SectionHead eyebrow={t('eyebrow')} title={<Serif>{t('title')}</Serif>} lead={t('lead')} />
 
         <Grid>
           <Card>
