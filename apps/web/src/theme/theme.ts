@@ -24,6 +24,8 @@ export const theme = {
     lapisSoft: 'var(--lapis-soft)',
     /** Candle — `Pending`, still being inscribed. */
     pending: 'var(--pending)',
+    /** Error text (submit failures) — readable on both themes. */
+    danger: 'var(--danger)',
     /** Base tint of an unfilled heatmap cell / meter track. */
     cell0: 'var(--cell0)',
     surface: 'var(--surface)',

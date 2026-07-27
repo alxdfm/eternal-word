@@ -1,5 +1,6 @@
 'use client'
 
+import { VerseStateChip } from '@/components/verse-state-chip'
 import type { VerseStatus as VerseStatusData } from '@/lib/api'
 import { shortenAddress } from '@/lib/format'
 import { useTranslations } from 'next-intl'
@@ -7,18 +8,20 @@ import styled from 'styled-components'
 
 const Box = styled.div`
   display: grid;
-  gap: 0.25rem;
+  gap: 0.4rem;
   justify-items: center;
 `
 
-const Badge = styled.span`
-  font-weight: 600;
+const Muted = styled.span`
+  color: ${({ theme }) => theme.color.muted};
+  font-size: 0.875rem;
 `
 
 const Detail = styled.span`
   max-width: 32rem;
+  font-family: ${({ theme }) => theme.font.mono};
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: ${({ theme }) => theme.color.faint};
   word-break: break-all;
 `
 
@@ -29,34 +32,42 @@ interface VerseStatusViewProps {
 }
 
 /**
- * Presentational live status of one verse: AVAILABLE / PENDING / REGISTERED /
- * FAILED and, once registered, the adopter. The query (and its polling) lives in
+ * Presentational live status of one verse — the design-system state chip plus,
+ * once registered, the adopter. The query (and its polling) lives in
  * RegisterPanel, which passes the result down — one subscription per reference.
  */
 export function VerseStatus({ data, isPending, isError }: VerseStatusViewProps) {
   const t = useTranslations('status')
 
   if (isPending) {
-    return <Box>{t('loading')}</Box>
+    return (
+      <Box>
+        <Muted>{t('loading')}</Muted>
+      </Box>
+    )
   }
   if (isError || data === undefined) {
-    return <Box>{t('unavailable')}</Box>
+    return (
+      <Box>
+        <Muted>{t('unavailable')}</Muted>
+      </Box>
+    )
   }
   if (!data.registrable) {
-    return <Box>{t('notRegistrable')}</Box>
+    return (
+      <Box>
+        <Muted>{t('notRegistrable')}</Muted>
+      </Box>
+    )
   }
-
-  const labels: Record<string, string> = {
-    AVAILABLE: t('available'),
-    PENDING: t('pending'),
-    REGISTERED: t('registered'),
-    FAILED: t('failed'),
-  }
-  const label = data.status !== null ? (labels[data.status] ?? data.status) : ''
 
   return (
     <Box>
-      <Badge>{label}</Badge>
+      {data.status === 'FAILED' ? (
+        <Muted>{t('failed')}</Muted>
+      ) : (
+        <VerseStateChip status={data.status} />
+      )}
       {data.status === 'REGISTERED' && data.adopter !== null && (
         <Detail>{t('adopter', { address: shortenAddress(data.adopter) })}</Detail>
       )}

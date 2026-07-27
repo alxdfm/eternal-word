@@ -17,7 +17,7 @@ export const GlobalStyle = createGlobalStyle`
     --bg:#E7E0CD; --panel:#EFE9DA; --panel2:#F4EFE2; --rule:#D6CEB6; --rule-soft:#E0D9C4;
     --text:#1C1D27; --muted:#6C6852; --faint:#98936F;
     --gold:#956A10; --gold-lit:#B98A22; --gold-on:#FBF6E9; --gold-rgb:149,106,16;
-    --lapis:#2C42A0; --lapis-soft:#5468BE; --pending:#8A6114;
+    --lapis:#2C42A0; --lapis-soft:#5468BE; --pending:#8A6114; --danger:#B4231F;
     --cell0:#DBD3BB; --surface:#EDE7D6;
     --shadow:0 1px 2px rgba(28,29,39,.05), 0 8px 26px -14px rgba(28,29,39,.22);
     --glow:none;
@@ -34,7 +34,7 @@ export const GlobalStyle = createGlobalStyle`
       --bg:#0F1017; --panel:#161927; --panel2:#1C2033; --rule:#2A2E42; --rule-soft:#20243550;
       --text:#ECE6D6; --muted:#9DA0B4; --faint:#63667E;
       --gold:#E0AE3C; --gold-lit:#F6D480; --gold-on:#12131C; --gold-rgb:224,174,60;
-      --lapis:#8098F4; --lapis-soft:#5C7CF0; --pending:#D69B4E;
+      --lapis:#8098F4; --lapis-soft:#5C7CF0; --pending:#D69B4E; --danger:#F08A84;
       --cell0:#191D2B; --surface:#12131C;
       --shadow:0 1px 2px rgba(0,0,0,.4), 0 18px 44px -20px rgba(0,0,0,.7);
       --glow:0 0 22px -6px rgba(224,174,60,.45);
@@ -46,7 +46,7 @@ export const GlobalStyle = createGlobalStyle`
     --bg:#E7E0CD; --panel:#EFE9DA; --panel2:#F4EFE2; --rule:#D6CEB6; --rule-soft:#E0D9C4;
     --text:#1C1D27; --muted:#6C6852; --faint:#98936F;
     --gold:#956A10; --gold-lit:#B98A22; --gold-on:#FBF6E9; --gold-rgb:149,106,16;
-    --lapis:#2C42A0; --lapis-soft:#5468BE; --pending:#8A6114;
+    --lapis:#2C42A0; --lapis-soft:#5468BE; --pending:#8A6114; --danger:#B4231F;
     --cell0:#DBD3BB; --surface:#EDE7D6;
     --shadow:0 1px 2px rgba(28,29,39,.05), 0 8px 26px -14px rgba(28,29,39,.22);
     --glow:none;
@@ -57,7 +57,7 @@ export const GlobalStyle = createGlobalStyle`
     --bg:#0F1017; --panel:#161927; --panel2:#1C2033; --rule:#2A2E42; --rule-soft:#20243550;
     --text:#ECE6D6; --muted:#9DA0B4; --faint:#63667E;
     --gold:#E0AE3C; --gold-lit:#F6D480; --gold-on:#12131C; --gold-rgb:224,174,60;
-    --lapis:#8098F4; --lapis-soft:#5C7CF0; --pending:#D69B4E;
+    --lapis:#8098F4; --lapis-soft:#5C7CF0; --pending:#D69B4E; --danger:#F08A84;
     --cell0:#191D2B; --surface:#12131C;
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 18px 44px -20px rgba(0,0,0,.7);
     --glow:0 0 22px -6px rgba(224,174,60,.45);

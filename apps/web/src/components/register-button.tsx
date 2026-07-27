@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui'
 import { verseQueryKey } from '@/hooks/use-verse-status'
 import type { VerseStatus } from '@/lib/api'
 import { registerVerse } from '@/lib/register'
@@ -10,27 +11,12 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import styled from 'styled-components'
 
-const Button = styled.button`
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: #512da8;
-  color: #fff;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`
-
 const Message = styled.p`
   margin: 0;
   max-width: 32rem;
   font-size: 0.875rem;
   word-break: break-word;
-  color: #b91c1c;
+  color: ${({ theme }) => theme.color.danger};
 `
 
 interface RegisterButtonProps {
@@ -97,7 +83,12 @@ export function RegisterButton({ book, chapter, verse, onSubmitted }: RegisterBu
 
   return (
     <>
-      <Button type="button" onClick={onRegister} disabled={!connected || phase === 'submitting'}>
+      <Button
+        type="button"
+        $variant="gold"
+        onClick={onRegister}
+        disabled={!connected || phase === 'submitting'}
+      >
         {phase === 'submitting' ? t('submitting') : t('register')}
       </Button>
       {phase === 'error' && error !== null && <Message>{error}</Message>}
