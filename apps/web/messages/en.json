@@ -5,7 +5,27 @@
   },
   "home": {
     "title": "Eternal Word",
-    "subtitle": "Register a verse of the Bible permanently on Solana."
+    "subtitle": "Register a verse of the Bible permanently on Solana.",
+    "registerTitle": "Register a verse",
+    "registerLead": "Search by reference and, if it's still available, inscribe it on-chain from your wallet."
+  },
+  "hero": {
+    "eyebrow": "Tracking & community · the living record",
+    "titleBefore": "Every verse registered is a letter ",
+    "titleLit": "illuminated",
+    "titleAfter": " in a codex that cannot fade.",
+    "sub": "Explore what's been adopted, map the whole canon, and see who is writing it — permanent text on Solana, verse by verse.",
+    "illuminated": "verses illuminated",
+    "ofCanon": "of the canon registered",
+    "stillDark": "{count, number} still in the dark",
+    "exploreCta": "Explore the record",
+    "dashboardCta": "Dashboard",
+    "mapCta": "Progress map",
+    "proofAdopter": "Adopter",
+    "proofSlot": "Slot",
+    "proofAccount": "Account (PDA)",
+    "proofRegistered": "Registered",
+    "proofTransaction": "Transaction"
   },
   "theme": {
     "toggle": "Toggle light and dark theme",

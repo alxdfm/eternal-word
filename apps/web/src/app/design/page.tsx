@@ -11,44 +11,12 @@ import {
   SegmentedControl,
   Serif,
   StateChip,
-  ThemeToggle,
   Tooltip,
   Wrap,
 } from '@/components/ui'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import styled from 'styled-components'
-
-const Top = styled.header`
-  border-bottom: 1px solid ${({ theme }) => theme.color.rule};
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: color-mix(in oklab, ${({ theme }) => theme.color.bg} 82%, transparent);
-  backdrop-filter: blur(6px);
-`
-const TopIn = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  height: 60px;
-`
-const Mark = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: ${({ theme }) => theme.font.serif};
-  .glyph {
-    color: ${({ theme }) => theme.color.gold};
-  }
-  b {
-    font-weight: 600;
-    font-size: 1.06rem;
-  }
-`
-const Spacer = styled.div`
-  flex: 1;
-`
 
 const Grid = styled.div`
   display: grid;
@@ -157,156 +125,136 @@ const DemoCell = styled.button`
 export default function DesignPage() {
   const t = useTranslations('design')
   const tState = useTranslations('verseState')
-  const tTheme = useTranslations('theme')
   const [mode, setMode] = useState<'text' | 'ref'>('text')
 
   return (
-    <>
-      <Top>
-        <Wrap>
-          <TopIn>
-            <Mark>
-              <span className="glyph">✦</span>
-              <b>Eternal Word</b>
-            </Mark>
-            <Spacer />
-            <ThemeToggle
-              ariaLabel={tTheme('toggle')}
-              darkLabel={tTheme('dark')}
-              lightLabel={tTheme('light')}
-            />
-          </TopIn>
-        </Wrap>
-      </Top>
+    <Section>
+      <Wrap>
+        <SectionHead
+          eyebrow={t('eyebrow')}
+          title={<Serif>{t('title')}</Serif>}
+          lead={t('lead')}
+          index={t('index')}
+        />
 
-      <Section>
-        <Wrap>
-          <SectionHead
-            eyebrow={t('eyebrow')}
-            title={<Serif>{t('title')}</Serif>}
-            lead={t('lead')}
-            index={t('index')}
-          />
-
-          <Grid>
-            <Card>
-              <Eyebrow as="span">{t('palette.title')}</Eyebrow>
-              <Swatches style={{ marginTop: '14px' }}>
-                <Sw>
-                  <span className="chipc" style={{ background: 'var(--bg)' }} />
-                  <div>
-                    <div className="nm">{t('palette.ground')}</div>
-                    <div className="ds">{t('palette.groundDesc')}</div>
-                  </div>
-                </Sw>
-                <Sw>
-                  <span
-                    className="chipc"
-                    style={{ background: 'var(--gold)', boxShadow: 'var(--glow)' }}
-                  />
-                  <div>
-                    <div className="nm">{t('palette.gold')}</div>
-                    <div className="ds">{t('palette.goldDesc')}</div>
-                  </div>
-                </Sw>
-                <Sw>
-                  <span className="chipc" style={{ background: 'var(--lapis)' }} />
-                  <div>
-                    <div className="nm">{t('palette.lapis')}</div>
-                    <div className="ds">{t('palette.lapisDesc')}</div>
-                  </div>
-                </Sw>
-                <Sw>
-                  <span className="chipc" style={{ background: 'var(--pending)' }} />
-                  <div>
-                    <div className="nm">{t('palette.candle')}</div>
-                    <div className="ds">{t('palette.candleDesc')}</div>
-                  </div>
-                </Sw>
-              </Swatches>
-            </Card>
-
-            <Card>
-              <Eyebrow as="span">{t('type.title')}</Eyebrow>
-              <div style={{ marginTop: '8px' }}>
-                <TypeRow>
-                  <div className="lbl">{t('type.serif')}</div>
-                  <Serif style={{ fontSize: '1.35rem', lineHeight: 1.3 }}>
-                    {t('type.serifSample')}
-                  </Serif>
-                </TypeRow>
-                <TypeRow>
-                  <div className="lbl">{t('type.sans')}</div>
-                  <div style={{ fontSize: '0.98rem' }}>{t('type.sansSample')}</div>
-                </TypeRow>
-                <TypeRow>
-                  <div className="lbl">{t('type.mono')}</div>
-                  <Mono style={{ fontSize: '0.9rem' }}>{t('type.monoSample')}</Mono>
-                </TypeRow>
-              </div>
-            </Card>
-
-            <Card>
-              <Eyebrow as="span">{t('states.title')}</Eyebrow>
-              <States style={{ marginTop: '14px' }}>
-                <div className="st">
-                  <StateChip state="available">{tState('available')}</StateChip>
-                  <small>{t('states.available')}</small>
+        <Grid>
+          <Card>
+            <Eyebrow as="span">{t('palette.title')}</Eyebrow>
+            <Swatches style={{ marginTop: '14px' }}>
+              <Sw>
+                <span className="chipc" style={{ background: 'var(--bg)' }} />
+                <div>
+                  <div className="nm">{t('palette.ground')}</div>
+                  <div className="ds">{t('palette.groundDesc')}</div>
                 </div>
-                <div className="st">
-                  <StateChip state="pending">{tState('pending')}</StateChip>
-                  <small>{t('states.pending')}</small>
-                </div>
-                <div className="st">
-                  <StateChip state="registered">{tState('registered')}</StateChip>
-                  <small>{t('states.registered')}</small>
-                </div>
-                <p className="note">{t('states.note')}</p>
-              </States>
-            </Card>
-          </Grid>
-
-          <Card style={{ marginTop: '20px' }}>
-            <Eyebrow as="span">{t('primitives.title')}</Eyebrow>
-            <div style={{ marginTop: '16px' }}>
-              <Row>
-                <StateChip state="available">{tState('available')}</StateChip>
-                <StateChip state="pending">{tState('pending')}</StateChip>
-                <StateChip state="registered">{tState('registered')}</StateChip>
-                <StateChip state="registered" />
-              </Row>
-              <Row>
-                <Button $variant="gold">{t('primitives.adopt')} →</Button>
-                <Button $variant="ghost">{t('primitives.secondary')}</Button>
-                <Button $variant="ghost" disabled>
-                  {t('primitives.secondary')}
-                </Button>
-              </Row>
-              <Row>
-                <SegmentedControl
-                  ariaLabel={t('primitives.segmented')}
-                  value={mode}
-                  onChange={setMode}
-                  options={[
-                    { value: 'text', label: t('primitives.segByText') },
-                    { value: 'ref', label: t('primitives.segByRef') },
-                  ]}
+              </Sw>
+              <Sw>
+                <span
+                  className="chipc"
+                  style={{ background: 'var(--gold)', boxShadow: 'var(--glow)' }}
                 />
-                <Tooltip content={t('primitives.tooltipBody')}>
-                  <DemoCell type="button">{t('primitives.tooltipTrigger')}</DemoCell>
-                </Tooltip>
-              </Row>
-              <Row>
-                <Legend>
-                  <span>{t('primitives.heatmapScaleLow')}</span>
-                  <HeatRamp aria-hidden="true" />
-                  <span>{t('primitives.heatmapScaleHigh')}</span>
-                </Legend>
-              </Row>
+                <div>
+                  <div className="nm">{t('palette.gold')}</div>
+                  <div className="ds">{t('palette.goldDesc')}</div>
+                </div>
+              </Sw>
+              <Sw>
+                <span className="chipc" style={{ background: 'var(--lapis)' }} />
+                <div>
+                  <div className="nm">{t('palette.lapis')}</div>
+                  <div className="ds">{t('palette.lapisDesc')}</div>
+                </div>
+              </Sw>
+              <Sw>
+                <span className="chipc" style={{ background: 'var(--pending)' }} />
+                <div>
+                  <div className="nm">{t('palette.candle')}</div>
+                  <div className="ds">{t('palette.candleDesc')}</div>
+                </div>
+              </Sw>
+            </Swatches>
+          </Card>
+
+          <Card>
+            <Eyebrow as="span">{t('type.title')}</Eyebrow>
+            <div style={{ marginTop: '8px' }}>
+              <TypeRow>
+                <div className="lbl">{t('type.serif')}</div>
+                <Serif style={{ fontSize: '1.35rem', lineHeight: 1.3 }}>
+                  {t('type.serifSample')}
+                </Serif>
+              </TypeRow>
+              <TypeRow>
+                <div className="lbl">{t('type.sans')}</div>
+                <div style={{ fontSize: '0.98rem' }}>{t('type.sansSample')}</div>
+              </TypeRow>
+              <TypeRow>
+                <div className="lbl">{t('type.mono')}</div>
+                <Mono style={{ fontSize: '0.9rem' }}>{t('type.monoSample')}</Mono>
+              </TypeRow>
             </div>
           </Card>
-        </Wrap>
-      </Section>
-    </>
+
+          <Card>
+            <Eyebrow as="span">{t('states.title')}</Eyebrow>
+            <States style={{ marginTop: '14px' }}>
+              <div className="st">
+                <StateChip state="available">{tState('available')}</StateChip>
+                <small>{t('states.available')}</small>
+              </div>
+              <div className="st">
+                <StateChip state="pending">{tState('pending')}</StateChip>
+                <small>{t('states.pending')}</small>
+              </div>
+              <div className="st">
+                <StateChip state="registered">{tState('registered')}</StateChip>
+                <small>{t('states.registered')}</small>
+              </div>
+              <p className="note">{t('states.note')}</p>
+            </States>
+          </Card>
+        </Grid>
+
+        <Card style={{ marginTop: '20px' }}>
+          <Eyebrow as="span">{t('primitives.title')}</Eyebrow>
+          <div style={{ marginTop: '16px' }}>
+            <Row>
+              <StateChip state="available">{tState('available')}</StateChip>
+              <StateChip state="pending">{tState('pending')}</StateChip>
+              <StateChip state="registered">{tState('registered')}</StateChip>
+              <StateChip state="registered" />
+            </Row>
+            <Row>
+              <Button $variant="gold">{t('primitives.adopt')} →</Button>
+              <Button $variant="ghost">{t('primitives.secondary')}</Button>
+              <Button $variant="ghost" disabled>
+                {t('primitives.secondary')}
+              </Button>
+            </Row>
+            <Row>
+              <SegmentedControl
+                ariaLabel={t('primitives.segmented')}
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: 'text', label: t('primitives.segByText') },
+                  { value: 'ref', label: t('primitives.segByRef') },
+                ]}
+              />
+              <Tooltip content={t('primitives.tooltipBody')}>
+                <DemoCell type="button">{t('primitives.tooltipTrigger')}</DemoCell>
+              </Tooltip>
+            </Row>
+            <Row>
+              <Legend>
+                <span>{t('primitives.heatmapScaleLow')}</span>
+                <HeatRamp aria-hidden="true" />
+                <span>{t('primitives.heatmapScaleHigh')}</span>
+              </Legend>
+            </Row>
+          </div>
+        </Card>
+      </Wrap>
+    </Section>
   )
 }
