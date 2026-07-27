@@ -15,6 +15,5 @@ export {
   Num,
   Rule,
   SectionHeading,
-  SectionIndex,
   Serif,
 } from './typography'

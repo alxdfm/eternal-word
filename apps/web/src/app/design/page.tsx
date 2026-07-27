@@ -118,7 +118,7 @@ const DemoCell = styled.button`
 `
 
 /**
- * Style-guide route (§01 of the mockup) — renders the tokens and primitives so a
+ * Style-guide route — renders the tokens and primitives so a
  * change to the design system is visible in one place. This is the bridge that
  * keeps production from drifting from the approved "Códice de Luz" mockup.
  */

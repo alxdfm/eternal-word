@@ -96,7 +96,7 @@
     "refBook": "Book",
     "refChapter": "Chapter",
     "refVerse": "Verse",
-    "placeholder": "Search words across all 31,098 verses…",
+    "placeholder": "Search words across all {count, number} verses…",
     "count": "{total, number} matches",
     "noResults": "No verses match “{query}”.",
     "resolve": "Resolve",

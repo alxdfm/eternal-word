@@ -44,15 +44,6 @@ export const Lead = styled.p`
   max-width: 52ch;
 `
 
-/** Monospace section index, e.g. "§ 01 — System". Gold, quiet. */
-export const SectionIndex = styled.span`
-  font-family: ${({ theme }) => theme.font.mono};
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  color: ${({ theme }) => theme.color.gold};
-  white-space: nowrap;
-`
-
 export const Rule = styled.hr`
   height: 1px;
   border: 0;

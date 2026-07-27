@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
-import { Eyebrow, Lead, SectionHeading, SectionIndex } from './typography'
+import { Eyebrow, Lead, SectionHeading } from './typography'
 
 /** Centered content column — the codex page width. */
 export const Wrap = styled.div`
@@ -34,20 +34,18 @@ const Head = styled.div`
 `
 
 /**
- * The eyebrow → heading → lead cluster every section opens with, plus the quiet
- * mono section index on the right. Keeps the five screens visually in step.
+ * The eyebrow → heading → lead cluster every section opens with, plus an
+ * optional slot on the right (e.g. a legend). Keeps the screens visually in step.
  */
 export function SectionHead({
   eyebrow,
   title,
   lead,
-  index,
   children,
 }: {
   eyebrow: string
   title: ReactNode
   lead?: ReactNode
-  index?: string
   children?: ReactNode
 }) {
   return (
@@ -57,7 +55,7 @@ export function SectionHead({
         <SectionHeading>{title}</SectionHeading>
         {lead !== undefined && <Lead>{lead}</Lead>}
       </div>
-      {children ?? (index !== undefined && <SectionIndex>{index}</SectionIndex>)}
+      {children}
     </Head>
   )
 }

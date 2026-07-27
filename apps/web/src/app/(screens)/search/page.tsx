@@ -6,7 +6,7 @@ import { VerseStateChip } from '@/components/verse-state-chip'
 import { useSearch } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
 import type { VerseReference } from '@/lib/api'
-import { BOOK_NUMBERS } from '@/lib/books'
+import { BOOK_NUMBERS, REGISTRABLE_VERSE_COUNT } from '@/lib/books'
 import { useTranslations } from 'next-intl'
 import { type ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
@@ -165,7 +165,7 @@ function ByText() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={t('placeholder')}
+          placeholder={t('placeholder', { count: REGISTRABLE_VERSE_COUNT })}
           aria-label={t('eyebrow')}
           autoComplete="off"
           spellCheck={false}
