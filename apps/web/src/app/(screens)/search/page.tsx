@@ -1,13 +1,13 @@
 'use client'
 
-import { Button, Card, Section, SectionHead, SegmentedControl, Serif, Wrap } from '@/components/ui'
+import { RegisterPanel } from '@/components/register-panel'
+import { Button, Section, SectionHead, SegmentedControl, Wrap } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useSearch } from '@/hooks/queries'
-import { useBookLabels, useOmittedNote } from '@/hooks/use-books'
-import { fetchVerse } from '@/lib/api'
-import { BOOK_NUMBERS, omittedAt } from '@/lib/books'
-import { useQuery } from '@tanstack/react-query'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useBookLabels } from '@/hooks/use-books'
+import type { VerseReference } from '@/lib/api'
+import { BOOK_NUMBERS } from '@/lib/books'
+import { useTranslations } from 'next-intl'
 import { type ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
@@ -106,33 +106,10 @@ const Field = styled.label`
     width: 5rem;
   }
 `
-const Gap = styled(Card)`
+const PanelWrap = styled.div`
   margin-top: 16px;
-  .head {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-bottom: 6px;
-  }
-  .badge {
-    font-size: 0.66rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: ${({ theme }) => theme.color.muted};
-    border: 1px solid ${({ theme }) => theme.color.rule};
-    border-radius: ${({ theme }) => theme.radius.pill};
-    padding: 2px 8px;
-  }
-  .verse {
-    font-family: ${({ theme }) => theme.font.serif};
-    font-size: 1.2rem;
-    line-height: 1.5;
-    margin: 6px 0 0;
-  }
-  p {
-    margin: 0;
-    color: ${({ theme }) => theme.color.muted};
-  }
+  display: grid;
+  justify-items: center;
 `
 const Note = styled.p`
   color: ${({ theme }) => theme.color.muted};
@@ -174,7 +151,6 @@ function useDebounced<T>(value: T, ms: number): T {
 function ByText() {
   const t = useTranslations('searchScreen')
   const labels = useBookLabels()
-  const f = useFormatter()
   const [input, setInput] = useState('light')
   const query = useDebounced(input, 250)
   const { data } = useSearch(query)
@@ -218,19 +194,10 @@ function ByText() {
 function ByReference() {
   const t = useTranslations('searchScreen')
   const labels = useBookLabels()
-  const omittedNote = useOmittedNote()
   const [book, setBook] = useState(43)
   const [chapter, setChapter] = useState('3')
   const [verse, setVerse] = useState('16')
-  const [ref, setRef] = useState<{ book: number; chapter: number; verse: number } | null>(null)
-
-  const omitted = ref ? omittedAt(ref.book, ref.chapter, ref.verse) : undefined
-  const { data, isError } = useQuery({
-    queryKey: ['verse', ref?.book, ref?.chapter, ref?.verse],
-    queryFn: () => fetchVerse(ref?.book as number, ref?.chapter as number, ref?.verse as number),
-    enabled: ref !== null && omitted === undefined,
-    retry: false,
-  })
+  const [ref, setRef] = useState<VerseReference | null>(null)
 
   const resolve = () => {
     const c = Number(chapter)
@@ -271,36 +238,13 @@ function ByReference() {
         </Button>
       </RefForm>
 
-      {ref !== null && omitted !== undefined ? (
-        <Gap>
-          {(() => {
-            const note = omittedNote(omitted)
-            return (
-              <>
-                <div className="head">
-                  <Serif style={{ fontWeight: 600 }}>
-                    {labels.reference(ref.book, ref.chapter, ref.verse)}
-                  </Serif>
-                  <span className="badge">{note.label}</span>
-                </div>
-                <p>{note.note}</p>
-              </>
-            )
-          })()}
-        </Gap>
-      ) : ref !== null && isError ? (
-        <Note>{t('notInCanon')}</Note>
-      ) : ref !== null && data ? (
-        <Gap>
-          <div className="head">
-            <Serif style={{ fontWeight: 600 }}>
-              {labels.reference(ref.book, ref.chapter, ref.verse)}
-            </Serif>
-            <VerseStateChip status={data.status} compact />
-          </div>
-          {data.text !== null && <p className="verse">{data.text}</p>}
-        </Gap>
-      ) : null}
+      {/* The panel resolves the verse, shows its status + text, the omitted note
+          (incl. the Rm 16:25 pointer), and — when AVAILABLE — the register CTA. */}
+      {ref !== null && (
+        <PanelWrap>
+          <RegisterPanel key={`${ref.book}:${ref.chapter}:${ref.verse}`} reference={ref} />
+        </PanelWrap>
+      )}
     </>
   )
 }

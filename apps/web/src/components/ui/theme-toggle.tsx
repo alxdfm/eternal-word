@@ -25,7 +25,7 @@ export function ThemeToggle({
   return (
     <Button type="button" $variant="ghost" onClick={toggle} aria-label={ariaLabel}>
       <span aria-hidden="true">{icon}</span>
-      {label !== '' && <span>{label}</span>}
+      {label !== '' && <span className="ew-toggle-label">{label}</span>}
     </Button>
   )
 }

@@ -18,8 +18,15 @@ const Bar = styled.header`
 const Inner = styled.div`
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   height: 60px;
+  @media (max-width: 860px) {
+    height: auto;
+    min-height: 60px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+    row-gap: 10px;
+  }
 `
 const Mark = styled(Link)`
   display: flex;
@@ -45,6 +52,10 @@ const Nav = styled.nav`
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  @media (max-width: 860px) {
+    order: 3;
+    flex-basis: 100%;
+  }
 `
 const NavLink = styled(Link)<{ $active: boolean }>`
   font-size: 0.85rem;

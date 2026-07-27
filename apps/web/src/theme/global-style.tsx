@@ -88,4 +88,45 @@ export const GlobalStyle = createGlobalStyle`
   @media (prefers-reduced-motion:reduce){
     *{ animation:none !important; transition:none !important }
   }
+
+  /* Wallet Adapter button → design system. Ghost pill (gold stays reserved for
+     the act of registering); overrides the library's own purple stylesheet. */
+  .wallet-adapter-button {
+    font-family:var(--sans) !important;
+    font-size:.82rem !important;
+    font-weight:600 !important;
+    height:auto !important;
+    line-height:1.2 !important;
+    padding:7px 15px !important;
+    border-radius:100px !important;
+    background:transparent !important;
+    color:var(--muted) !important;
+    border:1px solid var(--rule) !important;
+  }
+  .wallet-adapter-button:not([disabled]):hover{
+    background:transparent !important;
+    border-color:var(--lapis-soft) !important;
+    color:var(--text) !important;
+  }
+  .wallet-adapter-button-start-icon,
+  .wallet-adapter-button-end-icon{ width:18px !important; height:18px !important; }
+  .wallet-adapter-button-start-icon{ margin:0 8px 0 0 !important; }
+  .wallet-adapter-button-end-icon{ margin:0 0 0 8px !important; }
+  /* dropdown shown once connected (copy / change / disconnect) */
+  .wallet-adapter-dropdown-list{
+    background:var(--panel) !important;
+    border:1px solid var(--rule) !important;
+    border-radius:12px !important;
+    box-shadow:var(--shadow) !important;
+    font-family:var(--sans) !important;
+  }
+  .wallet-adapter-dropdown-list-item{
+    color:var(--text) !important;
+    font-size:.85rem !important;
+    border-radius:8px !important;
+  }
+  .wallet-adapter-dropdown-list-item:not([disabled]):hover{ background:var(--panel2) !important; }
+
+  /* header theme-toggle label hides on the narrowest screens to save width */
+  @media (max-width:480px){ .ew-toggle-label{ display:none } }
 `
