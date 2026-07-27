@@ -25,6 +25,7 @@ import {
 } from '@eternal-word/blockchain'
 import type { VerseAddress } from '@eternal-word/domain'
 import { Connection, Keypair, type VersionedTransaction } from '@solana/web3.js'
+import { argAt, buildRegisterTx } from './register-helpers.js'
 
 interface Options {
   url: string
@@ -32,13 +33,9 @@ interface Options {
 }
 
 function parseArgs(argv: readonly string[]): Options {
-  const at = (flag: string) => {
-    const i = argv.indexOf(flag)
-    return i >= 0 ? argv[i + 1] : undefined
-  }
   return {
-    url: at('--url') ?? 'https://api.devnet.solana.com',
-    keypairPath: at('--keypair') ?? `${homedir()}/.config/solana/id.json`,
+    url: argAt(argv, '--url') ?? 'https://api.devnet.solana.com',
+    keypairPath: argAt(argv, '--keypair') ?? `${homedir()}/.config/solana/id.json`,
   }
 }
 
@@ -76,21 +73,13 @@ async function main() {
     throw new Error('canon is not sealed yet — the bootstrap must finish first')
   }
 
-  const { blockhash } = await connection.getLatestBlockhash()
-
   const register = async (verse: VerseAddress, label: string) => {
-    const { text, proof } = prover.proofFor(verse)
-    const transaction = registerVerseTransaction({
-      adopter: wallet.publicKey,
-      address: verse,
-      text,
-      proof,
-      recentBlockhash: blockhash,
-      computeUnitLimit: 400_000,
-      priorityFeeMicroLamports: 1000,
-    })
-    transaction.sign([wallet])
-    const wireBytes = transaction.serialize().length
+    const { transaction, text, wireBytes } = await buildRegisterTx(
+      connection,
+      wallet,
+      prover,
+      verse,
+    )
     const signature = await connection.sendTransaction(transaction)
     await connection.confirmTransaction(signature, 'confirmed')
 

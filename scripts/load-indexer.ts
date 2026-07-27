@@ -14,15 +14,10 @@
 //
 import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import {
-  CatalogProver,
-  PROGRAM_ID,
-  configPda,
-  decodeConfig,
-  registerVerseTransaction,
-} from '@eternal-word/blockchain'
+import { CatalogProver, PROGRAM_ID, configPda, decodeConfig } from '@eternal-word/blockchain'
 import type { VerseAddress } from '@eternal-word/domain'
 import { Connection, Keypair } from '@solana/web3.js'
+import { argAt, buildRegisterTx } from './register-helpers.js'
 
 interface Options {
   url: string
@@ -36,21 +31,17 @@ interface Options {
 }
 
 function parseArgs(argv: readonly string[]): Options {
-  const at = (flag: string) => {
-    const i = argv.indexOf(flag)
-    return i >= 0 ? argv[i + 1] : undefined
-  }
-  const webApi = at('--web-api') ?? process.env.WEB_API_URL
+  const webApi = argAt(argv, '--web-api') ?? process.env.WEB_API_URL
   if (!webApi) throw new Error('--web-api <url> (or WEB_API_URL) is required')
   return {
-    url: at('--url') ?? 'https://api.devnet.solana.com',
-    keypairPath: at('--keypair') ?? `${homedir()}/.config/solana/id.json`,
+    url: argAt(argv, '--url') ?? 'https://api.devnet.solana.com',
+    keypairPath: argAt(argv, '--keypair') ?? `${homedir()}/.config/solana/id.json`,
     webApi: webApi.replace(/\/$/, ''),
-    book: Number(at('--book') ?? 19),
-    chapter: Number(at('--chapter') ?? 119),
-    count: Number(at('--count') ?? 25),
-    concurrency: Number(at('--concurrency') ?? 8),
-    pollTimeoutMs: Number(at('--poll-timeout-ms') ?? 180_000),
+    book: Number(argAt(argv, '--book') ?? 19),
+    chapter: Number(argAt(argv, '--chapter') ?? 119),
+    count: Number(argAt(argv, '--count') ?? 25),
+    concurrency: Number(argAt(argv, '--concurrency') ?? 8),
+    pollTimeoutMs: Number(argAt(argv, '--poll-timeout-ms') ?? 180_000),
   }
 }
 
@@ -129,21 +120,12 @@ async function main() {
   const key = (v: VerseAddress) => `${v.book}:${v.chapter}:${v.verse}`
 
   await mapWithConcurrency(targets, o.concurrency, async (address) => {
-    const { text, proof } = prover.proofFor(address)
-    const { blockhash } = await connection.getLatestBlockhash()
-    const tx = registerVerseTransaction({
-      adopter: wallet.publicKey,
-      address,
-      text,
-      proof,
-      recentBlockhash: blockhash,
-      computeUnitLimit: 400_000,
-      priorityFeeMicroLamports: 1000,
-    })
-    tx.sign([wallet])
-    const signature = await connection.sendTransaction(tx)
+    const { transaction } = await buildRegisterTx(connection, wallet, prover, address)
+    const signature = await connection.sendTransaction(transaction)
     sentAt.set(key(address), Date.now())
-    // Camada 2: PENDING otimista, como o site faz (best-effort).
+    // Camada 2: PENDING otimista, como o site faz (best-effort). De um único IP,
+    // o WRITE_LIMITER da WebApi (ver ADR de custo) pode 429 a maioria — por isso
+    // é best-effort; para exercitar a camada 2 sob carga, suba WEB_API_WRITE_*.
     await fetch(`${o.webApi}/pending`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
