@@ -1,6 +1,6 @@
 'use client'
 
-import { ThemeToggle, Wrap } from '@/components/ui'
+import { LocaleToggle, ThemeToggle, Wrap } from '@/components/ui'
 import { WalletButton } from '@/components/wallet-button'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -87,6 +87,7 @@ export function AppHeader() {
   const t = useTranslations('nav')
   const pathname = usePathname()
   const tTheme = useTranslations('theme')
+  const tLocale = useTranslations('locale')
   return (
     <Bar>
       <Wrap>
@@ -104,6 +105,10 @@ export function AppHeader() {
           </Nav>
           <Spacer />
           <Actions>
+            <LocaleToggle
+              ariaLabel={tLocale('toggle')}
+              labels={{ en: tLocale('en'), pt: tLocale('pt') }}
+            />
             <ThemeToggle
               ariaLabel={tTheme('toggle')}
               darkLabel={tTheme('dark')}
