@@ -45,10 +45,13 @@ export default $config({
       ...shared,
       handler: 'apps/api/src/handlers/webhook.handler',
       url: true,
-      // Cap the blast radius / cost of a flood of webhook posts (HD-05). The
-      // authHeader already blocks unauthenticated writes, but each request still
-      // invokes the Lambda. Reserved concurrency is the hard cost ceiling.
-      transform: { function: { reservedConcurrentExecutions: 10 } },
+      // Cost/DoS ceiling (HD-05): the AWS ACCOUNT concurrency limit is the hard
+      // cap (currently 10 total — a new-account default). Per-function reserved
+      // concurrency is intentionally NOT set: it can't exceed the account total
+      // and would starve the other functions. The authHeader blocks
+      // unauthenticated writes; per-IP abuse is handled in the app. If the
+      // account limit is raised for mainnet and per-function guarantees are
+      // wanted, use `concurrency: { reserved: N }` (NOT a transform).
       environment: {
         DATABASE_URL: databaseUrl.value,
         WEBHOOK_AUTH_TOKEN: webhookAuthToken.value,
@@ -112,10 +115,10 @@ export default $config({
       url: {
         cors: { allowOrigins: ['*'], allowMethods: ['GET', 'POST'], allowHeaders: ['content-type'] },
       },
-      // Cost ceiling for the public read/PENDING path (HD-05). The per-IP token
-      // bucket in the handler cuts naive abuse; this caps total concurrency so a
-      // burst cannot run up an unbounded bill. Tune per real traffic.
-      transform: { function: { reservedConcurrentExecutions: 30 } },
+      // Cost ceiling for the public read/PENDING path (HD-05): the account
+      // concurrency limit (10 today) is the hard cap. The per-IP token bucket in
+      // the handler cuts naive abuse (validated: 429 + Retry-After). Reserved
+      // concurrency is not set — see the note on IndexerWebhook above.
       environment: {
         DATABASE_URL: databaseUrl.value,
       },
