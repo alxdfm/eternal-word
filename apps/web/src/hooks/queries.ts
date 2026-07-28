@@ -26,10 +26,10 @@ export const useChapterProgress = (book: number | null) =>
     enabled: book !== null,
   })
 
-export const useSearch = (query: string) =>
+export const useSearch = (query: string, page = 1) =>
   useQuery({
-    queryKey: ['search', query],
-    queryFn: () => api.fetchSearch(query),
+    queryKey: ['search', query, page],
+    queryFn: () => api.fetchSearch(query, page),
     enabled: query.trim() !== '',
     placeholderData: keepPreviousData,
   })

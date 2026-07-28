@@ -26,8 +26,8 @@ import {
   type ListFilter,
   type MirrorEntry,
   type Paginated,
-  type SearchHit,
   type SearchRepository,
+  type SearchResult,
   type VerseListItem,
   type VerseRegistered,
   type VerseRepository,
@@ -337,23 +337,23 @@ describe('getChapterProgress', () => {
 
 describe('searchVerses', () => {
   class StubSearchRepo implements SearchRepository {
-    calls: Array<{ query: string; limit: number }> = []
-    async searchByText(query: string, limit: number): Promise<readonly SearchHit[]> {
-      this.calls.push({ query, limit })
-      return []
+    calls: Array<{ query: string; limit: number; offset: number }> = []
+    async searchByText(query: string, limit: number, offset: number): Promise<SearchResult> {
+      this.calls.push({ query, limit, offset })
+      return { hits: [], total: 0 }
     }
   }
 
   it('skips the DB for an empty or whitespace query', async () => {
     const repo = new StubSearchRepo()
-    expect(await searchVerses(repo, '   ')).toEqual([])
+    expect(await searchVerses(repo, '   ')).toEqual({ hits: [], total: 0 })
     expect(repo.calls).toHaveLength(0)
   })
 
-  it('trims the query and clamps the limit', async () => {
+  it('trims the query and clamps the limit and offset', async () => {
     const repo = new StubSearchRepo()
-    await searchVerses(repo, '  light  ', 999)
-    expect(repo.calls[0]).toEqual({ query: 'light', limit: 50 })
+    await searchVerses(repo, '  light  ', 999, 5)
+    expect(repo.calls[0]).toEqual({ query: 'light', limit: 50, offset: 5 })
   })
 })
 

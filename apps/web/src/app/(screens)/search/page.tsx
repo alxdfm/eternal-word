@@ -1,11 +1,11 @@
 'use client'
 
 import { RegisterPanel } from '@/components/register-panel'
-import { Button, Section, SectionHead, SegmentedControl, Wrap } from '@/components/ui'
+import { Button, Pager, Section, SectionHead, SegmentedControl, Wrap } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useSearch } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
-import type { VerseReference } from '@/lib/api'
+import { SEARCH_PAGE_SIZE, type VerseReference } from '@/lib/api'
 import { REGISTRABLE_VERSE_COUNT } from '@/lib/books'
 import { parseReference } from '@/lib/reference'
 import { useTranslations } from 'next-intl'
@@ -136,7 +136,14 @@ function ByText() {
   const labels = useBookLabels()
   const [input, setInput] = useState('light')
   const query = useDebounced(input, 250)
-  const { data } = useSearch(query)
+  const [page, setPage] = useState(1)
+  const { data } = useSearch(query, page)
+
+  // A new query starts back at page 1.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset paging on query change
+  useEffect(() => setPage(1), [query])
+
+  const pages = data ? Math.ceil(data.total / SEARCH_PAGE_SIZE) : 0
 
   return (
     <>
@@ -153,22 +160,27 @@ function ByText() {
           autoComplete="off"
           spellCheck={false}
         />
-        {data && <span className="count">{t('count', { total: data.hits.length })}</span>}
+        {data && <span className="count">{t('count', { total: data.total })}</span>}
       </Bar>
-      {data && data.hits.length === 0 && query.trim() !== '' ? (
+      {data && data.total === 0 && query.trim() !== '' ? (
         <Note>{t('noResults', { query })}</Note>
       ) : data ? (
-        <Results>
-          {data.hits.map((hit) => (
-            <ResultRow key={`${hit.book}:${hit.chapter}:${hit.verse}`}>
-              <span className="ref">{labels.abbrReference(hit.book, hit.chapter, hit.verse)}</span>
-              <span className="snip">
-                <Highlight text={hit.text} query={query} />
-              </span>
-              <VerseStateChip status={hit.status} compact />
-            </ResultRow>
-          ))}
-        </Results>
+        <>
+          <Results>
+            {data.hits.map((hit) => (
+              <ResultRow key={`${hit.book}:${hit.chapter}:${hit.verse}`}>
+                <span className="ref">
+                  {labels.abbrReference(hit.book, hit.chapter, hit.verse)}
+                </span>
+                <span className="snip">
+                  <Highlight text={hit.text} query={query} />
+                </span>
+                <VerseStateChip status={hit.status} compact />
+              </ResultRow>
+            ))}
+          </Results>
+          <Pager page={page} pages={pages} onChange={setPage} />
+        </>
       ) : null}
     </>
   )

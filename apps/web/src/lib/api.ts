@@ -98,8 +98,10 @@ export const fetchBookProgress = () => getJson<readonly BookProgress[]>('/progre
 export const fetchChapterProgress = (book: number) =>
   getJson<ChapterProgressResponse>(`/progress?book=${book}`)
 
-export const fetchSearch = (query: string, limit = 20) =>
-  getJson<SearchResponse>(`/search?q=${encodeURIComponent(query)}&limit=${limit}`)
+export const SEARCH_PAGE_SIZE = 20
+
+export const fetchSearch = (query: string, page = 1, limit = SEARCH_PAGE_SIZE) =>
+  getJson<SearchResponse>(`/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`)
 
 export const fetchAdopter = (pubkey: string, page = 1, pageSize = 20) =>
   getJson<AdopterProfile>(

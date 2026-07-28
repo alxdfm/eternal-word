@@ -177,21 +177,35 @@ describe.skipIf(!DATABASE_URL)('createAggregateReadRepository (Postgres)', () =>
 describe.skipIf(!DATABASE_URL)('createSearchRepository (Postgres FTS)', () => {
   const repo = createSearchRepository(createDatabase(DATABASE_URL as string))
 
+  const refKey = (h: { book: number; chapter: number; verse: number }) =>
+    `${h.book}:${h.chapter}:${h.verse}`
+
   it('finds "light" and includes Genesis 1:3', async () => {
-    const hits = await repo.searchByText('light', 50)
+    const { hits, total } = await repo.searchByText('light', 50, 0)
     expect(hits.length).toBeGreaterThan(0)
+    expect(total).toBeGreaterThanOrEqual(hits.length)
     const gen13 = hits.find((h) => h.book === 1 && h.chapter === 1 && h.verse === 3)
     expect(gen13).toBeDefined()
     expect(gen13?.text.toLowerCase()).toContain('light')
   })
 
-  it('honors the limit', async () => {
-    const hits = await repo.searchByText('God', 5)
+  it('honors the limit and reports the full total', async () => {
+    const { hits, total } = await repo.searchByText('God', 5, 0)
     expect(hits.length).toBeGreaterThan(0)
     expect(hits.length).toBeLessThanOrEqual(5)
+    expect(total).toBeGreaterThan(5)
+  })
+
+  it('paginates with offset (page 2 differs from page 1, same total)', async () => {
+    const p1 = await repo.searchByText('God', 5, 0)
+    const p2 = await repo.searchByText('God', 5, 5)
+    expect(p1.total).toBe(p2.total)
+    expect(p1.hits.map(refKey)).not.toEqual(p2.hits.map(refKey))
   })
 
   it('returns nothing for a nonsense term', async () => {
-    expect(await repo.searchByText('zzzznotaword', 20)).toHaveLength(0)
+    const { hits, total } = await repo.searchByText('zzzznotaword', 20, 0)
+    expect(hits).toHaveLength(0)
+    expect(total).toBe(0)
   })
 })

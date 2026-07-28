@@ -58,5 +58,5 @@ export {
   toCumulativeTrend,
 } from './read/aggregate-use-cases.js'
 export { estimateSol } from './read/sol-estimate.js'
-export type { SearchHit, SearchRepository } from './read/search.js'
+export type { SearchHit, SearchRepository, SearchResult } from './read/search.js'
 export { DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT, searchVerses } from './read/search.js'

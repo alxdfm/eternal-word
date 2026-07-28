@@ -100,6 +100,8 @@ export interface SearchHitDto {
 export interface SearchResponseDto {
   readonly query: string
   readonly hits: readonly SearchHitDto[]
+  /** Total matches across all pages (for the pager). */
+  readonly total: number
 }
 
 /** One book cell of an adopter's coverage grid. */
