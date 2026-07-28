@@ -1,10 +1,10 @@
 {
   "app": {
-    "title": "Palavra Eterna",
+    "title": "Eternal Word",
     "description": "Registre versículos da Bíblia de forma permanente na blockchain Solana."
   },
   "home": {
-    "title": "Palavra Eterna",
+    "title": "Eternal Word",
     "subtitle": "Registre um versículo da Bíblia de forma permanente na Solana.",
     "registerTitle": "Registrar um versículo",
     "registerLead": "Busque pela referência e, se ainda estiver disponível, inscreva-o on-chain a partir da sua carteira."
@@ -38,7 +38,7 @@
     "pt": "PT"
   },
   "nav": {
-    "brand": "Palavra Eterna",
+    "brand": "Eternal Word",
     "dashboard": "Painel",
     "explore": "Explorar",
     "map": "Mapa de progresso",
