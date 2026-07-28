@@ -5,7 +5,7 @@ import { Card } from '@/components/ui'
 import { VerseStatus } from '@/components/verse-status'
 import { useOmittedNote } from '@/hooks/use-books'
 import { useVerseStatus } from '@/hooks/use-verse-status'
-import type { VerseReference } from '@/lib/api'
+import { VerseNotInCanonError, type VerseReference } from '@/lib/api'
 import { omittedAt } from '@/lib/books'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
@@ -57,7 +57,8 @@ export function RegisterPanel({ reference }: { reference: VerseReference }) {
   const t = useTranslations('panel')
   const omittedNote = useOmittedNote()
   const [watching, setWatching] = useState(false)
-  const { data, isPending, isError } = useVerseStatus(reference, watching)
+  const { data, isPending, isError, error } = useVerseStatus(reference, watching)
+  const notInCanon = error instanceof VerseNotInCanonError
 
   const omitted = omittedAt(reference.book, reference.chapter, reference.verse)
   const isOmitted = data !== undefined && !data.registrable
@@ -84,7 +85,12 @@ export function RegisterPanel({ reference }: { reference: VerseReference }) {
         </OmittedNote>
       ) : (
         <>
-          <VerseStatus data={data} isPending={isPending} isError={isError} />
+          <VerseStatus
+            data={data}
+            isPending={isPending}
+            isError={isError}
+            notInCanon={notInCanon}
+          />
           {data?.registrable === true && data.status === 'AVAILABLE' && (
             <RegisterButton
               book={reference.book}

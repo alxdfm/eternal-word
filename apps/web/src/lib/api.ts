@@ -51,12 +51,25 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
+/** The reference is outside the canonical versification (e.g. Song of Solomon
+ * 3:16 — chapter 3 has 11 verses). The read API answers 404; the UI shows a
+ * "not in canon" note, not the generic error state (UX-01). */
+export class VerseNotInCanonError extends Error {
+  constructor() {
+    super('reference not in the canonical versification')
+    this.name = 'VerseNotInCanonError'
+  }
+}
+
 export async function fetchVerse(
   book: number,
   chapter: number,
   verse: number,
 ): Promise<VerseStatus> {
   const res = await fetch(apiUrl(`/?book=${book}&chapter=${chapter}&verse=${verse}`))
+  if (res.status === 404) {
+    throw new VerseNotInCanonError()
+  }
   if (!res.ok) {
     throw new Error(`verse lookup failed (${res.status})`)
   }

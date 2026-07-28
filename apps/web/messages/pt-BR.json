@@ -37,6 +37,9 @@
     "en": "EN",
     "pt": "PT"
   },
+  "localeNote": {
+    "text": "O texto bíblico é sempre exibido em inglês (World English Bible) — a língua universal do registro on-chain; só a interface está em português."
+  },
   "nav": {
     "brand": "Eternal Word",
     "dashboard": "Painel",
@@ -139,6 +142,7 @@
     "registered": "Registrado",
     "failed": "Falhou",
     "notRegistrable": "Não registrável",
+    "notInCanon": "Essa referência não existe na versificação canônica.",
     "adopter": "Adotante: {address}"
   },
   "verseState": {

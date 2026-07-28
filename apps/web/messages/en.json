@@ -37,6 +37,9 @@
     "en": "EN",
     "pt": "PT"
   },
+  "localeNote": {
+    "text": "The scripture text is always shown in English (World English Bible) — the universal language of the on-chain record; only the interface is translated."
+  },
   "nav": {
     "brand": "Eternal Word",
     "dashboard": "Dashboard",
@@ -139,6 +142,7 @@
     "registered": "Registered",
     "failed": "Failed",
     "notRegistrable": "Not registrable",
+    "notInCanon": "That reference is not in the canonical versification.",
     "adopter": "Adopter: {address}"
   },
   "verseState": {

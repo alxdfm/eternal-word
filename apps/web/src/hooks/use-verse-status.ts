@@ -1,6 +1,6 @@
 'use client'
 
-import { type VerseReference, type VerseStatus, fetchVerse } from '@/lib/api'
+import { VerseNotInCanonError, type VerseReference, type VerseStatus, fetchVerse } from '@/lib/api'
 import { type UseQueryResult, useQuery } from '@tanstack/react-query'
 
 export function verseQueryKey(book: number, chapter: number, verse: number) {
@@ -30,6 +30,8 @@ export function useVerseStatus(
       return fetchVerse(reference.book, reference.chapter, reference.verse)
     },
     enabled: reference !== null,
+    // A reference outside the canon (404) is stable — never retry it.
+    retry: (failureCount, error) => !(error instanceof VerseNotInCanonError) && failureCount < 3,
     refetchInterval: (query) => {
       const status = query.state.data?.status
       if (status === 'REGISTERED' || status === 'FAILED') {
