@@ -34,7 +34,7 @@ function parseArgs(argv: readonly string[]): Options {
   const webApi = argAt(argv, '--web-api') ?? process.env.WEB_API_URL
   if (!webApi) throw new Error('--web-api <url> (or WEB_API_URL) is required')
   return {
-    url: argAt(argv, '--url') ?? 'https://api.devnet.solana.com',
+    url: argAt(argv, '--url') ?? process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com',
     keypairPath: argAt(argv, '--keypair') ?? `${homedir()}/.config/solana/id.json`,
     webApi: webApi.replace(/\/$/, ''),
     book: Number(argAt(argv, '--book') ?? 19),
@@ -100,7 +100,7 @@ async function main() {
       'Eternal Word — HD-04 indexer load test',
       `program:  ${PROGRAM_ID.toBase58()}`,
       `wallet:   ${wallet.publicKey.toBase58()}`,
-      `cluster:  ${o.url}`,
+      `cluster:  ${new URL(o.url).origin}`,
       `web api:  ${o.webApi}`,
       `target:   ${o.count} verses from ${o.book}:${o.chapter}`,
       '',
@@ -168,6 +168,11 @@ async function main() {
   )
   if (pending.size > 0) process.exit(1)
   process.stdout.write('Load test passed — the 3 layers kept up under the batch.\n')
+  // Sai limpo: o RPC público mantém uma subscription WebSocket que fica
+  // re-tentando (429) mesmo com o trabalho já feito, e uma rejeição solta
+  // derrubaria o processo com exit 1 DEPOIS do sucesso. Um RPC dedicado
+  // (SOLANA_RPC_URL) evita o throttle.
+  process.exit(0)
 }
 
 main().catch((error) => {
