@@ -106,15 +106,15 @@ jobs:
         run: cargo test --manifest-path programs/eternal-word/Cargo.toml
 
   bytecode:
-    name: Verificação de bytecode (informativo até imagem pinada)
-    # ⚠️ INFORMATIVO (continue-on-error) — sabidamente falha hoje. `pnpm
-    # docker:build` RECONSTRÓI a imagem do `Dockerfile.build`, cujo toolchain não
-    # é pinado por digest (`--default-toolchain stable` deriva). Uma imagem fresca
-    # produz bytecode diferente do publicado (`8f2c6ecf…`), logo este job dá
-    # MISMATCH. Vira gate de verdade quando a toolchain for pinada por digest
-    # (opção A) ou via solana-verify — ver docs/deploy/PROGRAM_AUDIT_S06 / HD-03.
-    if: github.event_name != 'pull_request'
-    continue-on-error: true
+    name: Verificação de bytecode (desativado até imagem pinada — S07)
+    # ⚠️ DESATIVADO (`if: false`) — fica *skipped*, não vermelho. O build NÃO é
+    # reproduzível a partir do `Dockerfile.build`: cada `docker:build` fresco gera
+    # um .so DIFERENTE (CI: `6a9b84…`, `af4f14…`; a VM: `8f2c6ecf…`) — o
+    # `--default-toolchain stable` deriva e o build não é determinístico sem imagem
+    # pinada por digest. A integridade do deploy é conferida on-chain
+    # (`pnpm program:verify -- --onchain`, passa). Reativar na S07 com imagem
+    # pinada por digest / solana-verify — ver docs/deploy/PROGRAM_AUDIT_S06, HD-03.
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
