@@ -87,8 +87,6 @@
     "eyebrow": "Progress map",
     "title": "The whole canon, lighting up verse by verse",
     "lead": "66 books · 1,189 chapters. The more gold, the more of the book is registered. Tap a book to open its chapters.",
-    "legendLow": "0%",
-    "legendHigh": "40%+",
     "old": "Old Testament",
     "new": "New Testament",
     "chapterTooltip": "{registered, number} / {registrable, number} verses",

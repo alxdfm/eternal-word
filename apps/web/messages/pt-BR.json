@@ -87,8 +87,6 @@
     "eyebrow": "Mapa de progresso",
     "title": "Todo o cânon, acendendo versículo por versículo",
     "lead": "66 livros · 1.189 capítulos. Quanto mais ouro, mais do livro está registrado. Toque em um livro para abrir seus capítulos.",
-    "legendLow": "0%",
-    "legendHigh": "40%+",
     "old": "Antigo Testamento",
     "new": "Novo Testamento",
     "chapterTooltip": "{registered, number} / {registrable, number} versículos",

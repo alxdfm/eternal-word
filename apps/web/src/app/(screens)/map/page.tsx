@@ -125,12 +125,28 @@ function ratioOf(registered: number, registrable: number): number {
   return registrable > 0 ? registered / registrable : 0
 }
 
+/** Piso mínimo da escala do heatmap: sem ele, no início (cobertura ~0%) o livro
+ * mais registrado — mesmo com 1% — apareceria dourado cheio, exagerando o
+ * progresso. Com piso, "quase nada registrado" fica honestamente apagado. */
+const HEAT_FLOOR = 0.05
+
+/** Topo da escala de cor do mapa: o máximo real de cobertura entre os livros
+ * (com piso). A cor de cada tile é `ratio / scale` — o líder fica dourado cheio e
+ * os demais relativos a ele. Responde ao "por que 40%?": não é fixo, é o máximo
+ * atual (UX-05). O rótulo/tooltip de cada tile segue mostrando o % absoluto. */
+function coverageScale(books: readonly BookProgress[]): number {
+  const max = books.reduce((m, b) => Math.max(m, ratioOf(b.registered, b.registrable)), 0)
+  return Math.max(max, HEAT_FLOOR)
+}
+
 function BookMosaic({
   books,
+  scale,
   selected,
   onSelect,
 }: {
   books: readonly BookProgress[]
+  scale: number
   selected: number | null
   onSelect: (book: number) => void
 }) {
@@ -141,7 +157,8 @@ function BookMosaic({
     <Mosaic>
       {books.map((b) => {
         const ratio = ratioOf(b.registered, b.registrable)
-        const lit = isLit(ratio)
+        const heat = ratio / scale
+        const lit = isLit(heat)
         return (
           <Tooltip
             key={b.book}
@@ -160,7 +177,7 @@ function BookMosaic({
               $selected={selected === b.book}
               onClick={() => onSelect(b.book)}
               style={{
-                background: heatBackground(ratio),
+                background: heatBackground(heat),
                 color: lit ? 'var(--gold-on)' : undefined,
               }}
             >
@@ -176,7 +193,7 @@ function BookMosaic({
   )
 }
 
-function BookDetail({ book }: { book: number }) {
+function BookDetail({ book, scale }: { book: number; scale: number }) {
   const labels = useBookLabels()
   const t = useTranslations('map')
   const f = useFormatter()
@@ -201,8 +218,8 @@ function BookDetail({ book }: { book: number }) {
             >
               <Chapter
                 style={{
-                  background: heatBackground(ratio),
-                  color: isLit(ratio) ? 'var(--gold-on)' : undefined,
+                  background: heatBackground(ratio / scale),
+                  color: isLit(ratio / scale) ? 'var(--gold-on)' : undefined,
                 }}
               >
                 {f.number(c.chapter)}
@@ -218,20 +235,23 @@ function BookDetail({ book }: { book: number }) {
 export default function MapPage() {
   const t = useTranslations('map')
   const tc = useTranslations('common')
+  const f = useFormatter()
   const [selected, setSelected] = useState<number | null>(null)
   const { data, isPending, isError } = useBookProgress()
 
   const old = data?.filter((b) => b.testament === 'OLD') ?? []
   const neu = data?.filter((b) => b.testament === 'NEW') ?? []
+  const scale = coverageScale(data ?? [])
+  const asPercent = (r: number) => f.number(r, { style: 'percent', maximumFractionDigits: 0 })
 
   return (
     <Section>
       <Wrap>
         <SectionHead eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')}>
           <Legend>
-            <span>{t('legendLow')}</span>
+            <span>{asPercent(0)}</span>
             <HeatRamp aria-hidden="true" />
-            <span>{t('legendHigh')}</span>
+            <span>{asPercent(scale)}</span>
           </Legend>
         </SectionHead>
 
@@ -246,16 +266,16 @@ export default function MapPage() {
                 <h3>{t('old')}</h3>
                 <span className="c">{old.length}</span>
               </GroupHead>
-              <BookMosaic books={old} selected={selected} onSelect={setSelected} />
+              <BookMosaic books={old} scale={scale} selected={selected} onSelect={setSelected} />
             </Group>
             <Group>
               <GroupHead>
                 <h3>{t('new')}</h3>
                 <span className="c">{neu.length}</span>
               </GroupHead>
-              <BookMosaic books={neu} selected={selected} onSelect={setSelected} />
+              <BookMosaic books={neu} scale={scale} selected={selected} onSelect={setSelected} />
             </Group>
-            {selected !== null && <BookDetail book={selected} />}
+            {selected !== null && <BookDetail book={selected} scale={scale} />}
           </>
         )}
       </Wrap>
