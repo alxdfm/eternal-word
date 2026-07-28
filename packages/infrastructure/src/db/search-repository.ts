@@ -15,7 +15,9 @@ import { translations, verseTexts, verses } from './schema.js'
 export function createSearchRepository(db: Database): SearchRepository {
   return {
     async searchByText(query: string, limit: number, offset: number): Promise<SearchResult> {
-      const tsquery = sql`websearch_to_tsquery('english', ${query})`
+      // `simple` matches the `search_vector` config (schema.ts) — keeps
+      // stop-words ("the"/"you") searchable (UX-02).
+      const tsquery = sql`websearch_to_tsquery('simple', ${query})`
       const rows = await db
         .select({
           book: verseTexts.book,

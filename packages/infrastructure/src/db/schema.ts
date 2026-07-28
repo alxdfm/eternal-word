@@ -91,7 +91,11 @@ export const verseTexts = pgTable(
     // text search is an index lookup — never an ILIKE scan of 31k rows. NULL
     // (omitted) positions produce an empty vector and match nothing.
     searchVector: tsvector('search_vector').generatedAlwaysAs(
-      sql`to_tsvector('english', coalesce(text, ''))`,
+      // `simple` (not `english`): keeps stop-words like "the"/"you" searchable
+      // (UX-02). The query in search-repository.ts must use `simple` too. Trade-off:
+      // no stemming (e.g. "run" won't match "running") — acceptable for verse
+      // lookups, where exact words (incl. common ones) matter more.
+      sql`to_tsvector('simple', coalesce(text, ''))`,
     ),
   },
   (t) => [

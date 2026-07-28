@@ -208,4 +208,11 @@ describe.skipIf(!DATABASE_URL)('createSearchRepository (Postgres FTS)', () => {
     expect(hits).toHaveLength(0)
     expect(total).toBe(0)
   })
+
+  it('finds common words that `english` FTS drops as stop-words (UX-02)', async () => {
+    // "the" and "you" are English stop-words — with the `simple` config they are
+    // indexed and searchable. Requires migration 0004 applied.
+    expect((await repo.searchByText('the', 1, 0)).total).toBeGreaterThan(0)
+    expect((await repo.searchByText('you', 1, 0)).total).toBeGreaterThan(0)
+  })
 })
