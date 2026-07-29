@@ -121,7 +121,7 @@
     "resolve": "Resolver",
     "resolving": "Resolvendo…",
     "notInCanon": "Essa referência não existe na versificação canônica.",
-    "invalidReference": "Digite uma referência válida."
+    "invalidReference": "Digite uma referência válida. Ex.: João 3:12"
   },
   "profile": {
     "eyebrow": "Perfil do adotante",

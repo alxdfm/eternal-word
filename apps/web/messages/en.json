@@ -121,7 +121,7 @@
     "resolve": "Resolve",
     "resolving": "Resolving…",
     "notInCanon": "That reference is not in the canonical versification.",
-    "invalidReference": "Enter a valid reference."
+    "invalidReference": "Enter a valid reference. Ex.: John 3:12"
   },
   "profile": {
     "eyebrow": "Adopter profile",
