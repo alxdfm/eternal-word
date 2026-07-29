@@ -1,13 +1,13 @@
 'use client'
 
-import { Pager, heatBackground } from '@/components/ui'
+import { Pager, Serif, heatBackground } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useAdopter } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
 import { REGISTRABLE_VERSE_COUNT } from '@/lib/books'
 import { shortenAddress, solFractionDigits } from '@/lib/format'
 import { useFormatter, useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
 const Profile = styled.div`
@@ -118,6 +118,27 @@ const Cell = styled.div`
 const Note = styled.p`
   color: ${({ theme }) => theme.color.muted};
 `
+const Heading = styled.div`
+  margin-bottom: 26px;
+  .eyebrow {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.muted};
+  }
+`
+
+/** The profile screen heading (a small eyebrow + serif title), shared by
+ * `/adopter/[pubkey]` and `/me` so the two never drift. */
+export function ProfileHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <Heading>
+      <p className="eyebrow">{eyebrow}</p>
+      <Serif style={{ fontSize: '1.6rem', fontWeight: 600 }}>{title}</Serif>
+    </Heading>
+  )
+}
 
 /**
  * One wallet's profile body — metrics, the verses it registered (paginated) and
@@ -133,6 +154,12 @@ export function AdopterProfile({ pubkey }: { pubkey: string }) {
   const labels = useBookLabels()
   const [page, setPage] = useState(1)
   const { data, isPending, isError } = useAdopter(pubkey, page)
+
+  // A different wallet (navigating between adopters, or switching account on
+  // /me) starts back at page 1 — otherwise a stale page can land past the new
+  // wallet's last page and show an empty list.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset paging when the pubkey changes
+  useEffect(() => setPage(1), [pubkey])
 
   const pages = data ? Math.max(1, Math.ceil(data.page.total / data.page.pageSize)) : 1
 

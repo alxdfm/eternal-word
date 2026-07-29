@@ -1,7 +1,7 @@
 'use client'
 
-import { AdopterProfile } from '@/components/adopter-profile'
-import { Section, Serif, Wrap } from '@/components/ui'
+import { AdopterProfile, ProfileHeading } from '@/components/adopter-profile'
+import { Section, Wrap } from '@/components/ui'
 import { WalletButton } from '@/components/wallet-button'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useTranslations } from 'next-intl'
@@ -30,19 +30,7 @@ export default function MePage() {
   return (
     <Section>
       <Wrap>
-        <div style={{ marginBottom: 26 }}>
-          <p
-            style={{
-              margin: 0,
-              fontSize: '0.72rem',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {t('myEyebrow')}
-          </p>
-          <Serif style={{ fontSize: '1.6rem', fontWeight: 600 }}>{t('myTitle')}</Serif>
-        </div>
+        <ProfileHeading eyebrow={t('myEyebrow')} title={t('myTitle')} />
 
         {connected && publicKey !== null ? (
           <AdopterProfile pubkey={publicKey.toBase58()} />
