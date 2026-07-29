@@ -13,7 +13,7 @@ const Row = styled.div`
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 14px;
-  align-items: center;
+  align-items: start;
   padding: 13px 18px;
   border-bottom: 1px solid ${({ theme }) => theme.color.ruleSoft};
   &:last-child {
@@ -31,13 +31,14 @@ const Ref = styled(Serif)`
   font-weight: 600;
   font-size: 0.98rem;
   white-space: nowrap;
+  /* keep the reference aligned with the first line of the (now wrapping) text */
+  line-height: 1.5;
 `
 const Snippet = styled.span`
   color: ${({ theme }) => theme.color.muted};
   font-size: 0.86rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 `
 const Right = styled.div`
   display: flex;

@@ -86,7 +86,7 @@ const List = styled.div`
   margin-top: 16px;
   .pl {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 9px 0;
     border-bottom: 1px dashed ${({ theme }) => theme.color.ruleSoft};
@@ -98,15 +98,15 @@ const List = styled.div`
     font-family: ${({ theme }) => theme.font.serif};
     font-weight: 600;
     min-width: 78px;
+    line-height: 1.5;
   }
   .t {
     color: ${({ theme }) => theme.color.muted};
     font-size: 0.85rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.5;
     flex: 1;
     min-width: 0;
+    overflow-wrap: anywhere;
   }
 `
 const CoverageTitle = styled.div`
@@ -121,10 +121,11 @@ const Coverage = styled.div`
   grid-template-columns: repeat(11, minmax(0, 1fr));
   gap: 5px;
 `
-const Cell = styled.div`
+const Cell = styled.div<{ $filled: boolean }>`
   aspect-ratio: 1 / 1;
   border-radius: 4px;
-  border: 1px solid ${({ theme }) => theme.color.rule};
+  border: 1px solid ${({ $filled, theme }) => ($filled ? theme.color.gold : theme.color.rule)};
+  ${({ $filled, theme }) => ($filled ? `box-shadow: ${theme.shadow.glow};` : '')}
 `
 const Note = styled.p`
   color: ${({ theme }) => theme.color.muted};
@@ -234,15 +235,22 @@ export function AdopterProfile({ pubkey }: { pubkey: string }) {
           {t('coverageTitle', { registered: data.verses, total: REGISTRABLE_VERSE_COUNT })}
         </CoverageTitle>
         <Coverage>
-          {data.coverage.map((c) => (
-            <Cell
-              key={c.book}
-              title={labels.name(c.book)}
-              style={{
-                background: heatBackground(c.registrable > 0 ? c.registered / c.registrable : 0),
-              }}
-            />
-          ))}
+          {data.coverage.map((c) => {
+            const filled = c.registered > 0
+            const ratio = c.registrable > 0 ? c.registered / c.registrable : 0
+            // Floor covered books so even a single registered verse reads clearly
+            // gold against the empty ones — the grid is about *what* you've
+            // touched, not fine gradients.
+            const shown = filled ? Math.max(0.45, ratio) : 0
+            return (
+              <Cell
+                key={c.book}
+                $filled={filled}
+                title={`${labels.name(c.book)} · ${c.registered}/${c.registrable}`}
+                style={{ background: heatBackground(shown) }}
+              />
+            )
+          })}
         </Coverage>
         <Note style={{ marginTop: 16, fontSize: '0.8rem' }}>{t('coverageNote')}</Note>
       </Panel>
