@@ -244,6 +244,9 @@
   "register": {
     "register": "Register this verse",
     "submitting": "Registering…",
+    "bulk": "Register {count, number} selected",
+    "bulkProgress": "Registering {done, number}/{total, number}…",
+    "bulkDone": "{succeeded, number} sent, {failed, number} failed",
     "errors": {
       "rejected": "You declined the signature.",
       "insufficient": "Not enough SOL to cover rent and network fees.",

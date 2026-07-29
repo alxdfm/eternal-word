@@ -244,6 +244,9 @@
   "register": {
     "register": "Registrar este versículo",
     "submitting": "Registrando…",
+    "bulk": "Registrar {count, number} selecionados",
+    "bulkProgress": "Registrando {done, number}/{total, number}…",
+    "bulkDone": "{succeeded, number} enviados, {failed, number} falharam",
     "errors": {
       "rejected": "Você recusou a assinatura.",
       "insufficient": "SOL insuficiente para cobrir o rent e as taxas de rede.",

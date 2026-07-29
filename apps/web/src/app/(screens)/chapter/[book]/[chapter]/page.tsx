@@ -1,12 +1,20 @@
 'use client'
 
+import { BulkRegisterButton } from '@/components/bulk-register-button'
 import { Button, Pager, Section, SectionHead, Wrap } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useChapter } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
-import { ChapterNotFoundError, type VerseListItem } from '@/lib/api'
+import {
+  ChapterNotFoundError,
+  type ChapterVerses,
+  type VerseListItem,
+  type VerseReference,
+} from '@/lib/api'
 import { BOOK_NUMBERS } from '@/lib/books'
+import type { BulkRegisterOutcome } from '@/lib/bulk-register'
 import { shortenAddress } from '@/lib/format'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -101,6 +109,7 @@ export default function ChapterPage() {
   const t = useTranslations('chapterScreen')
   const tc = useTranslations('common')
   const labels = useBookLabels()
+  const queryClient = useQueryClient()
 
   const { data, isPending, isError, error } = useChapter(book, chapter)
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set())
@@ -130,6 +139,34 @@ export default function ChapterPage() {
   }
   function toggleAll(): void {
     setSelected(allAvailableSelected ? new Set() : new Set(available.map((v) => v.verse)))
+  }
+
+  const selectedReferences: readonly VerseReference[] = useMemo(
+    () =>
+      data
+        ? data.verses
+            .filter((v) => selected.has(v.verse))
+            .map((v) => ({ book: v.book, chapter: v.chapter, verse: v.verse }))
+        : [],
+    [data, selected],
+  )
+
+  // After a bulk run, flip the verses that were sent to PENDING in the cache
+  // (instant feedback) and clear the selection. The indexer promotes them to
+  // REGISTERED; the web never writes that state.
+  function onBulkComplete(outcome: BulkRegisterOutcome): void {
+    const sent = new Set(outcome.succeeded.map((r) => r.verse))
+    if (sent.size > 0) {
+      queryClient.setQueryData<ChapterVerses>(['chapter', book, chapter], (old) =>
+        old
+          ? {
+              ...old,
+              verses: old.verses.map((v) => (sent.has(v.verse) ? { ...v, status: 'PENDING' } : v)),
+            }
+          : old,
+      )
+    }
+    setSelected(new Set())
   }
 
   const pages = data ? Math.max(1, Math.ceil(data.verses.length / CHAPTER_PAGE_SIZE)) : 1
@@ -172,7 +209,11 @@ export default function ChapterPage() {
               </Button>
               <span className="count">{t('selected', { count: selected.size })}</span>
               <span className="spacer" />
-              {available.length === 0 && <span className="count">{t('noneAvailable')}</span>}
+              {available.length === 0 ? (
+                <span className="count">{t('noneAvailable')}</span>
+              ) : (
+                <BulkRegisterButton references={selectedReferences} onComplete={onBulkComplete} />
+              )}
             </Bar>
 
             <List>
