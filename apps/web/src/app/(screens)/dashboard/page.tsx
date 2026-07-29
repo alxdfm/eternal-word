@@ -137,7 +137,8 @@ export default function DashboardPage() {
               ◎{' '}
               {f.number(data.estimatedSol, {
                 maximumFractionDigits: solFractionDigits(data.estimatedSol),
-              })}
+              })}{' '}
+              <em>SOL</em>
             </div>
             <div className="sub">{t('contributedSub')}</div>
           </Stat>

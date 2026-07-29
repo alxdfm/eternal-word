@@ -64,6 +64,11 @@ const Metrics = styled.div`
     font-variant-numeric: tabular-nums;
     line-height: 1;
   }
+  .v em {
+    font-style: normal;
+    color: ${({ theme }) => theme.color.muted};
+    font-size: 0.9rem;
+  }
   .k {
     font-size: 0.68rem;
     letter-spacing: 0.1em;
@@ -187,7 +192,8 @@ export function AdopterProfile({ pubkey }: { pubkey: string }) {
               ◎
               {f.number(data.estimatedSol, {
                 maximumFractionDigits: solFractionDigits(data.estimatedSol),
-              })}
+              })}{' '}
+              <em>SOL</em>
             </div>
             <div className="k">{t('contributed')}</div>
           </div>
