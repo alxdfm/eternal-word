@@ -5,9 +5,7 @@
   },
   "home": {
     "title": "Eternal Word",
-    "subtitle": "Register a verse of the Bible permanently on Solana.",
-    "registerTitle": "Register a verse",
-    "registerLead": "Search by reference and, if it's still available, inscribe it on-chain from your wallet."
+    "subtitle": "Register a verse of the Bible permanently on Solana."
   },
   "hero": {
     "eyebrow": "Tracking & community · the living record",
@@ -18,8 +16,8 @@
     "illuminated": "verses illuminated",
     "ofCanon": "of the canon registered",
     "stillDark": "{count, number} still in the dark",
+    "registerCta": "Register a verse",
     "exploreCta": "Explore the record",
-    "dashboardCta": "Dashboard",
     "mapCta": "Progress map",
     "proofAdopter": "Adopter",
     "proofSlot": "Slot",
@@ -42,10 +40,16 @@
   },
   "nav": {
     "brand": "Eternal Word",
+    "register": "Register",
     "dashboard": "Dashboard",
     "explore": "Explore",
     "map": "Progress map",
     "search": "Search"
+  },
+  "registerScreen": {
+    "eyebrow": "Register",
+    "title": "Inscribe a verse on-chain",
+    "lead": "Search by reference and, if it's still available, register it permanently on Solana from your wallet."
   },
   "common": {
     "loading": "Loading…",

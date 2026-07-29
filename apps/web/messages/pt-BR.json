@@ -5,9 +5,7 @@
   },
   "home": {
     "title": "Eternal Word",
-    "subtitle": "Registre um versículo da Bíblia de forma permanente na Solana.",
-    "registerTitle": "Registrar um versículo",
-    "registerLead": "Busque pela referência e, se ainda estiver disponível, inscreva-o on-chain a partir da sua carteira."
+    "subtitle": "Registre um versículo da Bíblia de forma permanente na Solana."
   },
   "hero": {
     "eyebrow": "Acompanhamento e comunidade · o registro vivo",
@@ -18,8 +16,8 @@
     "illuminated": "versículos iluminados",
     "ofCanon": "do cânon registrado",
     "stillDark": "{count, number} ainda na escuridão",
+    "registerCta": "Registrar um versículo",
     "exploreCta": "Explorar o registro",
-    "dashboardCta": "Painel",
     "mapCta": "Mapa de progresso",
     "proofAdopter": "Adotante",
     "proofSlot": "Slot",
@@ -42,10 +40,16 @@
   },
   "nav": {
     "brand": "Eternal Word",
+    "register": "Registrar",
     "dashboard": "Painel",
     "explore": "Explorar",
     "map": "Mapa de progresso",
     "search": "Buscar"
+  },
+  "registerScreen": {
+    "eyebrow": "Registrar",
+    "title": "Inscreva um versículo on-chain",
+    "lead": "Busque pela referência e, se ainda estiver disponível, registre-o de forma permanente na Solana a partir da sua carteira."
   },
   "common": {
     "loading": "Carregando…",

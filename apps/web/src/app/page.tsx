@@ -1,17 +1,14 @@
 'use client'
 
-import { RegisterPanel } from '@/components/register-panel'
-import { SearchForm } from '@/components/search-form'
-import { Eyebrow, Lead, Meter, Rule, Section, SectionHeading, Wrap } from '@/components/ui'
+import { Eyebrow, Lead, Meter, Section, Wrap } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useDashboard } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
-import { type VerseReference, fetchVerse } from '@/lib/api'
+import { fetchVerse } from '@/lib/api'
 import { shortenAddress } from '@/lib/format'
 import { useQuery } from '@tanstack/react-query'
 import { useFormatter, useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useState } from 'react'
 import styled from 'styled-components'
 
 // The hero showcases the first verse registered on-chain (John 3:16, WB-09).
@@ -169,15 +166,6 @@ const Proof = styled.dl`
     color: ${({ theme }) => theme.color.gold};
   }
 `
-const RegisterSection = styled.div`
-  display: grid;
-  justify-items: center;
-  gap: 1rem;
-  text-align: center;
-  max-width: 42rem;
-  margin: 0 auto;
-`
-
 function HeroCounter() {
   const t = useTranslations('hero')
   const f = useFormatter()
@@ -262,9 +250,6 @@ function HeroVerse() {
 
 export default function HomePage() {
   const t = useTranslations('hero')
-  const th = useTranslations('home')
-  const tn = useTranslations('nav')
-  const [reference, setReference] = useState<VerseReference | null>(null)
 
   return (
     <>
@@ -281,34 +266,13 @@ export default function HomePage() {
               <Lead style={{ fontSize: '1.06rem', maxWidth: '46ch' }}>{t('sub')}</Lead>
               <HeroCounter />
               <Ctas>
-                <CtaPrimary href="/explore">{t('exploreCta')}</CtaPrimary>
-                <CtaGhost href="/dashboard">{t('dashboardCta')}</CtaGhost>
+                <CtaPrimary href="/register">{t('registerCta')}</CtaPrimary>
+                <CtaGhost href="/explore">{t('exploreCta')}</CtaGhost>
                 <CtaGhost href="/map">{t('mapCta')}</CtaGhost>
               </Ctas>
             </div>
             <HeroVerse />
           </HeroGrid>
-        </Wrap>
-      </Section>
-
-      <Wrap>
-        <Rule />
-      </Wrap>
-
-      <Section>
-        <Wrap>
-          <RegisterSection>
-            <Eyebrow>{tn('search')}</Eyebrow>
-            <SectionHeading>{th('registerTitle')}</SectionHeading>
-            <Lead style={{ textAlign: 'center' }}>{th('registerLead')}</Lead>
-            <SearchForm onSearch={setReference} />
-            {reference !== null && (
-              <RegisterPanel
-                key={`${reference.book}:${reference.chapter}:${reference.verse}`}
-                reference={reference}
-              />
-            )}
-          </RegisterSection>
         </Wrap>
       </Section>
     </>

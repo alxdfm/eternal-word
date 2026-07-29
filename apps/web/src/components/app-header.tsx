@@ -75,6 +75,7 @@ const Actions = styled.div`
 `
 
 const LINKS = [
+  { href: '/register', key: 'register' },
   { href: '/dashboard', key: 'dashboard' },
   { href: '/explore', key: 'explore' },
   { href: '/map', key: 'map' },
