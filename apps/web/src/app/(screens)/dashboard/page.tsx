@@ -4,6 +4,7 @@ import { Sparkline } from '@/components/sparkline'
 import { Section, SectionHead, StateChip, Wrap } from '@/components/ui'
 import { useDashboard } from '@/hooks/queries'
 import { BOOK_COUNT, CHAPTER_COUNT } from '@/lib/books'
+import { solFractionDigits } from '@/lib/format'
 import { useFormatter, useTranslations } from 'next-intl'
 import styled from 'styled-components'
 
@@ -132,7 +133,12 @@ export default function DashboardPage() {
 
           <Stat>
             <div className="k">{t('contributed')}</div>
-            <div className="val">◎ {f.number(data.estimatedSol, { maximumFractionDigits: 2 })}</div>
+            <div className="val">
+              ◎{' '}
+              {f.number(data.estimatedSol, {
+                maximumFractionDigits: solFractionDigits(data.estimatedSol),
+              })}
+            </div>
             <div className="sub">{t('contributedSub')}</div>
           </Stat>
 

@@ -80,6 +80,7 @@ const LINKS = [
   { href: '/explore', key: 'explore' },
   { href: '/map', key: 'map' },
   { href: '/search', key: 'search' },
+  { href: '/me', key: 'profile' },
 ] as const
 
 /** The shared chrome for the exploration screens: brand, section nav (active
