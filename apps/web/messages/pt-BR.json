@@ -52,7 +52,8 @@
     "dashboard": "Painel",
     "explore": "Explorar",
     "map": "Mapa de progresso",
-    "search": "Buscar"
+    "search": "Buscar",
+    "profile": "Meu perfil"
   },
   "registerScreen": {
     "eyebrow": "Registrar",
@@ -142,7 +143,10 @@
     "coverageNote": "Cada célula é um livro; o brilho cresce conforme o quanto desta mão o preencheu. Uma vida não completa o cânon — e esse é o ponto: o registro é coletivo.",
     "empty": "Esta carteira ainda não registrou nenhum versículo.",
     "enterWallet": "Informe um endereço de carteira para ver seu perfil.",
-    "walletLabel": "Endereço da carteira"
+    "walletLabel": "Endereço da carteira",
+    "myEyebrow": "Seu perfil",
+    "myTitle": "Tudo o que você registrou",
+    "connectPrompt": "Conecte sua carteira para ver tudo o que você registrou."
   },
   "search": {
     "book": "Livro",

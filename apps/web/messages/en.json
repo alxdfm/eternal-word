@@ -52,7 +52,8 @@
     "dashboard": "Dashboard",
     "explore": "Explore",
     "map": "Progress map",
-    "search": "Search"
+    "search": "Search",
+    "profile": "Profile"
   },
   "registerScreen": {
     "eyebrow": "Register",
@@ -142,7 +143,10 @@
     "coverageNote": "Each cell is a book; the glow grows with how much of it this hand has filled. One lifetime won't complete the canon — and that is the point: the record is collective.",
     "empty": "This wallet has not registered any verses yet.",
     "enterWallet": "Enter a wallet address to see its profile.",
-    "walletLabel": "Wallet address"
+    "walletLabel": "Wallet address",
+    "myEyebrow": "Your profile",
+    "myTitle": "Everything you've registered",
+    "connectPrompt": "Connect your wallet to see everything you've registered."
   },
   "search": {
     "book": "Book",
