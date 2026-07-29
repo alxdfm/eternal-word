@@ -42,7 +42,7 @@
     "nonProfit": "Eternal Word é um projeto sem fins lucrativos — a Bíblia inscrita de forma permanente na Solana, versículo a versículo.",
     "costs": "Registrar um versículo custa apenas o rent on-chain que guarda o texto, mais a taxa de rede da Solana. Não há taxa de serviço, e o projeto não fica com nada.",
     "donateIntro": "As doações são opcionais e ajudam na hospedagem e no desenvolvimento — separadas do rent que você paga para registrar.",
-    "donateLabel": "Doar",
+    "solanaAddress": "Endereço Solana",
     "copy": "Copiar endereço",
     "copied": "Copiado"
   },

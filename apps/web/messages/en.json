@@ -42,7 +42,7 @@
     "nonProfit": "Eternal Word is a non-profit project — the Bible inscribed permanently on Solana, one verse at a time.",
     "costs": "Registering a verse costs only the on-chain rent that stores its text, plus the Solana network fee. There is no service fee, and the project keeps nothing.",
     "donateIntro": "Donations are optional and support hosting and development — separate from the rent you pay to register.",
-    "donateLabel": "Donate",
+    "solanaAddress": "Solana address",
     "copy": "Copy address",
     "copied": "Copied"
   },

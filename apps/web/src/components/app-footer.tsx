@@ -50,14 +50,22 @@ const Donate = styled.div`
   .row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
   }
-  .label {
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 0.68rem;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: ${({ theme }) => theme.color.faint};
+    color: ${({ theme }) => theme.color.muted};
+    white-space: nowrap;
+    .sol {
+      color: ${({ theme }) => theme.color.gold};
+      font-size: 0.9rem;
+    }
   }
   code {
     font-family: ${({ theme }) => theme.font.mono};
@@ -65,18 +73,25 @@ const Donate = styled.div`
     color: ${({ theme }) => theme.color.text};
     word-break: break-all;
   }
-  button {
-    font: inherit;
-    font-size: 0.72rem;
-    color: ${({ theme }) => theme.color.lapis};
+  .copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    color: ${({ theme }) => theme.color.muted};
     background: transparent;
     border: 1px solid ${({ theme }) => theme.color.rule};
-    border-radius: ${({ theme }) => theme.radius.pill};
-    padding: 2px 10px;
+    border-radius: 8px;
     cursor: pointer;
-    white-space: nowrap;
     &:hover {
+      color: ${({ theme }) => theme.color.lapis};
       border-color: ${({ theme }) => theme.color.lapisSoft};
+    }
+    svg {
+      width: 14px;
+      height: 14px;
     }
   }
 `
@@ -100,10 +115,46 @@ function DonateLine({ address }: { address: string }) {
     <Donate>
       <p>{t('donateIntro')}</p>
       <div className="row">
-        <span className="label">{t('donateLabel')}</span>
+        <span className="tag">
+          <span className="sol" aria-hidden="true">
+            ◎
+          </span>
+          {t('solanaAddress')}
+        </span>
         <code>{address}</code>
-        <button type="button" onClick={copy}>
-          {copied ? t('copied') : t('copy')}
+        <button
+          type="button"
+          className="copy"
+          onClick={copy}
+          aria-label={t('copy')}
+          title={copied ? t('copied') : t('copy')}
+        >
+          {copied ? (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
         </button>
       </div>
     </Donate>
