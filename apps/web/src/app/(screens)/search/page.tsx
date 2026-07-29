@@ -133,11 +133,12 @@ function useDebounced<T>(value: T, ms: number): T {
 
 function ByText() {
   const t = useTranslations('searchScreen')
+  const tc = useTranslations('common')
   const labels = useBookLabels()
   const [input, setInput] = useState('light')
   const query = useDebounced(input, 250)
   const [page, setPage] = useState(1)
-  const { data } = useSearch(query, page)
+  const { data, isPending } = useSearch(query, page)
 
   // A new query starts back at page 1.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset paging on query change
@@ -181,6 +182,8 @@ function ByText() {
           </Results>
           <Pager page={page} pages={pages} onChange={setPage} />
         </>
+      ) : query.trim() !== '' && isPending ? (
+        <Note>{tc('loading')}</Note>
       ) : null}
     </>
   )

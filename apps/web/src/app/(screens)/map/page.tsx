@@ -196,8 +196,9 @@ function BookMosaic({
 function BookDetail({ book, scale }: { book: number; scale: number }) {
   const labels = useBookLabels()
   const t = useTranslations('map')
+  const tc = useTranslations('common')
   const f = useFormatter()
-  const { data } = useChapterProgress(book)
+  const { data, isPending, isError } = useChapterProgress(book)
   const chapters = data?.chapters ?? []
   const registered = chapters.reduce((sum, c) => sum + c.registered, 0)
   const registrable = chapters.reduce((sum, c) => sum + c.registrable, 0)
@@ -205,29 +206,37 @@ function BookDetail({ book, scale }: { book: number; scale: number }) {
     <Detail>
       <DetailHead>
         <span className="bk">{labels.name(book)}</span>
-        <span className="meta">{t('chaptersMeta', { registered, registrable })}</span>
+        {!isPending && !isError && (
+          <span className="meta">{t('chaptersMeta', { registered, registrable })}</span>
+        )}
       </DetailHead>
-      <Chapters>
-        {chapters.map((c) => {
-          const ratio = ratioOf(c.registered, c.registrable)
-          return (
-            <Tooltip
-              key={c.chapter}
-              stretch
-              content={`${t('chapterLabel', { chapter: c.chapter })} · ${t('chapterTooltip', { registered: c.registered, registrable: c.registrable })}`}
-            >
-              <Chapter
-                style={{
-                  background: heatBackground(ratio / scale),
-                  color: isLit(ratio / scale) ? 'var(--gold-on)' : undefined,
-                }}
+      {isPending ? (
+        <Note style={{ margin: 0 }}>{tc('loading')}</Note>
+      ) : isError ? (
+        <Note style={{ margin: 0 }}>{tc('error')}</Note>
+      ) : (
+        <Chapters>
+          {chapters.map((c) => {
+            const ratio = ratioOf(c.registered, c.registrable)
+            return (
+              <Tooltip
+                key={c.chapter}
+                stretch
+                content={`${t('chapterLabel', { chapter: c.chapter })} · ${t('chapterTooltip', { registered: c.registered, registrable: c.registrable })}`}
               >
-                {f.number(c.chapter)}
-              </Chapter>
-            </Tooltip>
-          )
-        })}
-      </Chapters>
+                <Chapter
+                  style={{
+                    background: heatBackground(ratio / scale),
+                    color: isLit(ratio / scale) ? 'var(--gold-on)' : undefined,
+                  }}
+                >
+                  {f.number(c.chapter)}
+                </Chapter>
+              </Tooltip>
+            )
+          })}
+        </Chapters>
+      )}
     </Detail>
   )
 }
