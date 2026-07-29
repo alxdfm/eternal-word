@@ -12,11 +12,11 @@ import styled from 'styled-components'
 
 const Profile = styled.div`
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 22px;
-  align-items: stretch;
-  @media (max-width: 920px) {
-    grid-template-columns: 1fr;
+  align-items: start;
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 `
 const Panel = styled.div`
@@ -27,6 +27,10 @@ const Panel = styled.div`
   padding: 24px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  @media (max-width: 560px) {
+    padding: 18px;
+  }
 `
 const Top = styled.div`
   display: flex;
@@ -53,21 +57,22 @@ const Top = styled.div`
 `
 const Metrics = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   padding: 18px 0;
   border-top: 1px solid ${({ theme }) => theme.color.rule};
   border-bottom: 1px solid ${({ theme }) => theme.color.rule};
   .v {
     font-family: ${({ theme }) => theme.font.serif};
-    font-size: 1.55rem;
+    font-size: clamp(1.2rem, 4.5vw, 1.55rem);
     font-variant-numeric: tabular-nums;
-    line-height: 1;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
   }
   .v em {
     font-style: normal;
     color: ${({ theme }) => theme.color.muted};
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
   .k {
     font-size: 0.68rem;
@@ -101,6 +106,7 @@ const List = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+    min-width: 0;
   }
 `
 const CoverageTitle = styled.div`
@@ -112,7 +118,7 @@ const CoverageTitle = styled.div`
 `
 const Coverage = styled.div`
   display: grid;
-  grid-template-columns: repeat(11, 1fr);
+  grid-template-columns: repeat(11, minmax(0, 1fr));
   gap: 5px;
 `
 const Cell = styled.div`
