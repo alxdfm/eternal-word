@@ -127,10 +127,20 @@ export default $config({
     // The site (S04, D4): Next.js on AWS via OpenNext, in the same SST app so
     // devnet → mainnet is one stage switch (S07). NEXT_PUBLIC_WEB_API_URL is
     // inlined at build from the WebApi Function URL; the Solana RPC defaults to
-    // public devnet in the app. No custom domain yet — the default URL is enough
-    // for the devnet journey.
+    // public devnet in the app.
+    //
+    // Custom domain on the live stage only: apex served, www → apex. DNS is
+    // delegated to Route 53 (the domain stays registered at Hostinger, only the
+    // nameservers point at the Route 53 hosted zone), so SST provisions the ACM
+    // certificate (us-east-1, DNS-validated) and the alias records itself. The
+    // hosted zone must exist and be delegated before this deploy, or cert
+    // validation hangs. Other stages keep the default CloudFront URL.
     const web = new sst.aws.Nextjs('Web', {
       path: 'apps/web',
+      domain:
+        $app.stage === 'production'
+          ? { name: 'eternalword.site', redirects: ['www.eternalword.site'] }
+          : undefined,
       environment: {
         NEXT_PUBLIC_WEB_API_URL: webApi.url,
       },
