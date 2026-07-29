@@ -2,6 +2,7 @@ import type {
   AdopterProfileDto,
   BookProgressDto,
   ChapterProgressResponseDto,
+  ChapterVersesResponseDto,
   DashboardStatsDto,
   PaginatedDto,
   RegistrationProofDto,
@@ -30,6 +31,7 @@ export type VerseListItem = VerseListItemDto
 export type VerseListPage = PaginatedDto<VerseListItemDto>
 export type BookProgress = BookProgressDto
 export type ChapterProgressResponse = ChapterProgressResponseDto
+export type ChapterVerses = ChapterVersesResponseDto
 export type SearchResponse = SearchResponseDto
 export type AdopterProfile = AdopterProfileDto
 
@@ -51,12 +53,25 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
+/** The reference is outside the canonical versification (e.g. Song of Solomon
+ * 3:16 — chapter 3 has 11 verses). The read API answers 404; the UI shows a
+ * "not in canon" note, not the generic error state (UX-01). */
+export class VerseNotInCanonError extends Error {
+  constructor() {
+    super('reference not in the canonical versification')
+    this.name = 'VerseNotInCanonError'
+  }
+}
+
 export async function fetchVerse(
   book: number,
   chapter: number,
   verse: number,
 ): Promise<VerseStatus> {
   const res = await fetch(apiUrl(`/?book=${book}&chapter=${chapter}&verse=${verse}`))
+  if (res.status === 404) {
+    throw new VerseNotInCanonError()
+  }
   if (!res.ok) {
     throw new Error(`verse lookup failed (${res.status})`)
   }
@@ -85,8 +100,30 @@ export const fetchBookProgress = () => getJson<readonly BookProgress[]>('/progre
 export const fetchChapterProgress = (book: number) =>
   getJson<ChapterProgressResponse>(`/progress?book=${book}`)
 
-export const fetchSearch = (query: string, limit = 20) =>
-  getJson<SearchResponse>(`/search?q=${encodeURIComponent(query)}&limit=${limit}`)
+/** A chapter that is not in the canonical versification (e.g. book 23 chapter
+ * 999). The API answers 404; the chapter view shows a "not in canon" note. */
+export class ChapterNotFoundError extends Error {
+  constructor() {
+    super('chapter not in the canonical versification')
+    this.name = 'ChapterNotFoundError'
+  }
+}
+
+export async function fetchChapter(book: number, chapter: number): Promise<ChapterVerses> {
+  const res = await fetch(apiUrl(`/chapter?book=${book}&chapter=${chapter}`))
+  if (res.status === 404) {
+    throw new ChapterNotFoundError()
+  }
+  if (!res.ok) {
+    throw new Error(`chapter fetch failed (${res.status})`)
+  }
+  return res.json() as Promise<ChapterVerses>
+}
+
+export const SEARCH_PAGE_SIZE = 20
+
+export const fetchSearch = (query: string, page = 1, limit = SEARCH_PAGE_SIZE) =>
+  getJson<SearchResponse>(`/search?q=${encodeURIComponent(query)}&limit=${limit}&page=${page}`)
 
 export const fetchAdopter = (pubkey: string, page = 1, pageSize = 20) =>
   getJson<AdopterProfile>(

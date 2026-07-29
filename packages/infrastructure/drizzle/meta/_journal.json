@@ -29,6 +29,13 @@
       "when": 1785098904877,
       "tag": "0003_magical_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785270295842,
+      "tag": "0004_panoramic_manta",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { handleAdopterProfile } from '../web/adopter-route.js'
+import { handleChapterVerses } from '../web/chapter-route.js'
 import { webContext } from '../web/context.js'
 import { handleDashboard } from '../web/dashboard-route.js'
 import { json, tooManyRequests } from '../web/http.js'
@@ -46,6 +47,7 @@ const PRUNE_IDLE_MS = 10 * 60_000
  *   GET  /proof     → text + Merkle proof for the register_verse transaction
  *   GET  /dashboard → global aggregates (S05)
  *   GET  /progress  → per-book progress; ?book=N drills into that book's chapters (S05)
+ *   GET  /chapter   → one chapter's verses with status (?book, ?chapter) (UX-10)
  *   GET  /verses    → paginated explore listing (?filter, ?page, ?pageSize) (S05)
  *   GET  /search    → full-text search over the canonical text (?q, ?limit) (S05)
  *   GET  /adopter   → one wallet's profile (?pubkey, ?page, ?pageSize) (S05)
@@ -78,6 +80,12 @@ export async function handler(event: HttpEvent): Promise<HttpResult> {
     }
     if (path.endsWith('/progress')) {
       return handleProgress(ctx.aggregateRepo, { book: query.book })
+    }
+    if (path.endsWith('/chapter')) {
+      return handleChapterVerses(ctx.aggregateRepo, {
+        book: query.book,
+        chapter: query.chapter,
+      })
     }
     if (path.endsWith('/verses')) {
       return handleListVerses(ctx.aggregateRepo, {

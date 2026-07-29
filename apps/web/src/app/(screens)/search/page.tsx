@@ -1,12 +1,13 @@
 'use client'
 
 import { RegisterPanel } from '@/components/register-panel'
-import { Button, Section, SectionHead, SegmentedControl, Wrap } from '@/components/ui'
+import { Button, Pager, Section, SectionHead, SegmentedControl, Wrap } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useSearch } from '@/hooks/queries'
 import { useBookLabels } from '@/hooks/use-books'
-import type { VerseReference } from '@/lib/api'
-import { BOOK_NUMBERS, REGISTRABLE_VERSE_COUNT } from '@/lib/books'
+import { SEARCH_PAGE_SIZE, type VerseReference } from '@/lib/api'
+import { REGISTRABLE_VERSE_COUNT } from '@/lib/books'
+import { parseReference } from '@/lib/reference'
 import { useTranslations } from 'next-intl'
 import { type ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
@@ -83,28 +84,10 @@ const Mark = styled.mark`
 `
 const RefForm = styled.div`
   display: flex;
-  gap: 8px;
-  align-items: end;
+  gap: 10px;
+  align-items: stretch;
   flex-wrap: wrap;
   margin: 16px 0;
-`
-const Field = styled.label`
-  display: grid;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.color.muted};
-  select,
-  input {
-    padding: 0.45rem 0.5rem;
-    border-radius: ${({ theme }) => theme.radius.md};
-    border: 1px solid ${({ theme }) => theme.color.rule};
-    background: ${({ theme }) => theme.color.panel};
-    color: ${({ theme }) => theme.color.text};
-    font: inherit;
-  }
-  input {
-    width: 5rem;
-  }
 `
 const PanelWrap = styled.div`
   margin-top: 16px;
@@ -150,10 +133,18 @@ function useDebounced<T>(value: T, ms: number): T {
 
 function ByText() {
   const t = useTranslations('searchScreen')
+  const tc = useTranslations('common')
   const labels = useBookLabels()
   const [input, setInput] = useState('light')
   const query = useDebounced(input, 250)
-  const { data } = useSearch(query)
+  const [page, setPage] = useState(1)
+  const { data, isPending } = useSearch(query, page)
+
+  // A new query starts back at page 1.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset paging on query change
+  useEffect(() => setPage(1), [query])
+
+  const pages = data ? Math.ceil(data.total / SEARCH_PAGE_SIZE) : 0
 
   return (
     <>
@@ -170,22 +161,29 @@ function ByText() {
           autoComplete="off"
           spellCheck={false}
         />
-        {data && <span className="count">{t('count', { total: data.hits.length })}</span>}
+        {data && <span className="count">{t('count', { total: data.total })}</span>}
       </Bar>
-      {data && data.hits.length === 0 && query.trim() !== '' ? (
+      {data && data.total === 0 && query.trim() !== '' ? (
         <Note>{t('noResults', { query })}</Note>
       ) : data ? (
-        <Results>
-          {data.hits.map((hit) => (
-            <ResultRow key={`${hit.book}:${hit.chapter}:${hit.verse}`}>
-              <span className="ref">{labels.abbrReference(hit.book, hit.chapter, hit.verse)}</span>
-              <span className="snip">
-                <Highlight text={hit.text} query={query} />
-              </span>
-              <VerseStateChip status={hit.status} compact />
-            </ResultRow>
-          ))}
-        </Results>
+        <>
+          <Results>
+            {data.hits.map((hit) => (
+              <ResultRow key={`${hit.book}:${hit.chapter}:${hit.verse}`}>
+                <span className="ref">
+                  {labels.abbrReference(hit.book, hit.chapter, hit.verse)}
+                </span>
+                <span className="snip">
+                  <Highlight text={hit.text} query={query} />
+                </span>
+                <VerseStateChip status={hit.status} compact />
+              </ResultRow>
+            ))}
+          </Results>
+          <Pager page={page} pages={pages} onChange={setPage} />
+        </>
+      ) : query.trim() !== '' && isPending ? (
+        <Note>{tc('loading')}</Note>
       ) : null}
     </>
   )
@@ -194,49 +192,49 @@ function ByText() {
 function ByReference() {
   const t = useTranslations('searchScreen')
   const labels = useBookLabels()
-  const [book, setBook] = useState(43)
-  const [chapter, setChapter] = useState('3')
-  const [verse, setVerse] = useState('16')
+  const [input, setInput] = useState('John 3:16')
   const [ref, setRef] = useState<VerseReference | null>(null)
+  const [invalid, setInvalid] = useState(false)
 
+  // Paste a reference like "Isa 60:19" — parsed against the localized book
+  // names/abbreviations, no more three separate fields (UX-07).
   const resolve = () => {
-    const c = Number(chapter)
-    const v = Number(verse)
-    if (Number.isInteger(c) && c > 0 && Number.isInteger(v) && v > 0) {
-      setRef({ book, chapter: c, verse: v })
+    const parsed = parseReference(input, (book) => [labels.name(book), labels.abbr(book)])
+    if (parsed === null) {
+      setInvalid(true)
+      setRef(null)
+      return
     }
+    setInvalid(false)
+    setRef(parsed)
   }
 
   return (
     <>
       <RefForm>
-        <Field>
-          {t('refBook')}
-          <select value={book} onChange={(e) => setBook(Number(e.target.value))}>
-            {BOOK_NUMBERS.map((n) => (
-              <option key={n} value={n}>
-                {labels.name(n)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field>
-          {t('refChapter')}
+        <Bar style={{ flex: '1 1 16rem', margin: 0 }}>
+          <span className="icon" aria-hidden="true">
+            ⌕
+          </span>
           <input
-            type="number"
-            min={1}
-            value={chapter}
-            onChange={(e) => setChapter(e.target.value)}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') resolve()
+            }}
+            placeholder={t('refPlaceholder')}
+            aria-label={t('byReference')}
+            autoComplete="off"
+            spellCheck={false}
           />
-        </Field>
-        <Field>
-          {t('refVerse')}
-          <input type="number" min={1} value={verse} onChange={(e) => setVerse(e.target.value)} />
-        </Field>
+        </Bar>
         <Button type="button" $variant="gold" onClick={resolve}>
           {t('resolve')}
         </Button>
       </RefForm>
+
+      {invalid && <Note>{t('invalidReference')}</Note>}
 
       {/* The panel resolves the verse, shows its status + text, the omitted note
           (incl. the Rm 16:25 pointer), and — when AVAILABLE — the register CTA. */}

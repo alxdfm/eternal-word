@@ -110,3 +110,33 @@ export async function getChapterProgress(
   }
   return { kind: 'ok', chapters: await repo.chapterProgress(book) }
 }
+
+export type ChapterVersesResult =
+  | { readonly kind: 'ok'; readonly verses: readonly VerseListItem[] }
+  | { readonly kind: 'invalid'; readonly reason: string }
+  | { readonly kind: 'notFound' }
+
+/**
+ * Every registrable verse of one chapter, with status, for the whole-chapter
+ * view (UX-10). Guards the 1-66 book range and a positive chapter; a
+ * non-existent chapter (or one with no registrable verses) yields `notFound` so
+ * the route answers 404, distinct from a real but empty result — which can't
+ * happen, since every canonical chapter has at least one registrable verse.
+ */
+export async function getChapterVerses(
+  repo: AggregateReadRepository,
+  book: number,
+  chapter: number,
+): Promise<ChapterVersesResult> {
+  if (!Number.isInteger(book) || book < FIRST_BOOK || book > BOOK_COUNT) {
+    return {
+      kind: 'invalid',
+      reason: `book index out of range: expected ${FIRST_BOOK}-${BOOK_COUNT}, got ${book}`,
+    }
+  }
+  if (!Number.isInteger(chapter) || chapter < 1) {
+    return { kind: 'invalid', reason: `chapter must be a positive integer, got ${chapter}` }
+  }
+  const verses = await repo.chapterVerses(book, chapter)
+  return verses.length === 0 ? { kind: 'notFound' } : { kind: 'ok', verses }
+}

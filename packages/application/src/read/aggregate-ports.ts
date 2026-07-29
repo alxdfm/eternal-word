@@ -26,6 +26,11 @@ export interface AggregateReadRepository {
   bookProgress(): Promise<readonly BookProgress[]>
   /** Every chapter of one book, in ascending order. */
   chapterProgress(book: number): Promise<readonly ChapterProgress[]>
+  /** Every registrable verse of one chapter, in ascending order, with its
+   * current status — the whole-chapter view (UX-10) and the set the bulk
+   * register (UX-11) draws its AVAILABLE candidates from. Bounded by the
+   * canon's longest chapter (Psalm 119, 176 verses), so no pagination. */
+  chapterVerses(book: number, chapter: number): Promise<readonly VerseListItem[]>
   /** Registered-verse count, distinct books and text bytes for one wallet. An
    * unknown wallet returns zeros — never an error. */
   adopterSummary(adopter: string): Promise<AdopterSummary>

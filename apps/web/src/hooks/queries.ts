@@ -26,10 +26,21 @@ export const useChapterProgress = (book: number | null) =>
     enabled: book !== null,
   })
 
-export const useSearch = (query: string) =>
+export const useChapter = (book: number, chapter: number) =>
   useQuery({
-    queryKey: ['search', query],
-    queryFn: () => api.fetchSearch(query),
+    queryKey: ['chapter', book, chapter],
+    queryFn: () => api.fetchChapter(book, chapter),
+    enabled: book > 0 && chapter > 0,
+    // A 404 means the chapter isn't in the canon — a note, not a transient
+    // failure, so don't retry it (mirrors the single-verse 404, UX-01).
+    retry: (failureCount, error) =>
+      !(error instanceof api.ChapterNotFoundError) && failureCount < 3,
+  })
+
+export const useSearch = (query: string, page = 1) =>
+  useQuery({
+    queryKey: ['search', query, page],
+    queryFn: () => api.fetchSearch(query, page),
     enabled: query.trim() !== '',
     placeholderData: keepPreviousData,
   })

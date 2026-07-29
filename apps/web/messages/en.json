@@ -5,9 +5,7 @@
   },
   "home": {
     "title": "Eternal Word",
-    "subtitle": "Register a verse of the Bible permanently on Solana.",
-    "registerTitle": "Register a verse",
-    "registerLead": "Search by reference and, if it's still available, inscribe it on-chain from your wallet."
+    "subtitle": "Register a verse of the Bible permanently on Solana."
   },
   "hero": {
     "eyebrow": "Tracking & community · the living record",
@@ -18,8 +16,8 @@
     "illuminated": "verses illuminated",
     "ofCanon": "of the canon registered",
     "stillDark": "{count, number} still in the dark",
+    "registerCta": "Register a verse",
     "exploreCta": "Explore the record",
-    "dashboardCta": "Dashboard",
     "mapCta": "Progress map",
     "proofAdopter": "Adopter",
     "proofSlot": "Slot",
@@ -37,12 +35,32 @@
     "en": "EN",
     "pt": "PT"
   },
+  "localeNote": {
+    "text": "The scripture text is always shown in English (World English Bible) — the universal language of the on-chain record; only the interface is translated."
+  },
   "nav": {
     "brand": "Eternal Word",
+    "register": "Register",
     "dashboard": "Dashboard",
     "explore": "Explore",
     "map": "Progress map",
     "search": "Search"
+  },
+  "registerScreen": {
+    "eyebrow": "Register",
+    "title": "Inscribe a verse on-chain",
+    "lead": "Search by reference and, if it's still available, register it permanently on Solana from your wallet.",
+    "viewChapter": "View the whole chapter"
+  },
+  "chapterScreen": {
+    "eyebrow": "Whole chapter",
+    "lead": "Every verse of the chapter with its state — select the available ones to register together.",
+    "progress": "{registered, number}/{total, number} registered",
+    "selectAll": "Select all available",
+    "clear": "Clear",
+    "selected": "{count, number} selected",
+    "noneAvailable": "Every verse in this chapter is already spoken for.",
+    "notInCanon": "That chapter is not in the canonical versification."
   },
   "common": {
     "loading": "Loading…",
@@ -84,8 +102,6 @@
     "eyebrow": "Progress map",
     "title": "The whole canon, lighting up verse by verse",
     "lead": "66 books · 1,189 chapters. The more gold, the more of the book is registered. Tap a book to open its chapters.",
-    "legendLow": "0%",
-    "legendHigh": "40%+",
     "old": "Old Testament",
     "new": "New Testament",
     "chapterTooltip": "{registered, number} / {registrable, number} verses",
@@ -98,9 +114,7 @@
     "lead": "The whole canon is searchable by text; the WEB's omitted positions are explained in place, not thrown as errors.",
     "byText": "By text",
     "byReference": "By reference",
-    "refBook": "Book",
-    "refChapter": "Chapter",
-    "refVerse": "Verse",
+    "refPlaceholder": "e.g. Isaiah 60:19",
     "placeholder": "Search words across all {count, number} verses…",
     "count": "{total, number} matches",
     "noResults": "No verses match “{query}”.",
@@ -139,6 +153,7 @@
     "registered": "Registered",
     "failed": "Failed",
     "notRegistrable": "Not registrable",
+    "notInCanon": "That reference is not in the canonical versification.",
     "adopter": "Adopter: {address}"
   },
   "verseState": {
@@ -229,6 +244,9 @@
   "register": {
     "register": "Register this verse",
     "submitting": "Registering…",
+    "bulk": "Register {count, number} selected",
+    "bulkProgress": "Registering {done, number}/{total, number}…",
+    "bulkDone": "{succeeded, number} sent, {failed, number} failed",
     "errors": {
       "rejected": "You declined the signature.",
       "insufficient": "Not enough SOL to cover rent and network fees.",

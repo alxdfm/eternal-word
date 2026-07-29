@@ -1,4 +1,4 @@
-import type { SearchHit, SearchRepository } from '@eternal-word/application'
+import type { SearchRepository, SearchResult } from '@eternal-word/application'
 import type { VerseStatus } from '@eternal-word/domain'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from './client.js'
@@ -14,8 +14,10 @@ import { translations, verseTexts, verses } from './schema.js'
  */
 export function createSearchRepository(db: Database): SearchRepository {
   return {
-    async searchByText(query: string, limit: number): Promise<readonly SearchHit[]> {
-      const tsquery = sql`websearch_to_tsquery('english', ${query})`
+    async searchByText(query: string, limit: number, offset: number): Promise<SearchResult> {
+      // `simple` matches the `search_vector` config (schema.ts) — keeps
+      // stop-words ("the"/"you") searchable (UX-02).
+      const tsquery = sql`websearch_to_tsquery('simple', ${query})`
       const rows = await db
         .select({
           book: verseTexts.book,
@@ -23,6 +25,9 @@ export function createSearchRepository(db: Database): SearchRepository {
           verse: verseTexts.verse,
           status: verses.status,
           text: verseTexts.text,
+          // Total matches, computed over the full result set before limit/offset
+          // — one round-trip serves the page and the pager count (UX-08).
+          total: sql<number>`count(*) over()`,
         })
         .from(verseTexts)
         .innerJoin(
@@ -45,14 +50,18 @@ export function createSearchRepository(db: Database): SearchRepository {
           asc(verseTexts.verse),
         )
         .limit(limit)
+        .offset(offset)
 
-      return rows.map((r) => ({
-        book: r.book,
-        chapter: r.chapter,
-        verse: r.verse,
-        status: r.status as VerseStatus,
-        text: r.text ?? '',
-      }))
+      return {
+        hits: rows.map((r) => ({
+          book: r.book,
+          chapter: r.chapter,
+          verse: r.verse,
+          status: r.status as VerseStatus,
+          text: r.text ?? '',
+        })),
+        total: rows.length > 0 ? Number(rows[0]?.total ?? 0) : 0,
+      }
     },
   }
 }

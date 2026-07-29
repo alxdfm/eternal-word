@@ -1,13 +1,11 @@
 {
   "app": {
-    "title": "Palavra Eterna",
+    "title": "Eternal Word",
     "description": "Registre versículos da Bíblia de forma permanente na blockchain Solana."
   },
   "home": {
-    "title": "Palavra Eterna",
-    "subtitle": "Registre um versículo da Bíblia de forma permanente na Solana.",
-    "registerTitle": "Registrar um versículo",
-    "registerLead": "Busque pela referência e, se ainda estiver disponível, inscreva-o on-chain a partir da sua carteira."
+    "title": "Eternal Word",
+    "subtitle": "Registre um versículo da Bíblia de forma permanente na Solana."
   },
   "hero": {
     "eyebrow": "Acompanhamento e comunidade · o registro vivo",
@@ -18,8 +16,8 @@
     "illuminated": "versículos iluminados",
     "ofCanon": "do cânon registrado",
     "stillDark": "{count, number} ainda na escuridão",
+    "registerCta": "Registrar um versículo",
     "exploreCta": "Explorar o registro",
-    "dashboardCta": "Painel",
     "mapCta": "Mapa de progresso",
     "proofAdopter": "Adotante",
     "proofSlot": "Slot",
@@ -37,12 +35,32 @@
     "en": "EN",
     "pt": "PT"
   },
+  "localeNote": {
+    "text": "O texto bíblico é sempre exibido em inglês (World English Bible) — a língua universal do registro on-chain; só a interface está em português."
+  },
   "nav": {
-    "brand": "Palavra Eterna",
+    "brand": "Eternal Word",
+    "register": "Registrar",
     "dashboard": "Painel",
     "explore": "Explorar",
     "map": "Mapa de progresso",
     "search": "Buscar"
+  },
+  "registerScreen": {
+    "eyebrow": "Registrar",
+    "title": "Inscreva um versículo on-chain",
+    "lead": "Busque pela referência e, se ainda estiver disponível, registre-o de forma permanente na Solana a partir da sua carteira.",
+    "viewChapter": "Ver o capítulo inteiro"
+  },
+  "chapterScreen": {
+    "eyebrow": "Capítulo inteiro",
+    "lead": "Cada versículo do capítulo com seu estado — selecione os disponíveis para registrar de uma vez.",
+    "progress": "{registered, number}/{total, number} registrados",
+    "selectAll": "Selecionar todos disponíveis",
+    "clear": "Limpar",
+    "selected": "{count, number} selecionados",
+    "noneAvailable": "Todos os versículos deste capítulo já foram registrados.",
+    "notInCanon": "Esse capítulo não existe na versificação canônica."
   },
   "common": {
     "loading": "Carregando…",
@@ -84,8 +102,6 @@
     "eyebrow": "Mapa de progresso",
     "title": "Todo o cânon, acendendo versículo por versículo",
     "lead": "66 livros · 1.189 capítulos. Quanto mais ouro, mais do livro está registrado. Toque em um livro para abrir seus capítulos.",
-    "legendLow": "0%",
-    "legendHigh": "40%+",
     "old": "Antigo Testamento",
     "new": "Novo Testamento",
     "chapterTooltip": "{registered, number} / {registrable, number} versículos",
@@ -98,9 +114,7 @@
     "lead": "Todo o cânon é pesquisável por texto; as posições omitidas pela WEB são explicadas no lugar, não lançadas como erro.",
     "byText": "Por texto",
     "byReference": "Por referência",
-    "refBook": "Livro",
-    "refChapter": "Capítulo",
-    "refVerse": "Versículo",
+    "refPlaceholder": "ex.: Isaías 60:19",
     "placeholder": "Busque palavras em todos os {count, number} versículos…",
     "count": "{total, number} resultados",
     "noResults": "Nenhum versículo corresponde a “{query}”.",
@@ -139,6 +153,7 @@
     "registered": "Registrado",
     "failed": "Falhou",
     "notRegistrable": "Não registrável",
+    "notInCanon": "Essa referência não existe na versificação canônica.",
     "adopter": "Adotante: {address}"
   },
   "verseState": {
@@ -229,6 +244,9 @@
   "register": {
     "register": "Registrar este versículo",
     "submitting": "Registrando…",
+    "bulk": "Registrar {count, number} selecionados",
+    "bulkProgress": "Registrando {done, number}/{total, number}…",
+    "bulkDone": "{succeeded, number} enviados, {failed, number} falharam",
     "errors": {
       "rejected": "Você recusou a assinatura.",
       "insufficient": "SOL insuficiente para cobrir o rent e as taxas de rede.",

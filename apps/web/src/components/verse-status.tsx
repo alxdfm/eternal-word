@@ -29,6 +29,8 @@ interface VerseStatusViewProps {
   readonly data: VerseStatusData | undefined
   readonly isPending: boolean
   readonly isError: boolean
+  /** The reference is outside the canon (404) — a clear note, not a generic error. */
+  readonly notInCanon?: boolean
 }
 
 /**
@@ -36,9 +38,16 @@ interface VerseStatusViewProps {
  * once registered, the adopter. The query (and its polling) lives in
  * RegisterPanel, which passes the result down — one subscription per reference.
  */
-export function VerseStatus({ data, isPending, isError }: VerseStatusViewProps) {
+export function VerseStatus({ data, isPending, isError, notInCanon }: VerseStatusViewProps) {
   const t = useTranslations('status')
 
+  if (notInCanon) {
+    return (
+      <Box>
+        <Muted>{t('notInCanon')}</Muted>
+      </Box>
+    )
+  }
   if (isPending) {
     return (
       <Box>

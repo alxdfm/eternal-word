@@ -172,26 +172,64 @@ describe.skipIf(!DATABASE_URL)('createAggregateReadRepository (Postgres)', () =>
     const page = await repo.adopterVerses('Nobody1111111111111111111111111111111111111', 0, 20)
     expect(page.total).toBe(0)
   })
+
+  it('lists a whole chapter in verse order with per-verse status (UX-10)', async () => {
+    const chapter = await repo.chapterVerses(43, 3)
+    expect(chapter.length).toBeGreaterThan(0)
+    // Strictly ascending by verse — the whole-chapter view relies on the order.
+    const numbers = chapter.map((v) => v.verse)
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b))
+    // The fixture registered John 3:16 to ADOPTER; the rest carry their status.
+    const v16 = chapter.find((v) => v.verse === 16)
+    expect(v16?.status).toBe('REGISTERED')
+    expect(v16?.adopter).toBe(ADOPTER)
+    expect(v16?.text).toBeTruthy()
+  })
+
+  it('returns nothing for a chapter outside the versification', async () => {
+    expect(await repo.chapterVerses(43, 999)).toHaveLength(0)
+  })
 })
 
 describe.skipIf(!DATABASE_URL)('createSearchRepository (Postgres FTS)', () => {
   const repo = createSearchRepository(createDatabase(DATABASE_URL as string))
 
+  const refKey = (h: { book: number; chapter: number; verse: number }) =>
+    `${h.book}:${h.chapter}:${h.verse}`
+
   it('finds "light" and includes Genesis 1:3', async () => {
-    const hits = await repo.searchByText('light', 50)
+    const { hits, total } = await repo.searchByText('light', 50, 0)
     expect(hits.length).toBeGreaterThan(0)
+    expect(total).toBeGreaterThanOrEqual(hits.length)
     const gen13 = hits.find((h) => h.book === 1 && h.chapter === 1 && h.verse === 3)
     expect(gen13).toBeDefined()
     expect(gen13?.text.toLowerCase()).toContain('light')
   })
 
-  it('honors the limit', async () => {
-    const hits = await repo.searchByText('God', 5)
+  it('honors the limit and reports the full total', async () => {
+    const { hits, total } = await repo.searchByText('God', 5, 0)
     expect(hits.length).toBeGreaterThan(0)
     expect(hits.length).toBeLessThanOrEqual(5)
+    expect(total).toBeGreaterThan(5)
+  })
+
+  it('paginates with offset (page 2 differs from page 1, same total)', async () => {
+    const p1 = await repo.searchByText('God', 5, 0)
+    const p2 = await repo.searchByText('God', 5, 5)
+    expect(p1.total).toBe(p2.total)
+    expect(p1.hits.map(refKey)).not.toEqual(p2.hits.map(refKey))
   })
 
   it('returns nothing for a nonsense term', async () => {
-    expect(await repo.searchByText('zzzznotaword', 20)).toHaveLength(0)
+    const { hits, total } = await repo.searchByText('zzzznotaword', 20, 0)
+    expect(hits).toHaveLength(0)
+    expect(total).toBe(0)
+  })
+
+  it('finds common words that `english` FTS drops as stop-words (UX-02)', async () => {
+    // "the" and "you" are English stop-words — with the `simple` config they are
+    // indexed and searchable. Requires migration 0004 applied.
+    expect((await repo.searchByText('the', 1, 0)).total).toBeGreaterThan(0)
+    expect((await repo.searchByText('you', 1, 0)).total).toBeGreaterThan(0)
   })
 })

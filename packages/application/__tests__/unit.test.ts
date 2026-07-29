@@ -26,8 +26,8 @@ import {
   type ListFilter,
   type MirrorEntry,
   type Paginated,
-  type SearchHit,
   type SearchRepository,
+  type SearchResult,
   type VerseListItem,
   type VerseRegistered,
   type VerseRepository,
@@ -36,6 +36,7 @@ import {
   evaluateHeartbeat,
   getAdopterProfile,
   getChapterProgress,
+  getChapterVerses,
   listVerses,
   markPending,
   markPendingRequest,
@@ -260,6 +261,34 @@ class StubAggregateRepo implements AggregateReadRepository {
   async chapterProgress(): Promise<readonly ChapterProgress[]> {
     return [{ chapter: 1, registered: 1, registrable: 31 }]
   }
+  async chapterVerses(_book: number, chapter: number): Promise<readonly VerseListItem[]> {
+    // Chapter 1 has verses; anything else is empty (an out-of-canon chapter).
+    if (chapter !== 1) {
+      return []
+    }
+    return [
+      {
+        book: 43,
+        chapter: 1,
+        verse: 1,
+        status: 'AVAILABLE',
+        text: 'In the beginning…',
+        adopter: null,
+        transaction: null,
+        registeredAt: null,
+      },
+      {
+        book: 43,
+        chapter: 1,
+        verse: 2,
+        status: 'REGISTERED',
+        text: 'The same was…',
+        adopter: 'Wallet1111',
+        transaction: 'Sig1111',
+        registeredAt: new Date('2026-07-25T00:00:00Z'),
+      },
+    ]
+  }
   async adopterSummary(): Promise<AdopterSummary> {
     return { verses: 0, books: 0, registeredTextBytes: 0 }
   }
@@ -335,25 +364,47 @@ describe('getChapterProgress', () => {
   })
 })
 
+describe('getChapterVerses', () => {
+  it('rejects a book index out of range', async () => {
+    expect((await getChapterVerses(new StubAggregateRepo(), 67, 1)).kind).toBe('invalid')
+  })
+
+  it('rejects a non-positive chapter', async () => {
+    expect((await getChapterVerses(new StubAggregateRepo(), 43, 0)).kind).toBe('invalid')
+  })
+
+  it('returns 404 (notFound) for a chapter with no registrable verses', async () => {
+    expect((await getChapterVerses(new StubAggregateRepo(), 43, 999)).kind).toBe('notFound')
+  })
+
+  it('returns the chapter verses in order for a real chapter', async () => {
+    const result = await getChapterVerses(new StubAggregateRepo(), 43, 1)
+    expect(result.kind).toBe('ok')
+    if (result.kind === 'ok') {
+      expect(result.verses.map((v) => v.verse)).toEqual([1, 2])
+    }
+  })
+})
+
 describe('searchVerses', () => {
   class StubSearchRepo implements SearchRepository {
-    calls: Array<{ query: string; limit: number }> = []
-    async searchByText(query: string, limit: number): Promise<readonly SearchHit[]> {
-      this.calls.push({ query, limit })
-      return []
+    calls: Array<{ query: string; limit: number; offset: number }> = []
+    async searchByText(query: string, limit: number, offset: number): Promise<SearchResult> {
+      this.calls.push({ query, limit, offset })
+      return { hits: [], total: 0 }
     }
   }
 
   it('skips the DB for an empty or whitespace query', async () => {
     const repo = new StubSearchRepo()
-    expect(await searchVerses(repo, '   ')).toEqual([])
+    expect(await searchVerses(repo, '   ')).toEqual({ hits: [], total: 0 })
     expect(repo.calls).toHaveLength(0)
   })
 
-  it('trims the query and clamps the limit', async () => {
+  it('trims the query and clamps the limit and offset', async () => {
     const repo = new StubSearchRepo()
-    await searchVerses(repo, '  light  ', 999)
-    expect(repo.calls[0]).toEqual({ query: 'light', limit: 50 })
+    await searchVerses(repo, '  light  ', 999, 5)
+    expect(repo.calls[0]).toEqual({ query: 'light', limit: 50, offset: 5 })
   })
 })
 
