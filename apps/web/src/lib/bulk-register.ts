@@ -131,7 +131,19 @@ export async function bulkRegisterVerses(
   const advance = () => options.onProgress?.({ done: ++done, total })
 
   for (const batch of chunk(references, batchSize)) {
-    const blockhash = await io.getBlockhash()
+    // No blockhash (e.g. the public RPC throttling the burst — S06) fails this
+    // batch, not the whole run: mark its verses failed and try the next batch,
+    // so a transient blip never throws away the partial result.
+    let blockhash: string
+    try {
+      blockhash = await io.getBlockhash()
+    } catch (error) {
+      for (const reference of batch) {
+        failed.push({ reference, error })
+        advance()
+      }
+      continue
+    }
 
     // Build every transaction in the batch (proof fetch + assembly). A build
     // failure fails just that verse; the batch goes on.

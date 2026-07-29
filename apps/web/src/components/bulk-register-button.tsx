@@ -67,10 +67,16 @@ export function BulkRegisterButton({ references, onComplete }: Props) {
         connection.sendRawTransaction(transaction.serialize(), { maxRetries: 5 }),
     }
 
-    const outcome = await bulkRegisterVerses(references, io, { onProgress: setProgress })
-    setProgress(null)
-    setSummary(outcome)
-    onComplete?.(outcome)
+    // bulkRegisterVerses is total (every IO failure becomes a `failed` entry),
+    // but the `finally` guarantees the button leaves the running state even if
+    // something unexpected throws — never a stuck "Registering…".
+    try {
+      const outcome = await bulkRegisterVerses(references, io, { onProgress: setProgress })
+      setSummary(outcome)
+      onComplete?.(outcome)
+    } finally {
+      setProgress(null)
+    }
   }
 
   return (

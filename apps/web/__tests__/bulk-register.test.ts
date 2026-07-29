@@ -104,6 +104,29 @@ describe('bulkRegisterVerses', () => {
     expect(outcome.failed.map((f) => f.reference.verse)).toEqual([2])
   })
 
+  it('fails only the batch whose blockhash could not be fetched, and goes on', async () => {
+    let calls = 0
+    const { io, rec } = makeIO({
+      getBlockhash: async () => {
+        calls++
+        // First batch: the RPC throttles the burst; second batch recovers.
+        if (calls === 1) {
+          throw new Error('failed to get recent blockhash')
+        }
+        return 'blockhash'
+      },
+    })
+    const outcome = await bulkRegisterVerses(refs(4), io, { batchSize: 2 })
+
+    // Not aborted: the first batch (2 verses) failed, the second (2) succeeded.
+    expect(outcome.aborted).toBe(false)
+    expect(outcome.failed.map((f) => f.reference.verse).sort()).toEqual([1, 2])
+    expect(outcome.succeeded.map((r) => r.verse).sort()).toEqual([3, 4])
+    // The first batch never built or sent; the second did.
+    expect(rec.builds).toEqual([3, 4])
+    expect(rec.sends).toBe(2)
+  })
+
   it('aborts the whole run when a batch signature is declined', async () => {
     const { io, rec } = makeIO({
       signAll: async () => {
