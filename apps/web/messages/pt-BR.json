@@ -38,6 +38,14 @@
   "localeNote": {
     "text": "O texto bíblico é sempre exibido em inglês (World English Bible) — a língua universal do registro on-chain; só a interface está em português."
   },
+  "footer": {
+    "nonProfit": "Eternal Word é um projeto sem fins lucrativos — a Bíblia inscrita de forma permanente na Solana, versículo a versículo.",
+    "costs": "Registrar um versículo custa apenas o rent on-chain que guarda o texto, mais a taxa de rede da Solana. Não há taxa de serviço, e o projeto não fica com nada.",
+    "donateIntro": "As doações são opcionais e ajudam na hospedagem e no desenvolvimento — separadas do rent que você paga para registrar.",
+    "donateLabel": "Doar",
+    "copy": "Copiar endereço",
+    "copied": "Copiado"
+  },
   "nav": {
     "brand": "Eternal Word",
     "register": "Registrar",

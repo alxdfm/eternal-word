@@ -1,6 +1,7 @@
 import '@solana/wallet-adapter-react-ui/styles.css'
 
 import { Providers } from '@/app/providers'
+import { AppFooter } from '@/components/app-footer'
 import { AppHeader } from '@/components/app-header'
 import { LocaleNote } from '@/components/locale-note'
 import { StyledComponentsRegistry } from '@/lib/registry'
@@ -35,6 +36,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 <AppHeader />
                 <LocaleNote />
                 {children}
+                <AppFooter />
               </Providers>
             </AppThemeProvider>
           </StyledComponentsRegistry>
