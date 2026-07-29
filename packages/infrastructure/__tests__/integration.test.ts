@@ -172,6 +172,23 @@ describe.skipIf(!DATABASE_URL)('createAggregateReadRepository (Postgres)', () =>
     const page = await repo.adopterVerses('Nobody1111111111111111111111111111111111111', 0, 20)
     expect(page.total).toBe(0)
   })
+
+  it('lists a whole chapter in verse order with per-verse status (UX-10)', async () => {
+    const chapter = await repo.chapterVerses(43, 3)
+    expect(chapter.length).toBeGreaterThan(0)
+    // Strictly ascending by verse — the whole-chapter view relies on the order.
+    const numbers = chapter.map((v) => v.verse)
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b))
+    // The fixture registered John 3:16 to ADOPTER; the rest carry their status.
+    const v16 = chapter.find((v) => v.verse === 16)
+    expect(v16?.status).toBe('REGISTERED')
+    expect(v16?.adopter).toBe(ADOPTER)
+    expect(v16?.text).toBeTruthy()
+  })
+
+  it('returns nothing for a chapter outside the versification', async () => {
+    expect(await repo.chapterVerses(43, 999)).toHaveLength(0)
+  })
 })
 
 describe.skipIf(!DATABASE_URL)('createSearchRepository (Postgres FTS)', () => {

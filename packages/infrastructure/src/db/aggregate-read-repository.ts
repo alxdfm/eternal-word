@@ -247,6 +247,17 @@ export function createAggregateReadRepository(db: Database): AggregateReadReposi
         .sort((a, b) => a.chapter - b.chapter)
     },
 
+    async chapterVerses(book, chapter): Promise<readonly VerseListItem[]> {
+      const rows = await db
+        .select(listItemColumns)
+        .from(verses)
+        .innerJoin(verseTexts, versesToTexts)
+        .innerJoin(translations, canonicalText)
+        .where(and(eq(verses.book, book), eq(verses.chapter, chapter)))
+        .orderBy(asc(verses.verse))
+      return rows.map(toListItem)
+    },
+
     async adopterSummary(adopter): Promise<AdopterSummary> {
       const [row] = await db
         .select({

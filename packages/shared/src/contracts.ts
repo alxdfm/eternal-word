@@ -88,6 +88,14 @@ export interface ChapterProgressResponseDto {
   readonly chapters: readonly ChapterProgressDto[]
 }
 
+/** Every registrable verse of one chapter, with status — the whole-chapter view
+ * (UX-10) and the pool the bulk register selects from (UX-11). */
+export interface ChapterVersesResponseDto {
+  readonly book: number
+  readonly chapter: number
+  readonly verses: readonly VerseListItemDto[]
+}
+
 /** One full-text search hit — reference, status and text (the UI highlights). */
 export interface SearchHitDto {
   readonly book: number

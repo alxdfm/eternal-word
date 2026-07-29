@@ -49,7 +49,18 @@
   "registerScreen": {
     "eyebrow": "Registrar",
     "title": "Inscreva um versículo on-chain",
-    "lead": "Busque pela referência e, se ainda estiver disponível, registre-o de forma permanente na Solana a partir da sua carteira."
+    "lead": "Busque pela referência e, se ainda estiver disponível, registre-o de forma permanente na Solana a partir da sua carteira.",
+    "viewChapter": "Ver o capítulo inteiro"
+  },
+  "chapterScreen": {
+    "eyebrow": "Capítulo inteiro",
+    "lead": "Cada versículo do capítulo com seu estado — selecione os disponíveis para registrar de uma vez.",
+    "progress": "{registered, number}/{total, number} registrados",
+    "selectAll": "Selecionar todos disponíveis",
+    "clear": "Limpar",
+    "selected": "{count, number} selecionados",
+    "noneAvailable": "Todos os versículos deste capítulo já foram registrados.",
+    "notInCanon": "Esse capítulo não existe na versificação canônica."
   },
   "common": {
     "loading": "Carregando…",

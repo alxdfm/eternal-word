@@ -5,6 +5,7 @@ import { SearchForm } from '@/components/search-form'
 import { Section, SectionHead, Wrap } from '@/components/ui'
 import type { VerseReference } from '@/lib/api'
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
 import { useState } from 'react'
 import styled from 'styled-components'
 
@@ -13,6 +14,15 @@ const PanelWrap = styled.div`
   justify-items: center;
   gap: 20px;
   margin-top: 12px;
+`
+const ChapterLink = styled(Link)`
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.lapis};
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 `
 
 /**
@@ -32,10 +42,15 @@ export default function RegisterPage() {
         <PanelWrap>
           <SearchForm onSearch={setReference} />
           {reference !== null && (
-            <RegisterPanel
-              key={`${reference.book}:${reference.chapter}:${reference.verse}`}
-              reference={reference}
-            />
+            <>
+              <RegisterPanel
+                key={`${reference.book}:${reference.chapter}:${reference.verse}`}
+                reference={reference}
+              />
+              <ChapterLink href={`/chapter/${reference.book}/${reference.chapter}`}>
+                {t('viewChapter')} →
+              </ChapterLink>
+            </>
           )}
         </PanelWrap>
       </Wrap>

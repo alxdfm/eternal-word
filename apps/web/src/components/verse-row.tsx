@@ -58,8 +58,8 @@ const Adopt = styled(Link)`
 `
 
 /** One verse in a feed: reference (book name, EX-01) + snippet + state chip and,
- * for a registered verse, a link to its adopter — or "Adopt →" to the existing
- * S04 register flow for an available one. */
+ * for a registered verse, a link to its adopter — or "Adopt →" to that verse's
+ * chapter view (UX-10), where it can be registered on its own or in a batch. */
 export function VerseRow({ item }: { item: VerseListItem }) {
   const labels = useBookLabels()
   const t = useTranslations('explore')
@@ -72,7 +72,7 @@ export function VerseRow({ item }: { item: VerseListItem }) {
         {item.status === 'REGISTERED' && item.adopter !== null ? (
           <Who href={`/adopter/${item.adopter}`}>{shortenAddress(item.adopter)}</Who>
         ) : item.status === 'AVAILABLE' ? (
-          <Adopt href="/">{t('adopt')}</Adopt>
+          <Adopt href={`/chapter/${item.book}/${item.chapter}`}>{t('adopt')}</Adopt>
         ) : null}
       </Right>
     </Row>

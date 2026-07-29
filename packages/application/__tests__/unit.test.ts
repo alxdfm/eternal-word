@@ -36,6 +36,7 @@ import {
   evaluateHeartbeat,
   getAdopterProfile,
   getChapterProgress,
+  getChapterVerses,
   listVerses,
   markPending,
   markPendingRequest,
@@ -260,6 +261,34 @@ class StubAggregateRepo implements AggregateReadRepository {
   async chapterProgress(): Promise<readonly ChapterProgress[]> {
     return [{ chapter: 1, registered: 1, registrable: 31 }]
   }
+  async chapterVerses(_book: number, chapter: number): Promise<readonly VerseListItem[]> {
+    // Chapter 1 has verses; anything else is empty (an out-of-canon chapter).
+    if (chapter !== 1) {
+      return []
+    }
+    return [
+      {
+        book: 43,
+        chapter: 1,
+        verse: 1,
+        status: 'AVAILABLE',
+        text: 'In the beginning…',
+        adopter: null,
+        transaction: null,
+        registeredAt: null,
+      },
+      {
+        book: 43,
+        chapter: 1,
+        verse: 2,
+        status: 'REGISTERED',
+        text: 'The same was…',
+        adopter: 'Wallet1111',
+        transaction: 'Sig1111',
+        registeredAt: new Date('2026-07-25T00:00:00Z'),
+      },
+    ]
+  }
   async adopterSummary(): Promise<AdopterSummary> {
     return { verses: 0, books: 0, registeredTextBytes: 0 }
   }
@@ -332,6 +361,28 @@ describe('getChapterProgress', () => {
   it('returns the chapters for a valid book', async () => {
     const result = await getChapterProgress(new StubAggregateRepo(), 43)
     expect(result.kind).toBe('ok')
+  })
+})
+
+describe('getChapterVerses', () => {
+  it('rejects a book index out of range', async () => {
+    expect((await getChapterVerses(new StubAggregateRepo(), 67, 1)).kind).toBe('invalid')
+  })
+
+  it('rejects a non-positive chapter', async () => {
+    expect((await getChapterVerses(new StubAggregateRepo(), 43, 0)).kind).toBe('invalid')
+  })
+
+  it('returns 404 (notFound) for a chapter with no registrable verses', async () => {
+    expect((await getChapterVerses(new StubAggregateRepo(), 43, 999)).kind).toBe('notFound')
+  })
+
+  it('returns the chapter verses in order for a real chapter', async () => {
+    const result = await getChapterVerses(new StubAggregateRepo(), 43, 1)
+    expect(result.kind).toBe('ok')
+    if (result.kind === 'ok') {
+      expect(result.verses.map((v) => v.verse)).toEqual([1, 2])
+    }
   })
 })
 

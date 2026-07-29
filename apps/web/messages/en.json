@@ -49,7 +49,18 @@
   "registerScreen": {
     "eyebrow": "Register",
     "title": "Inscribe a verse on-chain",
-    "lead": "Search by reference and, if it's still available, register it permanently on Solana from your wallet."
+    "lead": "Search by reference and, if it's still available, register it permanently on Solana from your wallet.",
+    "viewChapter": "View the whole chapter"
+  },
+  "chapterScreen": {
+    "eyebrow": "Whole chapter",
+    "lead": "Every verse of the chapter with its state — select the available ones to register together.",
+    "progress": "{registered, number}/{total, number} registered",
+    "selectAll": "Select all available",
+    "clear": "Clear",
+    "selected": "{count, number} selected",
+    "noneAvailable": "Every verse in this chapter is already spoken for.",
+    "notInCanon": "That chapter is not in the canonical versification."
   },
   "common": {
     "loading": "Loading…",

@@ -47,12 +47,14 @@ export { LIST_FILTERS, isListFilter } from './read/read-model.js'
 export type { AggregateReadRepository } from './read/aggregate-ports.js'
 export {
   type ChapterProgressResult,
+  type ChapterVersesResult,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   clampPage,
   getAdopterProfile,
   getBookProgress,
   getChapterProgress,
+  getChapterVerses,
   getDashboard,
   listVerses,
   toCumulativeTrend,

@@ -2,6 +2,7 @@ import type {
   AdopterProfileDto,
   BookProgressDto,
   ChapterProgressResponseDto,
+  ChapterVersesResponseDto,
   DashboardStatsDto,
   PaginatedDto,
   RegistrationProofDto,
@@ -30,6 +31,7 @@ export type VerseListItem = VerseListItemDto
 export type VerseListPage = PaginatedDto<VerseListItemDto>
 export type BookProgress = BookProgressDto
 export type ChapterProgressResponse = ChapterProgressResponseDto
+export type ChapterVerses = ChapterVersesResponseDto
 export type SearchResponse = SearchResponseDto
 export type AdopterProfile = AdopterProfileDto
 
@@ -97,6 +99,26 @@ export const fetchBookProgress = () => getJson<readonly BookProgress[]>('/progre
 
 export const fetchChapterProgress = (book: number) =>
   getJson<ChapterProgressResponse>(`/progress?book=${book}`)
+
+/** A chapter that is not in the canonical versification (e.g. book 23 chapter
+ * 999). The API answers 404; the chapter view shows a "not in canon" note. */
+export class ChapterNotFoundError extends Error {
+  constructor() {
+    super('chapter not in the canonical versification')
+    this.name = 'ChapterNotFoundError'
+  }
+}
+
+export async function fetchChapter(book: number, chapter: number): Promise<ChapterVerses> {
+  const res = await fetch(apiUrl(`/chapter?book=${book}&chapter=${chapter}`))
+  if (res.status === 404) {
+    throw new ChapterNotFoundError()
+  }
+  if (!res.ok) {
+    throw new Error(`chapter fetch failed (${res.status})`)
+  }
+  return res.json() as Promise<ChapterVerses>
+}
 
 export const SEARCH_PAGE_SIZE = 20
 
