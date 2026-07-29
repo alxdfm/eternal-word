@@ -19,7 +19,11 @@ describe('parseReference (UX-07)', () => {
   })
 
   it('parses the full book name', () => {
-    expect(parseReference('Isaiah 60:19', enCandidates)).toEqual({ book: 23, chapter: 60, verse: 19 })
+    expect(parseReference('Isaiah 60:19', enCandidates)).toEqual({
+      book: 23,
+      chapter: 60,
+      verse: 19,
+    })
   })
 
   it('parses a numbered book with an internal space (1 Cor 13:4)', () => {
