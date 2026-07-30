@@ -54,7 +54,7 @@ const Row = styled.label<{ $selectable: boolean }>`
   display: grid;
   grid-template-columns: 24px 68px 1fr auto;
   gap: 14px;
-  align-items: center;
+  align-items: start;
   padding: 12px 18px;
   border-bottom: 1px solid ${({ theme }) => theme.color.ruleSoft};
   cursor: ${({ $selectable }) => ($selectable ? 'pointer' : 'default')};
@@ -71,14 +71,14 @@ const Row = styled.label<{ $selectable: boolean }>`
     font-family: ${({ theme }) => theme.font.serif};
     font-weight: 600;
     white-space: nowrap;
+    /* keep the reference aligned with the first line of the (now wrapping) text */
+    line-height: 1.5;
   }
   .snip {
     color: ${({ theme }) => theme.color.muted};
     font-size: 0.9rem;
     line-height: 1.5;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
   .who {
     font-family: ${({ theme }) => theme.font.mono};
