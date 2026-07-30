@@ -12,7 +12,17 @@ import postgres from 'postgres'
  * rest of the code from the driver (FD-10).
  */
 export function createDatabase(connectionString: string) {
-  const client = postgres(connectionString, { prepare: false })
+  const client = postgres(connectionString, {
+    prepare: false,
+    // Fail-fast instead of hanging: without these a dead/slow Supabase socket
+    // would burn the whole Lambda timeout. `connect_timeout` caps the handshake;
+    // `idle_timeout` drops idle connections (good through the pooler and between
+    // reconcile runs). A server-side `statement_timeout` does NOT go here — the
+    // Supabase transaction pooler rejects it as a startup param (same reason as
+    // `prepare: false`); it lives on the Supabase role (see the indexer module).
+    connect_timeout: 10, // seconds
+    idle_timeout: 20, // seconds
+  })
   return drizzle(client)
 }
 
