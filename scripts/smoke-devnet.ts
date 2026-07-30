@@ -34,7 +34,7 @@ interface Options {
 
 function parseArgs(argv: readonly string[]): Options {
   return {
-    url: argAt(argv, '--url') ?? 'https://api.devnet.solana.com',
+    url: argAt(argv, '--url') ?? process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com',
     keypairPath: argAt(argv, '--keypair') ?? `${homedir()}/.config/solana/id.json`,
   }
 }

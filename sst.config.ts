@@ -6,7 +6,9 @@
 //
 // Secrets (set before deploy):
 //   sst secret set DatabaseUrl "postgres://...supabase-pooler...:6543/postgres"
-//   sst secret set SolanaRpcUrl "https://devnet.helius-rpc.com/?api-key=..."
+//   sst secret set WebhookAuthToken "<Helius Authorization header>"
+//   sst secret set AlertEmail "you@example.com"
+//   sst secret set SolanaRpcUrl "<cluster RPC>"   # optional — defaults to public devnet
 export default $config({
   app(input) {
     return {
@@ -24,12 +26,16 @@ export default $config({
     // The email subscription needs a one-time confirmation click from AWS SNS.
     const alertEmail = new sst.Secret('AlertEmail')
 
-    // getProgramAccounts (the reconcile) is a heavy call and the biggest RPC
-    // consumer. It runs on the FREE public devnet RPC, so Helius credits are
-    // spent only on the webhook. For mainnet, or if the public RPC throttles
-    // getProgramAccounts, point this at a dedicated RPC (e.g. Helius). Ver ADR
-    // docs/decisions/2026-07-23_tuning-de-custo-do-indexer.md.
-    const reconcileRpcUrl = 'https://api.devnet.solana.com'
+    // Cluster RPC — a secret so each stage points at its own cluster, with the
+    // FREE public devnet RPC as the placeholder: devnet works with zero config
+    // and the reconcile's getProgramAccounts spends no Helius credits. Mainnet:
+    // `sst secret set SolanaRpcUrl <mainnet RPC> --stage <stage>` (public mainnet
+    // by default; a dedicated provider only if the public throttles — routing
+    // getProgramAccounts through a paid RPC costs credits). Consumed by the
+    // reconcile (SOLANA_RPC_URL) and the web (NEXT_PUBLIC_SOLANA_RPC_URL) so both
+    // hit the same cluster. Ver ADRs 2026-07-23_tuning-de-custo-do-indexer.md e
+    // 2026-07-30_rpc-por-stage.md.
+    const solanaRpcUrl = new sst.Secret('SolanaRpcUrl', 'https://api.devnet.solana.com')
 
     // Both handlers use ~100 MB, so 256 MB is ample; a 2-week log retention caps
     // CloudWatch storage. Same ADR.
@@ -70,7 +76,7 @@ export default $config({
         timeout: '120 seconds',
         environment: {
           DATABASE_URL: databaseUrl.value,
-          SOLANA_RPC_URL: reconcileRpcUrl,
+          SOLANA_RPC_URL: solanaRpcUrl.value,
           // Dimension for the EMF health metric (HD-04).
           STAGE: $app.stage,
         },
@@ -126,8 +132,8 @@ export default $config({
 
     // The site (S04, D4): Next.js on AWS via OpenNext, in the same SST app so
     // devnet → mainnet is one stage switch (S07). NEXT_PUBLIC_WEB_API_URL is
-    // inlined at build from the WebApi Function URL; the Solana RPC defaults to
-    // public devnet in the app.
+    // inlined at build from the WebApi Function URL; NEXT_PUBLIC_SOLANA_RPC_URL
+    // from the SolanaRpcUrl secret (public devnet by default).
     //
     // Custom domain on the live stage only: apex served, www → apex. DNS is
     // delegated to Route 53 (the domain stays registered at Hostinger, only the
@@ -143,6 +149,7 @@ export default $config({
           : undefined,
       environment: {
         NEXT_PUBLIC_WEB_API_URL: webApi.url,
+        NEXT_PUBLIC_SOLANA_RPC_URL: solanaRpcUrl.value,
       },
     })
 

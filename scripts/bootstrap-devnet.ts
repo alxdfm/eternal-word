@@ -62,7 +62,7 @@ interface Options {
 function parseArgs(argv: readonly string[]): Options {
   const options: Options = {
     dryRun: argv.includes('--dry-run'),
-    url: 'https://api.devnet.solana.com',
+    url: process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com',
     keypairPath: `${homedir()}/.config/solana/id.json`,
   }
   const at = (flag: string) => {
