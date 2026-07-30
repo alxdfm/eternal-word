@@ -22,11 +22,18 @@ const Bar = styled.footer`
   line-height: 1.65;
 `
 const Inner = styled.div`
-  display: grid;
-  gap: 8px;
-  max-width: 64ch;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px 64px;
+  flex-wrap: wrap;
   p {
     margin: 0;
+  }
+  .about {
+    display: grid;
+    gap: 8px;
+    max-width: 52ch;
   }
   .brand {
     display: flex;
@@ -44,9 +51,9 @@ const Inner = styled.div`
   }
 `
 const Donate = styled.div`
-  margin-top: 10px;
   display: grid;
   gap: 6px;
+  min-width: min(100%, 300px);
   .row {
     display: flex;
     align-items: center;
@@ -172,14 +179,16 @@ export function AppFooter() {
     <Bar>
       <Wrap>
         <Inner>
-          <div className="brand">
-            <span className="glyph" aria-hidden="true">
-              ✦
-            </span>
-            <b>{brand}</b>
+          <div className="about">
+            <div className="brand">
+              <span className="glyph" aria-hidden="true">
+                ✦
+              </span>
+              <b>{brand}</b>
+            </div>
+            <p>{t('nonProfit')}</p>
+            <p>{t('costs')}</p>
           </div>
-          <p>{t('nonProfit')}</p>
-          <p>{t('costs')}</p>
           {DONATION_ADDRESS !== '' && <DonateLine address={DONATION_ADDRESS} />}
         </Inner>
       </Wrap>
