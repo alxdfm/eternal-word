@@ -33,7 +33,6 @@ const Inner = styled.div`
   .about {
     display: grid;
     gap: 8px;
-    max-width: 52ch;
   }
   .brand {
     display: flex;
