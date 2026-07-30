@@ -10,8 +10,8 @@ import {
   createVerseRepository,
   databaseUrlFromEnv,
 } from '@eternal-word/infrastructure'
-import { Connection } from '@solana/web3.js'
 import { runIndexer } from '../indexer/run.js'
+import { DEFAULT_RPC_URL, createSolanaConnection } from '../solana-connection.js'
 
 if (process.env.DATABASE_URL === undefined) {
   try {
@@ -21,8 +21,8 @@ if (process.env.DATABASE_URL === undefined) {
   }
 }
 
-const rpcUrl = process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com'
-const connection = new Connection(rpcUrl, 'confirmed')
+const rpcUrl = process.env.SOLANA_RPC_URL ?? DEFAULT_RPC_URL
+const connection = createSolanaConnection(rpcUrl)
 const db = createDatabase(databaseUrlFromEnv())
 
 const indexer = await runIndexer({

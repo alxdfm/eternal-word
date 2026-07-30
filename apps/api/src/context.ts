@@ -5,13 +5,10 @@ import {
   createVerseRepository,
   databaseUrlFromEnv,
 } from '@eternal-word/infrastructure'
-import { Connection } from '@solana/web3.js'
+import { DEFAULT_RPC_URL, createSolanaConnection } from './solana-connection.js'
 
 function build() {
-  const connection = new Connection(
-    process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com',
-    'confirmed',
-  )
+  const connection = createSolanaConnection(process.env.SOLANA_RPC_URL ?? DEFAULT_RPC_URL)
   const db = createDatabase(databaseUrlFromEnv())
   return {
     connection,

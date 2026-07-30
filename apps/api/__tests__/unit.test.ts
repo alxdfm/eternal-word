@@ -1,5 +1,6 @@
 import type { VerseReadRepository, VerseRepository, VerseView } from '@eternal-word/application'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { withTimeout } from '../src/solana-connection.js'
 import { handleMarkPending } from '../src/web/pending-route.js'
 import { RateLimiter } from '../src/web/rate-limit.js'
 import { handleReadVerse } from '../src/web/read-verse.js'
@@ -182,5 +183,27 @@ describe('RateLimiter (HD-05)', () => {
     now += 60_000
     limiter.prune(30_000)
     expect(limiter.size()).toBe(0)
+  })
+})
+
+describe('withTimeout (RPC fail-fast)', () => {
+  it('aborts a request that outlives the timeout', async () => {
+    // A fetch that never settles on its own — only when its signal aborts, the
+    // way a real fetch rejects when the request is cancelled.
+    const hung: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')))
+      })
+    await expect(withTimeout(hung, 5)('http://rpc.test')).rejects.toThrow('aborted')
+  })
+
+  it('passes the response through and clears the timer on success', async () => {
+    const ok = new Response('ok')
+    const fast: typeof fetch = () => Promise.resolve(ok)
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout')
+    await expect(withTimeout(fast, 5_000)('http://rpc.test')).resolves.toBe(ok)
+    // The finally clears the pending abort so it never fires on a settled call.
+    expect(clearSpy).toHaveBeenCalled()
+    clearSpy.mockRestore()
   })
 })
