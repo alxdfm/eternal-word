@@ -1,5 +1,5 @@
 {
-  "$comment": "Fonte de verdade legível por máquina do bytecode publicado por cluster. Usado por scripts/verify-bytecode.sh (pnpm program:verify) e conferível à mão: reconstrua no container (pnpm program:build) e compare sha256sum target/deploy/eternal_word.so com o valor abaixo. Mainnet ganha sua entrada na S07, após o build definitivo.",
+  "$comment": "Fonte de verdade legível por máquina do bytecode publicado por cluster. Usado por scripts/verify-bytecode.sh (pnpm program:verify) e conferível à mão: reconstrua no container (pnpm program:build) e compare sha256sum target/deploy/eternal_word.so com o valor abaixo. Mainnet ganha sua entrada na S07: deploy do MESMO artefato de devnet, sem rebuild (ADR 2026-07-27_upgrade-authority, adendo 2026-07-30).",
   "toolchain": {
     "agave": "3.1.13",
     "anchorCli": "1.0.0",
@@ -22,7 +22,7 @@
       "bytecodeSha256": null,
       "deploySlot": null,
       "upgradeAuthority": "revogar (--final) no cutover — ver ADR 2026-07-27_upgrade-authority",
-      "note": "Preenchido na S07 após o build definitivo (novo hash: commitment de mainnet cravado no bytecode)."
+      "note": "Preenchido na S07. Deploy do MESMO .so verificado em devnet — bytecodeSha256 esperado: 8f2c6ecf... (nada no bytecode é específico de cluster: mesmo declare_id, mesmo ROOTS_COMMITMENT; ADR 2026-07-27_upgrade-authority, adendo 2026-07-30)."
     }
   }
 }
