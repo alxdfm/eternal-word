@@ -37,6 +37,15 @@ export default $config({
     // 2026-07-30_rpc-por-stage.md.
     const solanaRpcUrl = new sst.Secret('SolanaRpcUrl', 'https://api.devnet.solana.com')
 
+    // S07 "launching soon" gate. On mainnet the apex opens with registration
+    // CLOSED until the program is deployed (cutover Fase C): the empty canon
+    // shows a notice instead of a register button that would fail on-chain.
+    // Default 'false' = closed; go live with
+    //   sst secret set RegistrationLive true --stage production
+    // then redeploy (NEXT_PUBLIC_* is inlined at build). Only `production`
+    // consults it — devnet and dev stages are always open (see below).
+    const registrationLive = new sst.Secret('RegistrationLive', 'false')
+
     // Both handlers use ~100 MB, so 256 MB is ample; a 2-week log retention caps
     // CloudWatch storage. Same ADR.
     const shared = {
@@ -135,21 +144,30 @@ export default $config({
     // inlined at build from the WebApi Function URL; NEXT_PUBLIC_SOLANA_RPC_URL
     // from the SolanaRpcUrl secret (public devnet by default).
     //
-    // Custom domain on the live stage only: apex served, www → apex. DNS is
-    // delegated to Route 53 (the domain stays registered at Hostinger, only the
-    // nameservers point at the Route 53 hosted zone), so SST provisions the ACM
-    // certificate (us-east-1, DNS-validated) and the alias records itself. The
-    // hosted zone must exist and be delegated before this deploy, or cert
-    // validation hangs. Other stages keep the default CloudFront URL.
+    // Custom domain per stage. DNS is delegated to Route 53 (the domain stays
+    // registered at Hostinger, only the nameservers point at the Route 53 hosted
+    // zone), so SST provisions the ACM certificate (us-east-1, DNS-validated) and
+    // the alias records itself. The hosted zone (eternalword.site) must exist and
+    // be delegated before this deploy, or cert validation hangs. SST discovers the
+    // parent zone for the subdomain automatically.
+    //   • production = MAINNET     → apex eternalword.site (www → apex)
+    //   • devnet     = testing field → devnet.eternalword.site
+    //   • other stages (personal dev) → default CloudFront URL
     const web = new sst.aws.Nextjs('Web', {
       path: 'apps/web',
       domain:
         $app.stage === 'production'
           ? { name: 'eternalword.site', redirects: ['www.eternalword.site'] }
-          : undefined,
+          : $app.stage === 'devnet'
+            ? { name: 'devnet.eternalword.site' }
+            : undefined,
       environment: {
         NEXT_PUBLIC_WEB_API_URL: webApi.url,
         NEXT_PUBLIC_SOLANA_RPC_URL: solanaRpcUrl.value,
+        // Registration open on every stage except a mainnet that hasn't launched
+        // (the RegistrationLive secret, default closed). Devnet/dev always open.
+        NEXT_PUBLIC_REGISTRATION_ENABLED:
+          $app.stage === 'production' ? registrationLive.value : 'true',
       },
     })
 
