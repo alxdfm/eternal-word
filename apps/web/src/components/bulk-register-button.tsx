@@ -1,5 +1,6 @@
 'use client'
 
+import { LaunchingSoon } from '@/components/launching-soon'
 import { Button } from '@/components/ui'
 import type { VerseReference } from '@/lib/api'
 import {
@@ -8,6 +9,7 @@ import {
   type BulkRegisterOutcome,
   bulkRegisterVerses,
 } from '@/lib/bulk-register'
+import { REGISTRATION_ENABLED } from '@/lib/env'
 import { buildRegisterTransaction } from '@/lib/register'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import type { VersionedTransaction } from '@solana/web3.js'
@@ -41,6 +43,12 @@ export function BulkRegisterButton({ references, onComplete }: Props) {
 
   const canSign = connected && publicKey !== null && signAllTransactions !== undefined
   const running = progress !== null
+
+  // "Launching soon": a closed stage (mainnet pre-launch) never offers the bulk
+  // action — the chapter view already hides the selection UI, this is the guard.
+  if (!REGISTRATION_ENABLED) {
+    return <LaunchingSoon />
+  }
 
   async function onClick(): Promise<void> {
     if (!canSign || publicKey === null || signAllTransactions === undefined) {

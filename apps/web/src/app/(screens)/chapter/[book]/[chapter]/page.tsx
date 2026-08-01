@@ -1,6 +1,7 @@
 'use client'
 
 import { BulkRegisterButton } from '@/components/bulk-register-button'
+import { LaunchingSoon } from '@/components/launching-soon'
 import { Button, Pager, Section, SectionHead, Wrap } from '@/components/ui'
 import { VerseStateChip } from '@/components/verse-state-chip'
 import { useChapter } from '@/hooks/queries'
@@ -13,6 +14,7 @@ import {
 } from '@/lib/api'
 import { BOOK_NUMBERS } from '@/lib/books'
 import type { BulkRegisterOutcome } from '@/lib/bulk-register'
+import { REGISTRATION_ENABLED } from '@/lib/env'
 import { shortenAddress } from '@/lib/format'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
@@ -198,27 +200,31 @@ export default function ChapterPage() {
           <Note>{tc('error')}</Note>
         ) : (
           <>
-            <Bar>
-              <Button
-                type="button"
-                onClick={toggleAll}
-                disabled={available.length === 0}
-                aria-pressed={allAvailableSelected}
-              >
-                {allAvailableSelected ? t('clear') : t('selectAll')}
-              </Button>
-              <span className="count">{t('selected', { count: selected.size })}</span>
-              <span className="spacer" />
-              {available.length === 0 ? (
-                <span className="count">{t('noneAvailable')}</span>
-              ) : (
-                <BulkRegisterButton references={selectedReferences} onComplete={onBulkComplete} />
-              )}
-            </Bar>
+            {REGISTRATION_ENABLED ? (
+              <Bar>
+                <Button
+                  type="button"
+                  onClick={toggleAll}
+                  disabled={available.length === 0}
+                  aria-pressed={allAvailableSelected}
+                >
+                  {allAvailableSelected ? t('clear') : t('selectAll')}
+                </Button>
+                <span className="count">{t('selected', { count: selected.size })}</span>
+                <span className="spacer" />
+                {available.length === 0 ? (
+                  <span className="count">{t('noneAvailable')}</span>
+                ) : (
+                  <BulkRegisterButton references={selectedReferences} onComplete={onBulkComplete} />
+                )}
+              </Bar>
+            ) : (
+              <LaunchingSoon />
+            )}
 
             <List>
               {pageItems.map((item) => {
-                const selectable = item.status === 'AVAILABLE'
+                const selectable = item.status === 'AVAILABLE' && REGISTRATION_ENABLED
                 return (
                   <Row key={item.verse} $selectable={selectable}>
                     {selectable ? (

@@ -61,6 +61,13 @@
     "lead": "Search by reference and, if it's still available, register it permanently on Solana from your wallet.",
     "viewChapter": "View the whole chapter"
   },
+  "launch": {
+    "soon": {
+      "badge": "Coming soon",
+      "title": "Registration opens soon",
+      "note": "The canon is being inscribed on-chain. Registration will open shortly — you can explore the verses in the meantime."
+    }
+  },
   "chapterScreen": {
     "eyebrow": "Whole chapter",
     "lead": "Every verse of the chapter with its state — select the available ones to register together.",

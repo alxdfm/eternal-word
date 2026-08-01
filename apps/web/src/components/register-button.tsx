@@ -1,8 +1,10 @@
 'use client'
 
+import { LaunchingSoon } from '@/components/launching-soon'
 import { Button } from '@/components/ui'
 import { verseQueryKey } from '@/hooks/use-verse-status'
 import type { VerseStatus } from '@/lib/api'
+import { REGISTRATION_ENABLED } from '@/lib/env'
 import { registerVerse } from '@/lib/register'
 import { registerErrorKey } from '@/lib/register-error'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
@@ -79,6 +81,12 @@ export function RegisterButton({ book, chapter, verse, onSubmitted }: RegisterBu
       }
       setPhase('error')
     }
+  }
+
+  // "Launching soon": on a closed stage (mainnet pre-launch) the action is
+  // replaced by a notice — never a register button that would fail on-chain.
+  if (!REGISTRATION_ENABLED) {
+    return <LaunchingSoon />
   }
 
   return (

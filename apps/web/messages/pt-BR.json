@@ -61,6 +61,13 @@
     "lead": "Busque pela referência e, se ainda estiver disponível, registre-o de forma permanente na Solana a partir da sua carteira.",
     "viewChapter": "Ver o capítulo inteiro"
   },
+  "launch": {
+    "soon": {
+      "badge": "Em breve",
+      "title": "O registro abre em breve",
+      "note": "O cânon está sendo inscrito on-chain. O registro abrirá em instantes — enquanto isso, você pode explorar os versículos."
+    }
+  },
   "chapterScreen": {
     "eyebrow": "Capítulo inteiro",
     "lead": "Cada versículo do capítulo com seu estado — selecione os disponíveis para registrar de uma vez.",
