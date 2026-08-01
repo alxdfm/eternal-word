@@ -1,7 +1,14 @@
 name: Release
 
 # Deploy dispara ao publicar uma release no GitHub. A tag da release é o
-# que vai para produção — nunca o topo da branch.
+# que vai para o cluster — nunca o topo da branch.
+#
+# O STAGE é escolhido pelo PREFIXO da tag (job `resolve`):
+#   v*        → stage `production` (mainnet) — releases cortadas da `main`
+#   devnet-*  → stage `devnet`     — releases cortadas da branch `devnet`
+# Assim os dois deploys são automatizados por release, com as MESMAS creds do
+# GitHub (são da conta inteira, servem qualquer stage). Cada stage roda sob o
+# seu próprio GitHub Environment, então a proteção de um não afeta o outro.
 #
 # Web + API/indexer sobem juntos numa única app SST (site via OpenNext), então
 # há um só job de deploy (`sst deploy`). O programa Anchor NÃO é deployado aqui,
@@ -12,16 +19,20 @@ name: Release
 #   secret AWS_ACCESS_KEY_ID      chave de um IAM user de deploy, com o mínimo
 #   secret AWS_SECRET_ACCESS_KEY  necessário para o deploy SST — policy em
 #                                 docs/deploy/aws-deploy-policy.json.
-#   var    AWS_REGION             região do stage (default us-west-1, onde o
-#                                 prod atual vive).
-#   Os segredos da app (DatabaseUrl, WebhookAuthToken, SolanaRpcUrl) já estão
-#   no SSM do stage — o `sst deploy` os lê de lá, não deste workflow.
+#   var    AWS_REGION             região do stage (default us-west-1).
+#   ⚠️ Como cada stage roda no seu Environment, as creds precisam estar acessíveis
+#   aos dois: o mais simples é deixá-las como secrets REPO-LEVEL (valem para todo
+#   Environment). Se estiverem escopadas ao Environment `production`, replique-as
+#   no Environment `devnet` (ou promova a repo-level).
+#   Os segredos da app (DatabaseUrl, WebhookAuthToken, SolanaRpcUrl, RegistrationLive)
+#   vivem no state do SST por stage — o `sst deploy` os lê de lá, não deste workflow.
 on:
   release:
     types: [published]
 
 concurrency:
-  group: release
+  # Serializa por stage: uma release de production não cancela uma de devnet.
+  group: release-${{ github.event.release.tag_name }}
   cancel-in-progress: false
 
 # Default restritivo do GITHUB_TOKEN — nenhum job precisa de mais que leitura.
@@ -29,8 +40,33 @@ permissions:
   contents: read
 
 jobs:
+  resolve:
+    name: Resolver stage pela tag
+    runs-on: ubuntu-latest
+    outputs:
+      stage: ${{ steps.pick.outputs.stage }}
+    steps:
+      # TAG_NAME chega por `env`, nunca interpolado direto no shell (uma tag com
+      # `$(...)` ou crase viraria comando no runner).
+      - name: Stage a partir do prefixo da tag
+        id: pick
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          case "${TAG_NAME}" in
+            devnet-*) stage=devnet ;;
+            v*)       stage=production ;;
+            *)
+              echo "::error::Tag '${TAG_NAME}' não reconhecida — use 'v*' (production) ou 'devnet-*' (devnet)."
+              exit 1
+              ;;
+          esac
+          echo "stage=${stage}" >> "$GITHUB_OUTPUT"
+          echo "Release '${TAG_NAME}' → stage '${stage}'."
+
   verify:
     name: Verificação pré-deploy
+    needs: resolve
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -54,7 +90,7 @@ jobs:
           pnpm lint
           pnpm test
 
-      # O que vai a produção precisa carregar o mesmo texto canônico que
+      # O que vai ao ar precisa carregar o mesmo texto canônico que
       # está registrado on-chain.
       - name: Verificar CanonicalText e Merkle root
         run: |
@@ -63,9 +99,12 @@ jobs:
 
   deploy:
     name: Deploy web + API/indexer (SST/AWS)
-    needs: verify
+    needs: [resolve, verify]
     runs-on: ubuntu-latest
-    environment: production
+    # Cada stage no seu Environment (production | devnet): tracking e proteção
+    # independentes. As creds AWS precisam estar acessíveis a este Environment
+    # (ver nota no topo do arquivo).
+    environment: ${{ needs.resolve.outputs.stage }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -90,14 +129,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Um só comando sobe o indexer, a WebApi e o site (OpenNext) na mesma app
-      # SST. NEXT_PUBLIC_WEB_API_URL é injetado no build a partir da URL da
-      # WebApi (ver sst.config.ts). O programa Anchor não entra aqui.
+      # SST, no stage resolvido pela tag. NEXT_PUBLIC_WEB_API_URL é injetado no
+      # build a partir da URL da WebApi (ver sst.config.ts). O programa Anchor
+      # não entra aqui.
       - name: Deploy (sst)
-        run: pnpm exec sst deploy --stage production
+        env:
+          STAGE: ${{ needs.resolve.outputs.stage }}
+        run: pnpm exec sst deploy --stage "${STAGE}"
 
   summary:
     name: Resumo
-    needs: deploy
+    needs: [resolve, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -107,10 +149,11 @@ jobs:
       - name: Registrar resultado
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
+          STAGE: ${{ needs.resolve.outputs.stage }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
           {
-            echo "### Release \`${TAG_NAME}\`"
+            echo "### Release \`${TAG_NAME}\` → stage \`${STAGE}\`"
             echo ""
             echo "| Alvo | Resultado |"
             echo "|------|-----------|"
