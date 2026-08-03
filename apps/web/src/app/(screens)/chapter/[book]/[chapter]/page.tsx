@@ -99,6 +99,13 @@ const Row = styled.label<{ $selectable: boolean }>`
 const Note = styled.p`
   color: ${({ theme }) => theme.color.muted};
 `
+// Centers the launching-soon notice and restores the spacing the Bar provided
+// (the notice replaces the Bar when registration is closed).
+const ClosedNotice = styled.div`
+  display: grid;
+  justify-items: center;
+  margin: 4px 0 16px;
+`
 
 function isValidBook(book: number): boolean {
   return Number.isInteger(book) && (BOOK_NUMBERS as readonly number[]).includes(book)
@@ -219,7 +226,9 @@ export default function ChapterPage() {
                 )}
               </Bar>
             ) : (
-              <LaunchingSoon />
+              <ClosedNotice>
+                <LaunchingSoon />
+              </ClosedNotice>
             )}
 
             <List>
