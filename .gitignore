@@ -50,5 +50,10 @@ coverage/
 tmp/
 .tmp/
 
+# Docs — mantidos apenas localmente, fora do repo público (removidos do
+# histórico em 2026-08-05). Contêm topologia de deploy, runbooks e notas
+# operacionais que não devem ir para o repositório aberto.
+docs/
+
 # Template original (não versionar)
 project-skeleton.zip
